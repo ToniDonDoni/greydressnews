@@ -1,0 +1,127 @@
+{
+  "model": "apple/coreml-depth-anything-v2-small",
+  "revision": "cfef6f6f2a70783dedc0bfae40cecbc2052285d3",
+  "source": "references/ElGrayPimenovLeiterWindow2.png",
+  "source_sha256": "c75794dbfe69920916fae155722dff042b3db787884db44a97a668b618406bd3",
+  "depth_sha256": "d760e4299ce696e246027869c61a61540d5a71bd7f8bd9faee08473fecdd2e64",
+  "generator_sha256": "1cf34995c6f37e5cd921d32d35c68296bfb04e87efbebb6664e01e6abf0151c4",
+  "source_size": [
+    1920,
+    1077
+  ],
+  "depth_size": [
+    1024,
+    574
+  ],
+  "preprocessing": "aspect-preserving letterbox; remove padding from prediction",
+  "semantics": "relative inverse depth; white is near; not meters",
+  "normalization_percentiles": [
+    1,
+    99
+  ],
+  "prediction_ms": 47.4,
+  "versions": {
+    "coremltools": "9.0",
+    "numpy": "2.4.6",
+    "pillow": "13.0.0"
+  },
+  "manual_depth_planes": {
+    "method": "hand_authored_three_plane_masks",
+    "depth_values": {
+      "far": 96,
+      "midground": 156,
+      "near": 236
+    },
+    "inverse_depth_semantics": "larger grayscale values are nearer",
+    "geometry": {
+      "studio_polygon": [
+        [
+          350,
+          0
+        ],
+        [
+          657,
+          0
+        ],
+        [
+          657,
+          573
+        ],
+        [
+          405,
+          573
+        ]
+      ],
+      "woman_left_extension": [
+        [
+          350,
+          190
+        ],
+        [
+          378,
+          184
+        ],
+        [
+          399,
+          205
+        ],
+        [
+          410,
+          255
+        ],
+        [
+          402,
+          320
+        ],
+        [
+          394,
+          382
+        ],
+        [
+          408,
+          445
+        ],
+        [
+          431,
+          500
+        ],
+        [
+          403,
+          525
+        ],
+        [
+          376,
+          486
+        ],
+        [
+          357,
+          430
+        ],
+        [
+          345,
+          350
+        ],
+        [
+          342,
+          278
+        ]
+      ],
+      "glass_left_x": 658
+    },
+    "right_side_lights": {
+      "search_left_x": 940,
+      "red_core": "R>=180, R-G>=35, R-B>=25, R>=1.22*G",
+      "warm_core": "R>=200, G>=80, G<=0.78*R, B<=145",
+      "neutral_light": "x>=980, min(R,G,B)>=210, channel_range<=45",
+      "blue_core": "x>=980, B>=205, B-R>=30, B-G>=15",
+      "minimum_component_area": 10,
+      "maximum_component_area": 1200,
+      "maximum_component_side": 64,
+      "maximum_aspect_ratio": 3.5,
+      "maximum_mask_coverage_percent": 4.0,
+      "postprocessing": "3px median filter, compact connected-component filtering, 3px maximum filter"
+    },
+    "semantics": "Far: plain background, left house and visible right-side lights behind glass; midground: studio and presenter; near: glass, water droplets and rain.",
+    "script_sha256": "8d4561b2bdec983517205def5e2b88c6095bfbedc673f7793fb750db975bb4f0"
+  }
+}

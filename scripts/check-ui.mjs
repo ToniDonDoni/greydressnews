@@ -1,21 +1,8 @@
 import assert from 'node:assert/strict';
 
-const elements={};
-for(const id of ['music','musicLabel','volume','bpm','bpmValue','soundbar']){
-  elements[id]={
-    value:'',textContent:'',handlers:{},attributes:{},
-    setAttribute(name,value){this.attributes[name]=value;},
-    addEventListener(name,handler){this.handlers[name]=handler;},
-    classList:{toggle(){}}
-  };
-}
-const stored=new Map(),sources=[],buffers=[],documentHandlers={};
-globalThis.localStorage={
-  getItem:key=>stored.has(key)?stored.get(key):null,
-  setItem:(key,value)=>stored.set(key,value)
-};
+const sources=[],buffers=[],contexts=[],gainTargets=[],documentHandlers={},calls=[];
 globalThis.document={
-  getElementById:id=>elements[id],
+  getElementById(){throw Error('Audio must not depend on visible controls');},
   addEventListener(name,handler){documentHandlers[name]=handler;}
 };
 const node=()=>({
@@ -24,80 +11,86 @@ const node=()=>({
   ratio:{value:0},attack:{value:0},release:{value:0}
 });
 class MockAudioContext{
-  constructor(){this.currentTime=10;this.state='suspended';this.destination=node();}
+  constructor(){
+    this.currentTime=10;
+    this.state='suspended';
+    this.destination=node();
+    contexts.push(this);
+  }
   createGain(){
     const gain=node();
-    gain.gain={value:0,cancelScheduledValues(){},setTargetAtTime(value){this.value=value;}};
+    gain.gain={
+      value:0,
+      cancelScheduledValues(){},
+      setTargetAtTime(value){this.value=value;gainTargets.push(value);}
+    };
     return gain;
   }
   createBiquadFilter(){return node();}
   createDynamicsCompressor(){return node();}
   createBuffer(channels,length,sampleRate){
     const buffer={channels,length,sampleRate,copyToChannel(){}};
-    buffers.push(buffer);return buffer;
+    buffers.push(buffer);
+    return buffer;
   }
   createBufferSource(){
     const source={
       connect(){},disconnect(){},buffer:null,
-      start(at){this.startedAt=at;},stop(at){this.stoppedAt=at;}
+      start(at){this.startedAt=at;calls.push('source.start');}
     };
-    sources.push(source);return source;
+    sources.push(source);
+    return source;
   }
-  async resume(){this.state='running';}
-  async suspend(){this.state='suspended';}
+  resume(){
+    calls.push('resume');
+    this.state='running';
+    return Promise.resolve();
+  }
 }
 globalThis.window={AudioContext:MockAudioContext};
 const realSetInterval=globalThis.setInterval;
 globalThis.setInterval=()=>1;
+const flush=()=>new Promise(resolve=>setImmediate(resolve));
 try{
   await import('../dist/music.mjs');
-  assert.equal(elements.bpmValue.textContent,'74 BPM');
-  assert.equal(elements.music.attributes['aria-pressed'],'false','Page load must stay silent');
-  assert.equal(sources.length,0,'Page load must not schedule audio');
-  assert.equal(typeof documentHandlers.click,'function','Any first page click should be able to start music');
-  await documentHandlers.click({isTrusted:false});
-  assert.equal(elements.music.attributes['aria-pressed'],'false','Synthetic clicks must not auto-start music');
-  await documentHandlers.click({isTrusted:true});
-  assert.equal(elements.music.attributes['aria-pressed'],'true');
+  assert.equal(sources.length,0,'Loading the page must not start sound');
+  assert.equal(contexts.length,0,'AudioContext must await a user gesture');
+  for(const name of ['pointerdown','touchstart','click']){
+    assert.equal(typeof documentHandlers[name],'function',name+' must support playback');
+  }
+
+  documentHandlers.click({isTrusted:false});
+  await flush();
+  assert.equal(sources.length,0,'Synthetic gestures must not start sound');
+
+  documentHandlers.pointerdown({isTrusted:true});
+  assert.deepEqual(calls.slice(0,2),['resume','source.start'],
+    'Audio resume and source start must run synchronously inside the user gesture');
+  await flush();
+  assert.equal(contexts[0]?.state,'running');
+  assert(sources.length>=2,'The first gesture must schedule multiple groove bars');
+  assert.equal(gainTargets.at(-1),.8,'The default output gain must be 80 percent');
+  assert(Math.abs(sources[1].startedAt-sources[0].startedAt-240/74)<1e-8,
+    'The original 74 BPM groove must be preserved');
+  assert(buffers.every(buffer=>buffer.sampleRate===24000),'The sample rate must be preserved');
+
   const initial=sources.length;
-  await documentHandlers.click({isTrusted:true});
-  assert.equal(elements.music.attributes['aria-pressed'],'true','Later page clicks must not pause music');
-  assert.equal(sources.length,initial,'Later clicks must not create another queue');
-  assert(initial>=2,'Playback must schedule multiple bars');
-  assert(Math.abs(sources[1].startedAt-sources[0].startedAt-240/74)<1e-8);
+  documentHandlers.touchstart({isTrusted:true});
+  documentHandlers.click({isTrusted:true});
+  await flush();
+  assert.equal(sources.length,initial,'Subsequent gesture events must not restart the groove');
+  assert.equal(contexts.length,1,'Only one AudioContext should exist');
 
-  elements.bpm.value='110';
-  elements.bpm.handlers.input();
-  assert.equal(elements.bpmValue.textContent,'110 BPM','The readout must follow input immediately');
-  assert.equal(stored.get('teaser-bpm'),'110','Tempo should be persisted');
-  await new Promise(resolve=>setTimeout(resolve,150));
-  assert(sources.slice(0,initial).every(source=>source.stoppedAt!==undefined),'The old queue must stop');
-  const changed=sources.slice(initial);
-  assert(changed.length>=2,'A new queue must be scheduled');
-  assert(Math.abs(changed[1].startedAt-changed[0].startedAt-240/110)<1e-8);
-  assert.equal(buffers.at(-1).length,Math.ceil((240/110+3)*24000));
-
-  await elements.music.handlers.click();
-  assert.equal(elements.music.attributes['aria-pressed'],'false');
-  await documentHandlers.click({isTrusted:true});
-  assert.equal(elements.music.attributes['aria-pressed'],'false','Page clicks must respect a manual pause');
-  elements.bpm.value='90';
-  elements.bpm.handlers.input();
-  await new Promise(resolve=>setTimeout(resolve,150));
-  const stoppedCount=sources.length;
-  await elements.music.handlers.click();
-  const resumed=sources.slice(stoppedCount);
-  assert(resumed.length>=2,'Resume must schedule bars at the selected tempo');
-  assert(Math.abs(resumed[1].startedAt-resumed[0].startedAt-240/90)<1e-8);
-  await elements.music.handlers.click();
-  stored.clear();sources.length=0;buffers.length=0;
-  // A fresh page whose very first click is the music button must start once.
-  await import('../dist/music.mjs?first-music-button');
-  await elements.music.handlers.click();await documentHandlers.click({isTrusted:true});
-  assert.equal(elements.music.attributes['aria-pressed'],'true','First button click was toggled twice by document bubbling');
-  await elements.music.handlers.click();await documentHandlers.click({isTrusted:true});
-  assert.equal(elements.music.attributes['aria-pressed'],'false','Button pause was immediately undone');
-  console.log('First page click, first music-button click, one-time activation, manual pause and tempo UI passed.');
+  // Simulate a mobile device that sends touchstart but no click event.
+  sources.length=0;contexts.length=0;gainTargets.length=0;calls.length=0;
+  await import('../dist/music.mjs?touch-only');
+  documentHandlers.touchstart({isTrusted:true});
+  assert.deepEqual(calls.slice(0,2),['resume','source.start'],
+    'A standalone touchstart must unlock audio before the handler returns');
+  await flush();
+  assert(sources.length>=2,'Touchstart alone must start actual audio');
+  assert.equal(gainTargets.at(-1),.8,'Touch-only playback must use 80 percent gain');
+  console.log('Trusted pointer and touch startup, synchronous mobile audio unlock, fixed gain, and single scheduling passed.');
 }finally{
   globalThis.setInterval=realSetInterval;
 }

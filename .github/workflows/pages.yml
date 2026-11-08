@@ -2,9 +2,9 @@ name: Publish to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [teaser, fix/flat-front-glass-depth]
   pull_request:
-    branches: [main]
+    branches: [teaser]
   workflow_dispatch:
 
 permissions:
@@ -26,6 +26,14 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '22'
+      - name: Install depth validation dependencies
+        run: |
+          python3 -m pip install 'Pillow>=10,<14'
+          npm install --no-save --no-package-lock playwright
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Validate manually corrected three-plane depth map
+        run: python3 scripts/manual_depth_planes.py --check
       - name: Check JavaScript syntax
         run: |
           node --check dist/scene.js
@@ -40,13 +48,35 @@ jobs:
         run: node scripts/check.mjs
       - name: Test tempo controls and audio rescheduling
         run: node scripts/check-ui.mjs
+      - name: Start static site for browser depth test
+        run: |
+          python3 -m http.server 8000 --directory dist > /tmp/teaser-http.log 2>&1 &
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:8000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/teaser-http.log
+          exit 1
+      - name: Measure rendered far, midground, and near parallax
+        env:
+          TEASER_URL: http://127.0.0.1:8000/
+        run: node scripts/check_reference_parallax.mjs
+      - name: Upload depth-plane browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-depth-parallax-evidence
+          path: output/reference-parallax-check/
+          if-no-files-found: warn
       - name: Upload static website
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/teaser')
     needs: build
     runs-on: ubuntu-latest
     permissions:

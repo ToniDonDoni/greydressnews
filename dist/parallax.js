@@ -85,7 +85,7 @@
         state.ready=true;draw();loading.classList.add('hidden');
       };
       depth.onerror=()=>fail(Error('Depth map could not be loaded'));
-      depth.src='assets/ElGrayPimenovLeiterWindow-depth.png';
+      depth.src='assets/ElGrayPimenovLeiterWindow2-depth.png';
     }catch(error){fail(error);}
   }
   painting.addEventListener('pointermove',event=>{

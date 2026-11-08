@@ -11,10 +11,11 @@ import PIL
 from PIL import Image
 
 from download_depth_model import MODEL_ID, REVISION, ensure_model, model_errors, sha256
+from manual_depth_planes import apply_manual_depth_planes, provenance
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'references/ElGrayPimenovLeiterWindow.png'
-OUTPUT = ROOT / 'dist/assets/ElGrayPimenovLeiterWindow-depth.png'
+SOURCE = ROOT / 'references/ElGrayPimenovLeiterWindow2.png'
+OUTPUT = ROOT / 'dist/assets/ElGrayPimenovLeiterWindow2-depth.png'
 MODEL = ROOT / 'output/models/DepthAnythingV2SmallF16.mlpackage'
 
 
@@ -56,12 +57,14 @@ def main():
     if high <= low:
         raise ValueError('The model returned constant depth')
     normalized = np.clip((aligned - low) / (high - low), 0, 1)
-    Image.fromarray(np.round(normalized * 255).astype(np.uint8)).save(OUTPUT)
+    predicted = Image.fromarray(np.round(normalized * 255).astype(np.uint8))
+    corrected, _, _, _ = apply_manual_depth_planes(source, predicted)
+    corrected.save(OUTPUT, optimize=True)
 
     metadata = {
         'model': MODEL_ID,
         'revision': REVISION,
-        'source': 'references/ElGrayPimenovLeiterWindow.png',
+        'source': 'references/ElGrayPimenovLeiterWindow2.png',
         'source_sha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
         'depth_sha256': hashlib.sha256(OUTPUT.read_bytes()).hexdigest(),
         'generator_sha256': sha256(Path(__file__)),
@@ -70,6 +73,7 @@ def main():
         'preprocessing': 'aspect-preserving letterbox; remove padding from prediction',
         'semantics': 'relative inverse depth; white is near; not meters',
         'normalization_percentiles': [1, 99],
+        'manual_depth_planes': provenance(),
         'prediction_ms': round(elapsed_ms, 1),
         'versions': {'coremltools': ct.__version__, 'numpy': np.__version__, 'pillow': PIL.__version__},
     }
