@@ -32,8 +32,10 @@ jobs:
           npm install --no-save --no-package-lock playwright
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
-      - name: Validate manually corrected three-plane depth map
-        run: python3 scripts/manual_depth_planes.py --check
+      - name: Validate depth regions
+        run: |
+          python3 test/test_depth_regions.py
+          python3 test/test_apply_depth_regions.py
       - name: Check JavaScript syntax
         run: |
           node --check dist/scene.js
