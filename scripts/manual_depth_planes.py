@@ -407,7 +407,7 @@ def main():
     metadata["generator_sha256"] = sha256(ROOT / "scripts/make_reference_depth.py")
     metadata.pop("glass_postprocess", None)
     metadata["manual_depth_planes"] = provenance()
-    META.write_text(json.dumps(metadata, indent=2) + "\\n")
+    META.write_text(json.dumps(metadata, indent=2) + "\n")
     report = validate(source, corrected, metadata)
     report["depth_sha256"] = metadata["depth_sha256"]
     report["source_sha256"] = sha256(SOURCE)
