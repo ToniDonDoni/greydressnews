@@ -17,28 +17,34 @@ A living, code-painted cafe scene with an orange cat, a laptop, coffee, and an e
   Drag the compact **3D** arc at the bottom center to turn the view. A short tap
   toggles depth; Left/Right arrows adjust it by keyboard and Home centers it.
 
-## Reference photo: foreground glass depth correction
+## Reference photo: manually authored three-plane depth
 
-The photo displayed in the `teaser` experience uses
-`dist/assets/ElGrayPimenovLeiterWindow2-depth.png`, a 1024 x 574
-relative inverse-depth map (lighter means nearer). The original neural map
-assigned varying depth to the textured glass at the right of the photograph.
-The corrected, committed depth PNG makes that visible glass region one
-screen-parallel near plane: x >= 662 uses grayscale value 248, with a
-four-pixel transition starting at x = 658. The presenter and left background
-retain their original neural depth values.
+The page uses `references/ElGrayPimenovLeiterWindow2.png` and its committed
+1024 x 574 relative inverse-depth map. The map is manually corrected by
+`scripts/manual_depth_planes.py`; this correction does not run a depth model.
 
-`scripts/flatten_reference_glass.py` documents and reproduces this correction
-without loading the neural model. Future full Core ML depth regeneration via
-`scripts/make_reference_depth.py` applies the same correction automatically.
-The companion JSON keeps the model attribution and records the edited depth
-checksum and postprocessing script fingerprint.
+The scene has exactly three semantic planes:
 
-**Limitation:** a single-channel depth map cannot encode both transparent
-glass and the presenter behind it at the same pixel. This correction flattens
-the existing *visible right-side glass*, not an invisible pane across the
-entire photograph. A full-screen glass overlay would require a separate
-transparent foreground texture/layer.
+- **Far (96):** plain background, the house on the left, and visible lights
+  behind the glass on the right.
+- **Midground (156):** the studio and presenter.
+- **Near (236):** the rain-covered glass, water droplets and rain directly in
+  front of the camera.
+
+The glass remains a screen-parallel plane. Right-side light cores are masked
+separately from the glass so they remain behind it. The masks are deterministic
+and mutually exclusive; a single-channel depth map still assigns only one depth
+to each pixel where visual layers overlap.
+
+Run `python scripts/manual_depth_planes.py` to reproduce the committed manual
+correction from the existing map, or `python scripts/manual_depth_planes.py
+--check` to validate it without changing files. The command produces review
+evidence under `specs/evidence/`: region masks, depth visualization, depth
+profile, before/after maps and a JSON report with per-region pixel counts and
+depth statistics.
+
+The optional `scripts/make_reference_depth.py` model-generation path applies
+the same manual masks after inference. It was not used to create this correction.
 
 ## Depth parallax experiment
 
@@ -248,6 +254,10 @@ The workflow checks the JavaScript and project contents, configures Pages, uploa
 | `scripts/build.py` | Local depth build and dependency-free CI validation |
 | `scripts/download_depth_model.py` | Pinned, verified model download into ignored local cache |
 | `scripts/make_depth.py` | Local Core ML depth baking |
+| `scripts/make_reference_depth.py` | Optional reference-photo depth inference followed by manual plane masks |
+| `scripts/manual_depth_planes.py` | Deterministic three-plane Z-map correction, diagnostics, and validation |
+| `specs/spec_001_three_plane_depth_correction.md` | Accepted scope and criteria for the manual Z-plane correction |
+| `specs/evidence/` | Before/after depth maps, region overlays, profiles, and validation report |
 | `scripts/check_build.py` | Missing/stale-map and model-cache regression checks |
 | `scripts/check-parallax.mjs` | Browser checks and parallax captures |
 | `.github/workflows/pages.yml` | Automatic and manual Pages publication |
