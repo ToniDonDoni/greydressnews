@@ -19,6 +19,27 @@ const browser=await chromium.launch({
 try{
   const page=await browser.newPage({viewport:{width:1200,height:820},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push(String(error)));
+  // Observe real Web Audio sources without replacing or mocking the synthesizer.
+  await page.addInitScript(()=>{
+    window.__grooveProbe={started:0,nonSilent:0,running:false};
+    const nativeStart=AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start=function(...args){
+      const data=this.buffer?.getChannelData(0);
+      if(data){
+        let magnitude=0;
+        for(let i=0;i<data.length;i+=256)magnitude+=Math.abs(data[i]);
+        if(magnitude>.01)window.__grooveProbe.nonSilent++;
+      }
+      window.__grooveProbe.started++;
+      return nativeStart.apply(this,args);
+    };
+    const nativeResume=AudioContext.prototype.resume;
+    AudioContext.prototype.resume=async function(...args){
+      const result=await nativeResume.apply(this,args);
+      window.__grooveProbe.running=this.state==='running';
+      return result;
+    };
+  });
   await page.goto(url);
   await page.waitForFunction(()=>{
     const canvas=document.querySelector('#depth-view');
@@ -118,6 +139,10 @@ try{
   await page.mouse.click(painting.x+painting.width*.5,painting.y+painting.height*.5);
   await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='true');
   assert.equal(await volume.isVisible(),true,'First page click must reveal volume');
+  const audioProbe=await page.evaluate(()=>window.__grooveProbe);
+  assert(audioProbe.running,'The actual browser AudioContext did not enter running state');
+  assert(audioProbe.started>=2,'The groove scheduler did not start Web Audio buffer sources');
+  assert(audioProbe.nonSilent>=2,'The synthesized audio buffers were silent');
   await page.mouse.click(painting.x+painting.width*.62,painting.y+painting.height*.42);
   assert.equal(await music.getAttribute('aria-pressed'),'true','Later artwork clicks must not pause the groove');
   await music.click();
@@ -134,6 +159,7 @@ try{
 
   const report={
     groove:{
+      audio_probe:audioProbe,
       first_trusted_page_click_starts:true,
       later_page_click_does_not_pause:true,
       explicit_pause_and_resume:true,
