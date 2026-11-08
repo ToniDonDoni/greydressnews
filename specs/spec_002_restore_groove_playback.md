@@ -17,13 +17,13 @@
 
 ## 3. Acceptance Criteria
 
-- [ ] AC-01: The page imports `music.mjs` and renders a usable music button and volume slider. Evidence: HTML and browser UI assertions.
-- [ ] AC-02: No sound starts before interaction; the first trusted page click starts playback. Evidence: browser and mocked AudioContext tests.
-- [ ] AC-03: A subsequent page click does not pause the music. Evidence: browser and mocked AudioContext tests.
-- [ ] AC-04: Music button clicks pause and resume playback, including after the one-time click shortcut is consumed. Evidence: browser and mocked AudioContext tests.
-- [ ] AC-05: The volume slider appears when playing and can adjust the volume; no tempo UI appears. Evidence: browser assertions and markup checks.
-- [ ] AC-06: No depth map, art composition, or parallax regression. Evidence: existing depth and Playwright validation.
-- [ ] AC-07: GitHub Actions build and browser tests pass. Evidence: linked CI run.
+- [x] AC-01: The page imports `music.mjs` and renders a usable music button and volume slider. Evidence: HTML and browser UI assertions.
+- [x] AC-02: No sound starts before interaction; the first trusted page click starts playback. Evidence: browser and mocked AudioContext tests.
+- [x] AC-03: A subsequent page click does not pause the music. Evidence: browser and mocked AudioContext tests.
+- [x] AC-04: Music button clicks pause and resume playback, including after the one-time click shortcut is consumed. Evidence: browser and mocked AudioContext tests.
+- [x] AC-05: The volume slider appears when playing and can adjust the volume; no tempo UI appears. Evidence: browser assertions and markup checks.
+- [x] AC-06: No depth map, art composition, or parallax regression. Evidence: existing depth and Playwright validation.
+- [x] AC-07: GitHub Actions build and browser tests pass. Evidence: linked CI run.
 
 ## 4. Analysis
 
@@ -48,6 +48,13 @@
 - [x] Restore compact control styling.
 - [x] Make tempo controls optional without changing the default BPM.
 - [x] Update static site checks.
-- [ ] Extend browser playback regression tests.
-- [ ] Verify all existing page and parallax tests pass.
-- [ ] Record verification evidence.
+- [x] Extend browser playback regression tests.
+- [x] Verify all existing page and parallax tests pass.
+- [x] Record verification evidence.
+
+## 7. Verification Evidence
+
+- [GitHub Actions run #42509085957](https://github.com/ToniDonDoni/greydressnews/actions/runs/42509085957) passed all build, source, groove UI, depth, and Playwright browser checks.
+- `scripts/check-ui.mjs` uses a mock AudioContext to verify silence before interaction, trusted-click start, later-click behavior, explicit playback control, and bar scheduling.
+- `scripts/check_reference_parallax.mjs` uses actual Chromium page clicks to verify the first-click start, later artwork clicks, volume availability, manual pause/resume, and absence of a tempo slider alongside the three-plane parallax test.
+- Browser captures and the test report are available in the workflow's `reference-depth-parallax-evidence` artifact.
