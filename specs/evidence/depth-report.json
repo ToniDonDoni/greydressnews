@@ -1,0 +1,111 @@
+{
+  "passed": true,
+  "size": [
+    1024,
+    574
+  ],
+  "depth_order": [
+    96,
+    156,
+    236
+  ],
+  "regions": {
+    "far": {
+      "pixel_count": 286532,
+      "coverage_percent": 48.749,
+      "expected_depth": 96,
+      "min": 96,
+      "p05": 96,
+      "median": 96,
+      "p95": 96,
+      "max": 96
+    },
+    "midground": {
+      "pixel_count": 170815,
+      "coverage_percent": 29.061,
+      "expected_depth": 156,
+      "min": 156,
+      "p05": 156,
+      "median": 156,
+      "p95": 156,
+      "max": 156
+    },
+    "near": {
+      "pixel_count": 130429,
+      "coverage_percent": 22.19,
+      "expected_depth": 236,
+      "min": 236,
+      "p05": 236,
+      "median": 236,
+      "p95": 236,
+      "max": 236
+    }
+  },
+  "right_side_lights": {
+    "pixel_count": 79655,
+    "centroid": [
+      905,
+      209
+    ],
+    "bbox": [
+      800,
+      0,
+      1024,
+      574
+    ],
+    "assigned_depth": 96
+  },
+  "sample_points": {
+    "left_house": {
+      "xy": [
+        160,
+        250
+      ],
+      "expected_depth": 96
+    },
+    "studio": {
+      "xy": [
+        620,
+        100
+      ],
+      "expected_depth": 156
+    },
+    "presenter": {
+      "xy": [
+        510,
+        260
+      ],
+      "expected_depth": 156
+    },
+    "glass": {
+      "xy": [
+        720,
+        250
+      ],
+      "expected_depth": 236
+    },
+    "right_side_light_centroid": {
+      "xy": [
+        905,
+        209
+      ],
+      "expected_depth": 96
+    }
+  },
+  "checks": {
+    "three_distinct_levels": true,
+    "far_less_than_mid_less_than_near": true,
+    "masks_partition_image": true,
+    "right_side_lights_detected": true,
+    "right_side_lights_excluded_from_near": true
+  },
+  "depth_sha256": "221e9a79d1e7185127217858c465934040fea7f3aa798663603d8d688563b624",
+  "source_sha256": "c75794dbfe69920916fae155722dff042b3db787884db44a97a668b618406bd3",
+  "diagnostics": {
+    "regions_image": "specs/evidence/depth-regions.png",
+    "depth_visualization": "specs/evidence/depth-visualization.png",
+    "depth_profile": "specs/evidence/depth-profiles.png",
+    "depth_before": "specs/evidence/depth-before.png",
+    "depth_after": "specs/evidence/depth-after.png"
+  }
+}
