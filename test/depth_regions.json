@@ -10,7 +10,7 @@
     "farthest": 100,
     "status": "provisional"
   },
-  "notes": "Review overlay only. Geometry is in reference-image pixels. Light and red-trail regions overlap the foreground glass in image space but sit behind it in depth.",
+  "notes": "Review overlay only. Geometry is in reference-image pixels. The five lights sit behind the foreground glass. The broad red streak stays with the glass and has no separate depth region.",
   "regions": [
     {
       "id": "city",
@@ -203,36 +203,60 @@
             978
           ],
           [
-            710,
+            707,
             946
           ],
           [
-            693,
-            910
+            698,
+            920
           ],
           [
-            686,
-            857
+            687,
+            900
           ],
           [
-            690,
-            794
+            680,
+            880
           ],
           [
-            705,
-            713
+            672,
+            850
           ],
           [
-            710,
-            641
+            666,
+            820
           ],
           [
-            705,
-            576
+            676,
+            800
           ],
           [
-            714,
-            514
+            679,
+            780
+          ],
+          [
+            683,
+            750
+          ],
+          [
+            688,
+            700
+          ],
+          [
+            700,
+            650
+          ],
+          [
+            704,
+            600
+          ],
+          [
+            716,
+            550
+          ],
+          [
+            722,
+            500
           ],
           [
             740,
@@ -337,80 +361,6 @@
         ]
       },
       "neural_detail_strength": 0.0
-    },
-    {
-      "id": "red_trail",
-      "label": "RED TRAIL",
-      "depth": 68,
-      "color": "#f44b78",
-      "opacity": 43,
-      "outline": "dashed",
-      "badge": [
-        1470,
-        45
-      ],
-      "geometry": {
-        "type": "polygon",
-        "points": [
-          [
-            1575,
-            0
-          ],
-          [
-            1850,
-            0
-          ],
-          [
-            1800,
-            105
-          ],
-          [
-            1815,
-            190
-          ],
-          [
-            1880,
-            272
-          ],
-          [
-            1840,
-            427
-          ],
-          [
-            1790,
-            570
-          ],
-          [
-            1797,
-            710
-          ],
-          [
-            1755,
-            788
-          ],
-          [
-            1570,
-            784
-          ],
-          [
-            1570,
-            680
-          ],
-          [
-            1580,
-            538
-          ],
-          [
-            1550,
-            410
-          ],
-          [
-            1568,
-            255
-          ]
-        ]
-      },
-      "neural_detail_strength": 0.08
     },
     {
       "id": "light_a",
@@ -553,13 +503,6 @@
       "note": "Each light has a separate depth."
     },
     {
-      "title": "RED TRAIL",
-      "region_ids": [
-        "red_trail"
-      ],
-      "note": "Closer than the lights, behind the glass."
-    },
-    {
       "title": "STUDIO WALL",
       "region_ids": [
         "studio_wall"
@@ -596,7 +539,6 @@
       "studio_wall",
       "presenter",
       "front_glass",
-      "red_trail",
       "light_a",
       "light_b",
       "light_c",

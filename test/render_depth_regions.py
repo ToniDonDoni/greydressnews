@@ -176,7 +176,7 @@ def render(photo_path, map_path, output_path):
     for region in regions:
         tint(photo, region)
 
-    panel_height = 508
+    panel_height = 145 + math.ceil(len(data["legend"]) / 3) * 121
     canvas = Image.new("RGBA", (width, height + panel_height), (13, 22, 33, 255))
     canvas.paste(photo.convert("RGBA"), (0, 0))
     draw = ImageDraw.Draw(canvas)

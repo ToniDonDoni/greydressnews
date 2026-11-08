@@ -68,7 +68,7 @@ The editable map is `test/depth_regions.json`. It records polygons and five indi
 output/depth_venv/bin/python test/render_depth_regions.py references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/photo_overlay.png
 ```
 
-Open `output/depth_review/photo_overlay.png`. Check the city contour, presenter silhouette, studio wall, ticker, glass boundary, red trail, and each light A-E. If the composition moved, edit the coordinates or depths in `test/depth_regions.json` and render again. The preview renderer accepts another resolution when its aspect ratio is within 1% of the reference; it scales the photo to the reference size for comparison. It does not change the supplied photo.
+Open `output/depth_review/photo_overlay.png`. Check the city contour, presenter silhouette, studio wall, ticker, glass boundary, and each light A-E. The broad red streak shares the glass depth rather than forming a separate region. If the composition moved, edit the coordinates or depths in `test/depth_regions.json` and render again. The preview renderer accepts another resolution when its aspect ratio is within 1% of the reference; it scales the photo to the reference size for comparison. It does not change the supplied photo.
 
 Check the edited configuration:
 
@@ -111,7 +111,7 @@ cp output/depth_review/corrected_depth.png output/site_preview/assets/ElGrayPime
 python3 -m http.server 8001 --directory output/site_preview
 ```
 
-Open `http://127.0.0.1:8001/` and move the pointer or drag on a phone. Inspect both camera extremes for cut edges, holes, and whether the city, presenter, studio, ticker, red trail, five lights, and glass move in a believable order. Stop the server with Ctrl-C. `output/` is ignored by Git.
+Open `http://127.0.0.1:8001/` and move the pointer or drag on a phone. Inspect both camera extremes for cut edges, holes, and whether the city, presenter, studio, ticker, five lights, and glass move in a believable order. The broad red streak should remain attached to the glass. Stop the server with Ctrl-C. `output/` is ignored by Git.
 
 `scripts/check_reference_parallax.mjs` is currently tied to the committed three-plane map and its saved evidence. It is a baseline test for the current published map, not an acceptance test for this new candidate.
 

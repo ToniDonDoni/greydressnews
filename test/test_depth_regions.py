@@ -26,7 +26,8 @@ class DepthRegionTest(unittest.TestCase):
         self.assertTrue(regions["front_glass"]["depth"] < regions["ticker"]["depth"] < regions["presenter"]["depth"] < regions["studio_wall"]["depth"])
         lights = [regions[f"light_{letter}"]["depth"] for letter in "abcde"]
         self.assertEqual(len(set(lights)), 5)
-        self.assertTrue(all(regions["red_trail"]["depth"] < depth < regions["city"]["depth"] for depth in lights))
+        self.assertNotIn("red_trail", regions)
+        self.assertTrue(all(regions["front_glass"]["depth"] < depth < regions["city"]["depth"] for depth in lights))
 
     def test_reference_preview_is_repeatable(self):
         """Compare two temporary overlays of the reference photo byte for byte."""
@@ -37,7 +38,7 @@ class DepthRegionTest(unittest.TestCase):
             render(REFERENCE, MAP, second)
             self.assertEqual(first.read_bytes(), second.read_bytes())
             with Image.open(first) as preview:
-                self.assertEqual(preview.size, (1920, 1585))
+                self.assertEqual(preview.size, (1920, 1464))
                 self.assertEqual(preview.format, "PNG")
                 ticker = next(region for region in load_map(MAP)["regions"] if region["id"] == "ticker")
                 self.assertEqual(preview.getpixel((1500, 978)), tuple(bytes.fromhex(ticker["color"][1:])))
@@ -51,7 +52,7 @@ class DepthRegionTest(unittest.TestCase):
                 source.resize((960, 538)).save(replacement)
             render(replacement, MAP, preview)
             with Image.open(preview) as result:
-                self.assertEqual(result.size, (1920, 1585))
+                self.assertEqual(result.size, (1920, 1464))
 
             wrong_aspect = Path(directory) / "wrong-aspect.png"
             Image.new("RGB", (960, 960)).save(wrong_aspect)
