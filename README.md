@@ -1,289 +1,83 @@
-Live site: [Teaser After Hours](https://tonidondoni.github.io/greydressnews/)
+# Grey Dress News
 
-# Teaser After Hours
+[View the interactive study](https://tonidondoni.github.io/greydressnews/)
 
-A living, code-painted cafe scene with an orange cat, a laptop, coffee, and an endless instrumental hip-hop groove. The 1024 x 1024 artwork is inspired by neo-impressionism and pointillism. Everything runs locally in the browser after the static assets have loaded.
+## Artistic concept
 
-## Experience
+A news presenter in a gray dress becomes the point of departure for a dialogue between the urban visions of **Yuri Pimenov** and **Saul Leiter**.
 
-- Two lamps swing with different periods and phases. Tap a lamp to switch it on or off.
-- Distant windows turn on and off after randomized dwell times.
-- Individual steam particles rise, curl, disperse, and respawn above the coffee.
-- Light rain crosses the unobstructed window areas, and the cat occasionally blinks.
-- The animation runs continuously without a timeline reset. Pause it, change the evening rhythm, or enter full screen using the lower-right controls.
-- The **first click or tap anywhere on the page** starts the groove and reveals the volume slider, just like the music-note button. After that, only the music button toggles playback; other page gestures never pause it or undo a manual pause. A first click on the music button also starts only once. The tempo slider adjusts the beat from 50 to 140 BPM (74 by default), including during playback. A separate volume slider appears while music plays. Audio starts only after a user gesture and can be paused independently of the animation.
-- The animation respects the browser's reduced-motion preference. The page loads silently; music starts only after the first user click or tap.
-- Move the pointer across the painting for a small depth-based viewpoint change.
-  Drag the compact **3D** arc at the bottom center to turn the view. A short tap
-  toggles depth; Left/Right arrows adjust it by keyboard and Home centers it.
+The gray of her dress recalls the restrained palette of Pimenov's cityscapes. That quiet chromatic affinity suggests a transformation of the city behind her: architecture softens into broken painterly strokes, windows flicker through the night, and buildings are held together by subtle transitions of light rather than hard outlines. Pimenov's vision is the foundation of the composition, not merely a decorative quotation.
 
-## Reference photo: manually authored three-plane depth
+Leiter introduces a different way of seeing the city. Rain-streaked glass, reflections and translucent fields of color interrupt the view, placing the observer at a remove from the scene. The red at the right becomes a chromatic counterpoint to Pimenov's subdued tones. One artist lends the city its painted atmosphere; the other reframes it through the unstable surface of a window.
 
-The page uses `references/ElGrayPimenovLeiterWindow2.png` and its committed
-1024 x 574 relative inverse-depth map. The map is manually corrected by
-`scripts/manual_depth_planes.py`; this correction does not run a depth model.
+The aim is not to imitate two signatures side by side, but to bring painting and photography into a single contemporary image. The presenter anchors the scene in the visual language of broadcast news, while the city and the glass complicate what is foreground, what is distant, and what it means to look through an image.
 
-The scene has exactly three semantic planes:
+**Art-direction source:** Read [SPEC-004: Blonde News Presenter in a City](https://github.com/ToniDonDoni/adavilazil/blob/main/test/explore_visual_styles/test6/SPEC-004-PRESENTER.md) before revising the composition. The source study establishes **Pimenov as the primary visual language** and **Leiter as the photographic and chromatic counterpoint**. Edward Steichen is explored there as an independent comparison, not as part of this hybrid.
 
-- **Far (96):** plain background, the house on the left, and visible lights
-  behind the glass on the right.
-- **Midground (156):** the studio and presenter.
-- **Near (236):** the rain-covered glass, water droplets and rain directly in
-  front of the camera.
+## Interactive depth study
 
-The glass remains a screen-parallel plane. Right-side light cores are masked
-separately from the glass so they remain behind it. The masks are deterministic
-and mutually exclusive; a single-channel depth map still assigns only one depth
-to each pixel where visual layers overlap.
+This repository presents the fixed reference image `references/ElGrayPimenovLeiterWindow2.png` as an interactive, browser-based parallax study. The displayed image is served from `dist/assets/ElGrayPimenovLeiterWindow2.png`; the site does not redraw the artwork or generate new pictures at runtime.
 
-Run `python scripts/manual_depth_planes.py` to reproduce the committed manual
-correction from the existing map, or `python scripts/manual_depth_planes.py
---check` to validate it without changing files. The command produces review
-evidence under `specs/evidence/`: region masks, depth visualization, depth
-profile, before/after maps and a JSON report with per-region pixel counts and
-depth statistics.
+Pointer movement changes the apparent viewpoint through a WebGL warp of the photograph. The depth is deliberately authored around three spatial planes:
 
-The optional `scripts/make_reference_depth.py` model-generation path applies
-the same manual masks after inference. It was not used to create this correction.
+| Plane | Visual elements | Inverse-depth value |
+| --- | --- | --- |
+| Far | Plain background, the building on the left, selected lights behind the glass on the right | 96 |
+| Midground | The presenter and television studio | 156 |
+| Near | The rain-covered glass directly in front of the camera | 236 |
 
-## Depth parallax experiment
+The rain-covered glass is treated as a screen-parallel foreground surface; selected light sources visible beyond it are assigned to the distant plane. These values are relative, not physical distances. A single-channel depth map assigns one value per pixel, so overlapping transparent and distant elements remain a deliberate 2.5D approximation rather than a full 3D reconstruction.
 
-This branch uses a real Depth Anything V2 Small FP16 prediction of `assets/cafe.jpg`.
-The cat, laptop and foreground table move relative to the distant windows. It is
-a limited 2.5D viewpoint shift, not a complete 3D reconstruction. Large rotations
-or newly revealed surfaces are not available from one image.
+**Depth implementation and acceptance criteria:** [SPEC-001: Three-Plane Depth Correction](specs/spec_001_three_plane_depth_correction.md). The manually corrected Z-map, its metadata, object masks and numerical evidence are committed in `dist/assets/` and `specs/evidence/`.
 
-Depth is baked once into `dist/assets/cafe-depth.png`. The browser loads that map
-once and warps the existing live Canvas painting with WebGL. No model, Python
-server, account, API key or remote inference is needed during playback. Lamps,
-steam, rain, blink animation and music keep their original implementations. The
-WebGL output never becomes input to the source painting. The fixed depth map does
-not follow the small moving lamps and steam exactly; that approximation is part
-of this first experiment.
+## Implementation and verification
 
-Pointer movement is smoothed and returns to center on exit. On a touchscreen,
-drag a finger directly across the painting to change the viewpoint. The picture
-keeps the active gesture until release or cancellation, then eases back to center.
-The upward arc and its arrowheads form a 58 x 44 px control at the bottom center.
-Dragging it does not toggle 3D; a short tap toggles it. Native music controls keep
-their normal touch behavior; page gestures remain
-available outside the picture and when 3D is off. The effect starts
-disabled with reduced motion. A missing map or unavailable WebGL leaves the
-original painting usable. The controls remain outside the warped image. A small
-crop leaves room for near layers to shift without exposing the frame edges.
-
-### Build the depth map locally
-
-Use an Apple Silicon Mac and Python 3.11. Run from the repository root:
+The page is a static HTML, CSS and JavaScript experience in `dist/`. It requires no model inference, server-side rendering or external image service during playback.
 
 ```sh
-python3.11 -m venv output/depth-venv
-. output/depth-venv/bin/activate
-python -m pip install -r scripts/depth-requirements.txt
-python scripts/build.py
+python3 -m http.server 8000 --directory dist
 ```
 
-The build calls `scripts/make_depth.py`. The generator calls
-`scripts/download_depth_model.py` if the official Apple Small FP16 model is not
-already cached. Downloads use a pinned Hugging Face revision and verify the
-manifest, model graph and weight checksums. A complete verified cache is reused
-without a network request; incomplete or corrupt downloads are repaired.
+Open `http://localhost:8000/` and move the pointer or drag across the image to inspect the depth separation.
 
-The roughly 50 MB package stays in ignored
-`output/models/DepthAnythingV2SmallF16.mlpackage/`. Hub metadata and caches also
-stay under ignored `output/`. Do not commit model weights or the Python environment.
-To download only the model, run `python scripts/download_depth_model.py`.
-
-To reuse a package already stored elsewhere:
+To validate the committed Z-map without regenerating it:
 
 ```sh
-python scripts/build.py --model PATH_TO/DepthAnythingV2SmallF16.mlpackage
+python3 -m pip install 'Pillow>=10,<14'
+python3 scripts/manual_depth_planes.py --check
+python3 scripts/build.py --check
+node scripts/check.mjs
 ```
 
-`python scripts/make_depth.py` also works on its own and downloads the model when
-needed. Both generation commands require macOS Core ML. The static website does
-not need the model after the map is baked.
+To reproduce the manual Z-map correction and its diagnostic images, run `python3 scripts/manual_depth_planes.py`. This uses hand-authored masks and fixed depth levels; it **does not call an AI depth model**. Commit the resulting depth PNG, metadata JSON and evidence together.
 
-The generated files to commit are:
-
-- `dist/assets/cafe-depth.png`: the 512 x 512 depth image used by the browser.
-- `dist/assets/cafe-depth.json`: source, map, generator and model hashes, pinned
-  model revision and package versions.
-
-The official package is [Apple's Core ML Small FP16 model](https://huggingface.co/apple/coreml-depth-anything-v2-small),
-licensed Apache-2.0. Letterboxing preserves the square image's proportions in the
-518 x 392 input; prediction padding is removed before saving. White means nearer,
-not a distance in meters. Local timing reports stay under ignored `output/depth/`.
-
-### Before pushing or publishing with Actions
-
-**Bake on the Mac first, then commit and push the depth PNG and JSON together
-with the source image and relevant script changes.** For example, after changing
-the cafe artwork:
-
-```sh
-python scripts/build.py
-python scripts/build.py --check
-git add dist/assets/cafe.jpg dist/assets/cafe-depth.png dist/assets/cafe-depth.json
-git commit -m "Bake depth for updated cafe artwork"
-git push
-```
-
-When changing the build or generator, also commit those scripts, this README and
-the workflow changes. Updating `scripts/make_depth.py` requires rebaking because
-the metadata records its hash.
-
-GitHub Actions runs **`python3 scripts/build.py --check`** on Linux. This uses only
-the Python standard library: it does not install Core ML, download weights or run
-inference. It verifies the committed map, source/generator/model hashes, complete
-PNG and local website resources before uploading `dist/` to Pages. Missing or
-stale depth fails the workflow with instructions to rebuild on macOS and commit
-both generated files. The model is not included in the Pages artifact.
-
-Run the build/cache failure checks locally with `python3 scripts/check_build.py`.
-Serving the already-built website still needs only the normal static HTTP server
-described below.
-
-The reference-photo browser check runs in GitHub Actions with Playwright
-and Chromium. It verifies the browser-loaded depth samples, captures center/left/
-right camera views, and measures image displacement in the far, midground and
-near regions. The workflow uploads its PNG captures and JSON report as the
-`reference-depth-parallax-evidence` artifact.
-
-To run it locally, install Playwright and Chromium, start the static server, then
-run:
+The optional browser test requires Playwright and Chromium. Start the local server first, then run:
 
 ```sh
 npm install --no-save --no-package-lock playwright
 npx playwright install chromium
-python3 -m http.server 8000 --directory dist
 TEASER_URL=http://127.0.0.1:8000/ node scripts/check_reference_parallax.mjs
 ```
 
-Captures and the measured displacement report are saved in ignored
-`output/reference-parallax-check/`. The test verifies relative displacement
-ordering; it does not claim a complete 3D reconstruction or physical-phone
-performance.
+The test captures center, left and right views; verifies browser-loaded depth samples; and measures whether foreground displacement exceeds midground displacement, which in turn exceeds background displacement. GitHub Actions also runs the depth checks and uploads browser evidence.
 
-## How the image is made
-
-The illustration is drawn entirely by `scripts/draw_teaser.py`, using Python, Pillow, and NumPy. It does not use a diffusion model, downloaded artwork, or a reference photograph.
-
-1. A hand-authored composition defines the cafe, buildings, cat, laptop, table, coffee, and croissant as filled shapes and sampled Bezier curves.
-2. A small palette establishes the warm interior lighting and cool evening window colors.
-3. Three passes of randomized pigment dabs sample the underlying colors and add neighboring complementary colors. Short directional strokes add fur detail; fine curves add whiskers.
-4. A larger working raster is downsampled to 1024 x 1024, then a subtle grain is added.
-5. The script writes an actual uncompressed 24-bit BMP itself: a file header, a DIB header, and bottom-up BGR pixel rows with row padding. Pillow also saves a JPEG copy.
-
-The drawing uses fixed random seeds, so the same code and dependency versions reproduce the same pixels. A texture pass intentionally introduces the appearance of irregular paint without requiring a learned image generator.
-
-## How the animation is made
-
-`scripts/make_layers.py` reuses the drawing code to produce a background without fixed lamps or steam, two transparent lamp sprites, and window-position data. The generated assets are committed in `dist/assets/` so the website requires no Python installation or build step.
-
-`dist/scene.js` composites those layers with the Canvas 2D API. Pendulum angles combine sine waves; window brightness eases toward randomly selected states; steam and rain use small bounded particle collections. Each particle fades or exits before respawning. The result has continuous motion and recurring motifs without an obvious loop boundary. Random parameters are regenerated when the page is loaded or the evening rhythm is changed.
-
-## How the music is made
-
-`dist/groove-core.mjs` is a small procedural instrument and sequencer written in plain JavaScript. It computes PCM samples at 24 kHz. It does not download drum samples, stream a track, or call a music-generation service. There are no vocals.
-
-The 4/4 arrangement defaults to 74 BPM and combines:
-
-- **Kick:** a sine oscillator with a fast downward pitch envelope, a short noise transient, exponential decay, and soft saturation.
-- **Snare:** filtered random noise, decaying resonances, and quiet delayed noise bursts.
-- **Hi-hats and rim:** short high-frequency noise and decaying sinusoidal partials, with velocity differences and alternating stereo positions.
-- **Bass:** a low fundamental with a few harmonics and a short amplitude envelope.
-- **Electric-piano-like chords:** frequency modulation, detuned partials, exponential decay, low-pass filtering, subtle pitch drift, and quiet stereo delay taps.
-- **Texture and glitches:** very quiet filtered noise, held and quantized noise accents, occasional pitched repeats, and phrase-ending drum fills.
-
-A stable backbeat anchors the groove. Odd sixteenths are delayed to create swing, while small timing and velocity changes keep it loose. A 16-bar harmonic cycle supplies continuity; probabilistic hats, ghost notes, fills, sparse breakdowns, and glitch events create ongoing variation. The rhythm stays recognizable instead of becoming an unstructured random sequence.
-
-`dist/music.mjs` schedules newly rendered bars with the Web Audio clock, several seconds ahead of playback. Each bar includes its sound tails, which overlap the next bar rather than being cut at the boundary. Changing BPM rebuilds the queued bars at the selected tempo and fades the audio across the transition. Ended audio nodes disconnect, and the synthesis cache contains only the small set of notes used by the arrangement. Playback continues generating bars for as long as it is enabled. Volume changes are smoothed, and output filtering and compression tame the mix.
-
-## Run locally
-
-Serve the existing static files with Python 3:
-
-```sh
-python3 -m http.server 8000 --directory dist
-```
-
-Open `http://localhost:8000/`. Use an HTTP server rather than opening the HTML file directly, because the page loads a JavaScript module and a JSON asset.
-
-## Regenerate the artwork
-
-Python 3.10 or newer is recommended.
-
-```sh
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements.txt
-python scripts/draw_teaser.py
-python scripts/make_layers.py
-```
-
-The first command that draws artwork writes BMP and JPEG files into `output/`. The layer generator updates the committed web assets in `dist/assets/`. Commit those updated assets when changing the drawing. Then run `python scripts/build.py` on the Mac and commit the updated depth PNG and JSON as well; otherwise Actions rejects the stale depth.
-
-## Check the project
-
-Node.js 22 or newer is recommended. There are no JavaScript package dependencies.
-
-```sh
-node scripts/check.mjs
-```
-
-The check verifies English-only source text, local asset references, reproducible synthesis for a fixed seed, finite stereo audio samples, signal headroom, and bounded note caching over 32 rendered bars.
-
-## Publish to GitHub Pages
-
-The workflow `.github/workflows/pages.yml` publishes only `dist/`. It validates pushes to `teaser` and `fix/flat-front-glass-depth`, and pull requests targeting `teaser`. Feature-branch runs validate the site but do not deploy it. A successful run on `teaser` deploys the site.
-
-For initial setup, select **Settings > Pages > Build and deployment > Source > GitHub Actions**. Once Pages is configured, successful workflow runs update the live site automatically. Relative asset paths support deployment under a repository subdirectory as well as at a domain root.
-
-The workflow checks the JavaScript and project contents, configures Pages, uploads the static artifact, and deploys it to the `github-pages` environment. No personal access token or custom repository secret is required for routine deployment.
-
-## Project layout
+## Project files
 
 | Path | Purpose |
 | --- | --- |
-| `dist/index.html` | Accessible page structure and controls |
-| `dist/style.css` | Responsive gallery layout |
-| `dist/scene.js` | Canvas animation and interactions |
-| `dist/parallax.js` | Mouse-controlled WebGL depth warp of the live painting |
-| `dist/assets/cafe-depth.png`, `cafe-depth.json` | Baked neural depth and provenance |
-| `dist/groove-core.mjs` | Pure procedural synthesis and musical arrangement |
-| `dist/music.mjs` | Browser audio scheduling and music controls |
-| `dist/assets/` | Generated raster layers and window positions |
-| `scripts/draw_teaser.py` | Complete original drawing and direct BMP writer |
-| `scripts/make_layers.py` | Animated-layer asset generator |
-| `scripts/check.mjs` | Source, asset, and audio checks |
-| `scripts/build.py` | Local depth build and dependency-free CI validation |
-| `scripts/download_depth_model.py` | Pinned, verified model download into ignored local cache |
-| `scripts/make_depth.py` | Local Core ML depth baking |
-| `scripts/make_reference_depth.py` | Optional reference-photo depth inference followed by manual plane masks |
-| `scripts/manual_depth_planes.py` | Deterministic three-plane Z-map correction, diagnostics, and validation |
-| `specs/spec_001_three_plane_depth_correction.md` | Accepted scope and criteria for the manual Z-plane correction |
-| `specs/evidence/` | Before/after depth maps, region overlays, profiles, and validation report |
-| `scripts/check_build.py` | Missing/stale-map and model-cache regression checks |
-| `scripts/check_reference_parallax.mjs` | Browser-measured far, midground and near parallax checks |
-| `.github/workflows/pages.yml` | Automatic and manual Pages publication |
+| `references/ElGrayPimenovLeiterWindow2.png` | Reference artwork |
+| `dist/index.html`, `dist/style.css`, `dist/parallax.js` | Interactive presentation |
+| `dist/assets/ElGrayPimenovLeiterWindow2-depth.png` | Committed three-plane depth map |
+| `dist/assets/ElGrayPimenovLeiterWindow2-depth.json` | Depth metadata and checksums |
+| `scripts/manual_depth_planes.py` | Deterministic manual mask correction and verification |
+| `scripts/check_reference_parallax.mjs` | Browser displacement test |
+| `specs/spec_001_three_plane_depth_correction.md` | Depth acceptance criteria |
+| `specs/evidence/` | Mask overlays, depth visualizations and reports |
+| `.github/workflows/pages.yml` | Site validation and GitHub Pages publication |
 
-## References and attribution
+## Publishing
 
-The drawing, animation, synthesis, and arrangement algorithms were written specifically for this project. No third-party application repository or algorithm implementation was copied or adapted. The following documentation informed the implementation:
-
-- [Pillow documentation](https://pillow.readthedocs.io/en/stable/) for raster drawing, resizing, and image encoding.
-- [NumPy documentation](https://numpy.org/doc/stable/) for pixel arrays and deterministic noise.
-- [MDN: Advanced techniques - creating and sequencing audio](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Advanced_techniques) for sound synthesis and audio-clock scheduling concepts.
-- [W3C Web Audio API specification](https://www.w3.org/TR/webaudio/) for audio buffers, scheduled sources, filters, and compression.
-- [MDN Canvas API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API) for browser raster compositing.
-- [GitHub Pages custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) for deployment configuration.
-
-The deployment workflow uses the official [checkout](https://github.com/actions/checkout), [setup-node](https://github.com/actions/setup-node), [configure-pages](https://github.com/actions/configure-pages), [upload-pages-artifact](https://github.com/actions/upload-pages-artifact), and [deploy-pages](https://github.com/actions/deploy-pages) actions. These are deployment dependencies, not sources of the music or animation algorithms.
-
-## Privacy
-
-The application has no accounts, analytics, tracking scripts, API keys, or external media services. Its browser storage entries remember the visitor's chosen music volume and tempo. Raster assets contain no EXIF identity or location information. The live URL at the top necessarily includes the account namespace required by the standard Pages address.
+The GitHub Actions workflow validates the feature branch and pull requests. Publishing to the shared GitHub Pages address is configured for `teaser`; a feature-branch test does not create a separate preview URL. The live page shows whichever revision was most recently deployed through the Pages workflow.
 
 ## License
 
