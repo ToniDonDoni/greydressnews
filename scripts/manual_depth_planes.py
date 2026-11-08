@@ -1,6 +1,5 @@
 """Apply deterministic, hand-authored three-plane depth masks to the reference Z-map."""
 import argparse
-from collections import deque
 import hashlib
 import json
 from pathlib import Path
@@ -283,8 +282,8 @@ def provenance():
         },
         "inverse_depth_semantics": "larger grayscale values are nearer",
         "geometry": {
-            "studio_polygon": STUDIO_POLYGON,
-            "woman_left_extension": WOMAN_LEFT_EXTENSION,
+            "studio_polygon": [list(point) for point in STUDIO_POLYGON],
+            "woman_left_extension": [list(point) for point in WOMAN_LEFT_EXTENSION],
             "glass_left_x": GLASS_LEFT,
         },
         "right_side_lights": {
@@ -391,6 +390,16 @@ def main():
         print(json.dumps(report, indent=2))
         return
 
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    before = EVIDENCE / "depth-before.png"
+    if not before.exists():
+        existing_preview = EVIDENCE / "current-depth.png"
+        if existing_preview.is_file():
+            with Image.open(existing_preview) as prior:
+                prior.convert("L").save(before, optimize=True)
+        else:
+            original.save(before, optimize=True)
+
     corrected, preview, masks, lights = apply_manual_depth_planes(source, original)
     corrected.save(DEPTH, optimize=True)
     metadata = json.loads(META.read_text())
@@ -398,11 +407,11 @@ def main():
     metadata["generator_sha256"] = sha256(ROOT / "scripts/make_reference_depth.py")
     metadata.pop("glass_postprocess", None)
     metadata["manual_depth_planes"] = provenance()
-    report = make_report(corrected, masks, lights)
+    META.write_text(json.dumps(metadata, indent=2) + "\\n")
+    report = validate(source, corrected, metadata)
     report["depth_sha256"] = metadata["depth_sha256"]
     report["source_sha256"] = sha256(SOURCE)
     save_diagnostics(preview, corrected, masks, lights, report)
-    META.write_text(json.dumps(metadata, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 
 
