@@ -56,7 +56,7 @@ try{
   await import('../dist/music.mjs');
   assert.equal(sources.length,0,'Loading the page must not start sound');
   assert.equal(contexts.length,0,'AudioContext must await a user gesture');
-  for(const name of ['pointerdown','touchstart','click']){
+  for(const name of ['pointerup','touchend','click']){
     assert.equal(typeof documentHandlers[name],'function',name+' must support playback');
   }
 
@@ -64,7 +64,7 @@ try{
   await flush();
   assert.equal(sources.length,0,'Synthetic gestures must not start sound');
 
-  documentHandlers.pointerdown({isTrusted:true});
+  documentHandlers.pointerup({isTrusted:true});
   assert.deepEqual(calls.slice(0,2),['resume','source.start'],
     'Audio resume and source start must run synchronously inside the user gesture');
   await flush();
@@ -76,7 +76,7 @@ try{
   assert(buffers.every(buffer=>buffer.sampleRate===24000),'The sample rate must be preserved');
 
   const initial=sources.length;
-  documentHandlers.touchstart({isTrusted:true});
+  documentHandlers.touchend({isTrusted:true});
   documentHandlers.click({isTrusted:true});
   await flush();
   assert.equal(sources.length,initial,'Subsequent gesture events must not restart the groove');
@@ -85,7 +85,7 @@ try{
   // Simulate a mobile device that sends touchstart but no click event.
   sources.length=0;contexts.length=0;gainTargets.length=0;calls.length=0;
   await import('../dist/music.mjs?touch-only');
-  documentHandlers.touchstart({isTrusted:true});
+  documentHandlers.touchend({isTrusted:true});
   assert.deepEqual(calls.slice(0,2),['resume','source.start'],
     'A standalone touchstart must unlock audio before the handler returns');
   await flush();
