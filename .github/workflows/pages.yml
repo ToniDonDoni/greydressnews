@@ -76,7 +76,7 @@ jobs:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/teaser'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/teaser')
     needs: build
     runs-on: ubuntu-latest
     permissions:
