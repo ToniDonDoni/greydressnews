@@ -77,17 +77,15 @@ function onGesture(event){
   if(!playing&&!starting){
     start();
   }else if(playing&&context?.state!=='running'){
-    // Audio may be interrupted when a mobile device locks or changes output.
     void context.resume().then(schedule).catch(error=>{
       console.error('Groove could not resume:',error);
     });
   }
 }
 
-// Taps on a non-clickable image do not always produce a delegated click on iOS.
-// Listen at the start of the gesture, while browser audio activation is available.
-document.addEventListener('pointerdown',onGesture,{capture:true,passive:true});
-document.addEventListener('touchstart',onGesture,{capture:true,passive:true});
+// Start audio on user activation, including Android touch release.
+document.addEventListener('pointerup',onGesture,{capture:true});
+document.addEventListener('touchend',onGesture,{capture:true});
 document.addEventListener('click',onGesture,{capture:true});
 document.addEventListener('keydown',onGesture,{capture:true});
 document.addEventListener('visibilitychange',()=>{if(playing)schedule();});

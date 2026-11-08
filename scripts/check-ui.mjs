@@ -10,6 +10,7 @@ const node=()=>({
   frequency:{value:0},Q:{value:0},threshold:{value:0},knee:{value:0},
   ratio:{value:0},attack:{value:0},release:{value:0}
 });
+// TODO fix test always PASS because of mocking
 class MockAudioContext{
   constructor(){
     this.currentTime=10;
