@@ -28,7 +28,7 @@ jobs:
           node-version: '22'
       - name: Install depth validation dependencies
         run: |
-          python3 -m pip install 'Pillow>=10,<14'
+          python3 -m pip install -r requirements.txt
           npm install --no-save --no-package-lock playwright
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
