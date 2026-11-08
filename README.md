@@ -144,19 +144,25 @@ Run the build/cache failure checks locally with `python3 scripts/check_build.py`
 Serving the already-built website still needs only the normal static HTTP server
 described below.
 
-An optional browser check requires Playwright and Chromium, with the static server
-already running. Set `PLAYWRIGHT_MODULE` for an existing Playwright installation
-and `BROWSER_EXECUTABLE` for an existing browser if needed:
+The reference-photo browser check runs in GitHub Actions with Playwright
+and Chromium. It verifies the browser-loaded depth samples, captures center/left/
+right camera views, and measures image displacement in the far, midground and
+near regions. The workflow uploads its PNG captures and JSON report as the
+`reference-depth-parallax-evidence` artifact.
+
+To run it locally, install Playwright and Chromium, start the static server, then
+run:
 
 ```sh
-TEASER_URL=http://127.0.0.1:8000/ node scripts/check-parallax.mjs
+npm install --no-save --no-package-lock playwright
+npx playwright install chromium
+python3 -m http.server 8000 --directory dist
+TEASER_URL=http://127.0.0.1:8000/ node scripts/check_reference_parallax.mjs
 ```
 
-It checks visible image changes, unchanged source pixels while the camera moves,
-live animation, lamp clicks, controls, reduced motion, WebGL fallback, one depth
-load, no external runtime requests, and 390/320 px layouts. Captures and measured
-display callback throughput are saved in ignored `output/parallax-check/`. These
-short desktop-browser checks do not establish physical-phone or sustained 60 fps
+Captures and the measured displacement report are saved in ignored
+`output/reference-parallax-check/`. The test verifies relative displacement
+ordering; it does not claim a complete 3D reconstruction or physical-phone
 performance.
 
 ## How the image is made
@@ -230,7 +236,7 @@ The check verifies English-only source text, local asset references, reproducibl
 
 ## Publish to GitHub Pages
 
-The workflow `.github/workflows/pages.yml` publishes only `dist/`. It runs on pushes to `main` and can also be started with **Actions > Publish to GitHub Pages > Run workflow**.
+The workflow `.github/workflows/pages.yml` publishes only `dist/`. It validates pushes to `teaser` and `fix/flat-front-glass-depth`, and pull requests targeting `teaser`. Feature-branch runs validate the site but do not deploy it. A successful run on `teaser` deploys the site.
 
 For initial setup, select **Settings > Pages > Build and deployment > Source > GitHub Actions**. Once Pages is configured, successful workflow runs update the live site automatically. Relative asset paths support deployment under a repository subdirectory as well as at a domain root.
 
@@ -259,7 +265,7 @@ The workflow checks the JavaScript and project contents, configures Pages, uploa
 | `specs/spec_001_three_plane_depth_correction.md` | Accepted scope and criteria for the manual Z-plane correction |
 | `specs/evidence/` | Before/after depth maps, region overlays, profiles, and validation report |
 | `scripts/check_build.py` | Missing/stale-map and model-cache regression checks |
-| `scripts/check-parallax.mjs` | Browser checks and parallax captures |
+| `scripts/check_reference_parallax.mjs` | Browser-measured far, midground and near parallax checks |
 | `.github/workflows/pages.yml` | Automatic and manual Pages publication |
 
 ## References and attribution
