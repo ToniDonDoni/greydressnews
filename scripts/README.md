@@ -2,7 +2,7 @@
 
 Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the reference photograph, its depth PNG, the WebGL parallax script, and the procedural music module directly.
 
-This guide is the entry point for working on the current reference-photo page. The depth-region schema and editable coordinates are described in [test/README.md](../test/README.md); project conventions are in [CONTRIBUTING.md](../CONTRIBUTING.md).
+This guide is the entry point for working on the current reference-photo page. The depth-region schema and editable coordinates are described in [test/README.md](../test/README.md); project conventions are in [CONTRIBUTING.md](../CONTRIBUTING.md). Photo-taking commands below use the committed `references/ElGrayPimenovLeiterWindow2.png` image and can be pasted as written. For a new photo, replace that path in each command with the path to your actual image; quote paths containing spaces.
 
 ## Quick route
 
@@ -32,7 +32,7 @@ For overlay-only work, a normal Python environment with `requirements.txt` is su
 The editable map is `test/depth_regions.json`. It records polygons and five individual light ellipses in coordinates of the 1920 x 1077 reference. Depth 1 is nearest and depth 100 is farthest. Render the map over a supplied photo before generating or replacing any depth PNG:
 
 ```sh
-output/depth_venv/bin/python test/render_depth_regions.py path/to/new_photo.png --output output/depth_review/photo_overlay.png
+output/depth_venv/bin/python test/render_depth_regions.py references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/photo_overlay.png
 ```
 
 Open `output/depth_review/photo_overlay.png`. Check the city contour, presenter silhouette, studio wall, ticker, glass boundary, red trail, and each light A-E. If the composition moved, edit the coordinates or depths in `test/depth_regions.json` and render again. The preview renderer accepts another resolution when its aspect ratio is within 1% of the reference; it scales the photo to the reference size for comparison. It does not change the supplied photo.
@@ -44,12 +44,14 @@ output/depth_venv/bin/python test/test_depth_regions.py
 output/depth_venv/bin/python test/test_apply_depth_regions.py
 ```
 
+These tests use the committed reference image and generated temporary inputs. They check the map contract, repeatable overlays, depth ordering, and input preservation; they do not compare your new photo or `output/depth_review/` files with a saved target image. Their verbose output lists the inputs and comparisons.
+
 ## Generate a corrected depth candidate
 
 First generate an uncorrected neural depth PNG for the same photo:
 
 ```sh
-output/depth_venv/bin/python scripts/generate_raw_reference_depth.py --source path/to/new_photo.png --output output/depth_review/raw_depth.png
+output/depth_venv/bin/python scripts/generate_raw_reference_depth.py --source references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/raw_depth.png
 ```
 
 The command writes `raw_depth.png` and `raw_depth.json`. It does not touch `dist/`. For the original photograph, the saved raw prediction `specs/evidence/depth-before.png` can also serve as input.
@@ -57,7 +59,7 @@ The command writes `raw_depth.png` and `raw_depth.json`. It does not touch `dist
 Apply the hand-set regions and depths from `test/depth_regions.json`:
 
 ```sh
-output/depth_venv/bin/python scripts/apply_depth_regions.py --photo path/to/new_photo.png --input-depth output/depth_review/raw_depth.png --output output/depth_review/corrected_depth.png
+output/depth_venv/bin/python scripts/apply_depth_regions.py --photo references/ElGrayPimenovLeiterWindow2.png --input-depth output/depth_review/raw_depth.png --output output/depth_review/corrected_depth.png
 ```
 
 The command writes `corrected_depth.png` and a JSON report with source and output checksums, each region's target grayscale value, and coverage. It preserves the photo and raw map. The 1-100 review scale maps to the existing shader's inverse-grayscale range: 1 -> 236 (near) and 100 -> 96 (far). `neural_detail_strength` retains some local neural variation in selected regions; zero makes a region flat. `depth_bake.write_order` resolves overlapping regions. The ticker is written last at depth 21.
@@ -71,7 +73,7 @@ Use a disposable copy so the committed `dist/` assets stay intact:
 ```sh
 mkdir -p output/site_preview
 cp -R dist/. output/site_preview/
-cp path/to/new_photo.png output/site_preview/assets/ElGrayPimenovLeiterWindow2.png
+cp references/ElGrayPimenovLeiterWindow2.png output/site_preview/assets/ElGrayPimenovLeiterWindow2.png
 cp output/depth_review/corrected_depth.png output/site_preview/assets/ElGrayPimenovLeiterWindow2-depth.png
 python3 -m http.server 8001 --directory output/site_preview
 ```

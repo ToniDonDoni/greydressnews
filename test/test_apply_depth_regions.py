@@ -27,6 +27,7 @@ def at_reference_pixel(image, x, y):
 
 class ApplyDepthRegionsTest(unittest.TestCase):
     def test_depth_scale_and_overlap_order(self):
+        """Compare corrected synthetic depth with JSON targets and overlap rules."""
         data = load_map(MAP)
         self.assertEqual(grayscale_for_depth(1, data), 236)
         self.assertEqual(grayscale_for_depth(100, data), 96)
@@ -51,6 +52,7 @@ class ApplyDepthRegionsTest(unittest.TestCase):
         self.assertEqual(at_reference_pixel(result, 950, 995), at_reference_pixel(revised, 950, 995))
 
     def test_cli_operation_keeps_neural_input(self):
+        """Check temporary photo and raw PNG inputs remain unchanged after baking."""
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
             photo = folder / "photo.png"
@@ -71,4 +73,7 @@ class ApplyDepthRegionsTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    print(f"Region map: {MAP.relative_to(ROOT)}", file=sys.stderr)
+    print("Inputs: synthetic 1024x574 raw depth and a temporary 1920x1077 photo.", file=sys.stderr)
+    print("Comparison: corrected pixels versus JSON depths, changed presenter depth, and unchanged inputs; no saved golden PNG.", file=sys.stderr)
+    unittest.main(verbosity=2)

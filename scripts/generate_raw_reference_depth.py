@@ -24,6 +24,11 @@ def sha256(path):
 
 
 def predict(source_path, output_path, model_path=None):
+    if not source_path.is_file():
+        raise SystemExit(
+            f"Source photo not found: {source_path}\n"
+            "Pass an existing image, for example --source references/ElGrayPimenovLeiterWindow2.png"
+        )
     if platform.system() != "Darwin":
         raise SystemExit("Core ML depth inference requires macOS")
     if output_path.resolve() in (source_path.resolve(), COMMITTED_DEPTH.resolve()):

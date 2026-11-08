@@ -24,10 +24,9 @@ Follow the setup in `scripts/README.md`, then run from the project root:
 
 ```sh
 output/depth_venv/bin/python test/render_depth_regions.py references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/depth-mask-original.png
-output/depth_venv/bin/python test/render_depth_regions.py path/to/new-photo.png --output output/depth_review/depth-mask-new.png
 ```
 
-The renderer leaves the input untouched and writes an annotated PNG with a legend. A new image may have different pixel dimensions if its aspect ratio is within 1% of the reference; the renderer scales it to the reference size for visual comparison. If the framing or composition changes, adjust the coordinates in `depth_regions.json` before treating the overlay as aligned.
+The command uses the committed reference photo and can be pasted as written. Replace that photo path with an existing new image when reviewing a replacement. The renderer leaves the input untouched and writes an annotated PNG with a legend. A new image may have different pixel dimensions if its aspect ratio is within 1% of the reference; the renderer scales it to the reference size for visual comparison. If the framing or composition changes, adjust the coordinates in `depth_regions.json` before treating the overlay as aligned.
 
 Edit the JSON to move a boundary, change a depth, or reposition a label. Polygon `points`, ellipse `center` and `radius`, and `badge` positions all use the same reference-image coordinates. The legend reads the depths from the region entries, so changed values appear on the next render without editing the script.
 
@@ -36,13 +35,13 @@ Edit the JSON to move a boundary, change a depth, or reposition a label. Polygon
 First save the raw neural prediction on an Apple Silicon Mac with Python 3.11 and the project's Core ML dependencies installed:
 
 ```sh
-output/depth_venv/bin/python scripts/generate_raw_reference_depth.py --source path/to/new-photo.png --output output/depth_review/raw-depth.png
+output/depth_venv/bin/python scripts/generate_raw_reference_depth.py --source references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/raw-depth.png
 ```
 
 Then apply the JSON to that raw map:
 
 ```sh
-output/depth_venv/bin/python scripts/apply_depth_regions.py --photo path/to/new-photo.png --input-depth output/depth_review/raw-depth.png --output output/depth_review/corrected-depth.png
+output/depth_venv/bin/python scripts/apply_depth_regions.py --photo references/ElGrayPimenovLeiterWindow2.png --input-depth output/depth_review/raw-depth.png --output output/depth_review/corrected-depth.png
 ```
 
 For the current reference image, `specs/evidence/depth-before.png` can be used as the saved raw neural map. The correction script writes an 8-bit inverse-depth PNG and a JSON report beside it. It never overwrites its input. The review scale maps 1 (nearest) to grayscale 236 and 100 (farthest) to grayscale 96, matching the existing shader's working range. `neural_detail_strength` in each region keeps a controlled amount of the neural map's local variation; zero makes a region flat. Mask edges are antialiased when scaled to the neural map's resolution.
