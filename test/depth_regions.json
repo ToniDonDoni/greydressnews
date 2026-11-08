@@ -1,0 +1,551 @@
+{
+  "schema_version": 1,
+  "reference_image": "references/ElGrayPimenovLeiterWindow2.png",
+  "reference_size": [
+    1920,
+    1077
+  ],
+  "depth_scale": {
+    "nearest": 1,
+    "farthest": 100,
+    "status": "provisional"
+  },
+  "notes": "Review overlay only. Geometry is in reference-image pixels. The five lights sit behind the foreground glass. The broad red streak stays with the glass and has no separate depth region.",
+  "regions": [
+    {
+      "id": "city",
+      "label": "CITY",
+      "depth": 100,
+      "color": "#348bef",
+      "opacity": 48,
+      "outline": "solid",
+      "badge": [
+        64,
+        45
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            0,
+            0
+          ],
+          [
+            664,
+            0
+          ],
+          [
+            681,
+            94
+          ],
+          [
+            705,
+            214
+          ],
+          [
+            732,
+            341
+          ],
+          [
+            749,
+            490
+          ],
+          [
+            751,
+            646
+          ],
+          [
+            735,
+            800
+          ],
+          [
+            713,
+            949
+          ],
+          [
+            713,
+            978
+          ],
+          [
+            0,
+            978
+          ]
+        ]
+      },
+      "neural_detail_strength": 0.2
+    },
+    {
+      "id": "studio_wall",
+      "label": "STUDIO WALL",
+      "depth": 48,
+      "color": "#9d71e5",
+      "opacity": 47,
+      "outline": "solid",
+      "badge": [
+        777,
+        45
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            664,
+            0
+          ],
+          [
+            1235,
+            0
+          ],
+          [
+            1235,
+            978
+          ],
+          [
+            713,
+            978
+          ],
+          [
+            713,
+            949
+          ],
+          [
+            735,
+            800
+          ],
+          [
+            751,
+            646
+          ],
+          [
+            749,
+            490
+          ],
+          [
+            732,
+            341
+          ],
+          [
+            705,
+            214
+          ],
+          [
+            681,
+            94
+          ]
+        ]
+      },
+      "neural_detail_strength": 0.12
+    },
+    {
+      "id": "presenter",
+      "label": "PRESENTER",
+      "depth": 26,
+      "color": "#ffb241",
+      "opacity": 44,
+      "outline": "solid",
+      "badge": [
+        802,
+        589
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            945,
+            76
+          ],
+          [
+            999,
+            74
+          ],
+          [
+            1043,
+            85
+          ],
+          [
+            1074,
+            115
+          ],
+          [
+            1096,
+            158
+          ],
+          [
+            1110,
+            214
+          ],
+          [
+            1119,
+            272
+          ],
+          [
+            1135,
+            338
+          ],
+          [
+            1158,
+            391
+          ],
+          [
+            1200,
+            448
+          ],
+          [
+            1235,
+            519
+          ],
+          [
+            1235,
+            978
+          ],
+          [
+            710,
+            978
+          ],
+          [
+            707,
+            946
+          ],
+          [
+            698,
+            920
+          ],
+          [
+            687,
+            900
+          ],
+          [
+            680,
+            880
+          ],
+          [
+            672,
+            850
+          ],
+          [
+            666,
+            820
+          ],
+          [
+            676,
+            800
+          ],
+          [
+            679,
+            780
+          ],
+          [
+            683,
+            750
+          ],
+          [
+            688,
+            700
+          ],
+          [
+            700,
+            650
+          ],
+          [
+            704,
+            600
+          ],
+          [
+            716,
+            550
+          ],
+          [
+            722,
+            500
+          ],
+          [
+            740,
+            467
+          ],
+          [
+            790,
+            443
+          ],
+          [
+            832,
+            417
+          ],
+          [
+            864,
+            374
+          ],
+          [
+            880,
+            313
+          ],
+          [
+            879,
+            250
+          ],
+          [
+            886,
+            174
+          ],
+          [
+            906,
+            112
+          ]
+        ]
+      },
+      "neural_detail_strength": 0.12
+    },
+    {
+      "id": "ticker",
+      "label": "NEWS TICKER",
+      "depth": 21,
+      "color": "#b8ec78",
+      "opacity": 62,
+      "outline": "solid",
+      "badge": [
+        835,
+        995
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            0,
+            978
+          ],
+          [
+            1919,
+            978
+          ],
+          [
+            1919,
+            1076
+          ],
+          [
+            0,
+            1076
+          ]
+        ]
+      },
+      "neural_detail_strength": 0.0
+    },
+    {
+      "id": "front_glass",
+      "label": "GLASS",
+      "depth": 1,
+      "color": "#30cabe",
+      "opacity": 47,
+      "outline": "solid",
+      "badge": [
+        1280,
+        820
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            1235,
+            0
+          ],
+          [
+            1919,
+            0
+          ],
+          [
+            1919,
+            978
+          ],
+          [
+            1235,
+            978
+          ]
+        ]
+      },
+      "neural_detail_strength": 0.0
+    },
+    {
+      "id": "light_a",
+      "label": "A",
+      "depth": 93,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1720,
+        170
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1893,
+          219
+        ],
+        "radius": [
+          32,
+          32
+        ]
+      },
+      "neural_detail_strength": 0.0
+    },
+    {
+      "id": "light_b",
+      "label": "B",
+      "depth": 90,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1635,
+        326
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1798,
+          328
+        ],
+        "radius": [
+          55,
+          55
+        ]
+      },
+      "neural_detail_strength": 0.0
+    },
+    {
+      "id": "light_c",
+      "label": "C",
+      "depth": 87,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1695,
+        548
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1865,
+          553
+        ],
+        "radius": [
+          35,
+          35
+        ]
+      },
+      "neural_detail_strength": 0.0
+    },
+    {
+      "id": "light_d",
+      "label": "D",
+      "depth": 84,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1669,
+        756
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1844,
+          770
+        ],
+        "radius": [
+          39,
+          39
+        ]
+      },
+      "neural_detail_strength": 0.0
+    },
+    {
+      "id": "light_e",
+      "label": "E",
+      "depth": 81,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1570,
+        886
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1742,
+          902
+        ],
+        "radius": [
+          36,
+          36
+        ]
+      },
+      "neural_detail_strength": 0.0
+    }
+  ],
+  "legend": [
+    {
+      "title": "CITY",
+      "region_ids": [
+        "city"
+      ],
+      "note": "Far background; refine the building outline."
+    },
+    {
+      "title": "FIVE LIGHTS",
+      "region_ids": [
+        "light_a",
+        "light_b",
+        "light_c",
+        "light_d",
+        "light_e"
+      ],
+      "note": "Each light has a separate depth."
+    },
+    {
+      "title": "STUDIO WALL",
+      "region_ids": [
+        "studio_wall"
+      ],
+      "note": "Separate from the presenter."
+    },
+    {
+      "title": "PRESENTER",
+      "region_ids": [
+        "presenter"
+      ],
+      "note": "In front of the wall; refine the silhouette."
+    },
+    {
+      "title": "NEWS TICKER",
+      "region_ids": [
+        "ticker"
+      ],
+      "note": "In front of the presenter, behind the glass."
+    },
+    {
+      "title": "GLASS",
+      "region_ids": [
+        "front_glass"
+      ],
+      "note": "Droplets and streaks on the nearest plane."
+    }
+  ],
+  "depth_bake": {
+    "inverse_gray_at_nearest": 236,
+    "inverse_gray_at_farthest": 96,
+    "write_order": [
+      "city",
+      "studio_wall",
+      "presenter",
+      "front_glass",
+      "light_a",
+      "light_b",
+      "light_c",
+      "light_d",
+      "light_e",
+      "ticker"
+    ],
+    "notes": "One grayscale value can represent only one visible surface per pixel. Later regions override earlier ones in overlapping areas."
+  }
+}
