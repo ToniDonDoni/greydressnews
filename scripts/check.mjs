@@ -29,7 +29,7 @@ assert(html.includes('id="poster"')&&html.includes('id="depth-view"'),'The stati
 assert(html.includes('assets/ElGrayPimenovLeiterWindow2.png'),'The reference image must be used');
 for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue'])
   assert(!html.includes(`id="${id}"`),`Unexpected audio control: ${id}`);
-assert(!/<(?:button|input)\\b/i.test(html),'The artwork must not display music controls');
+assert(!/<(?:button|input)\b/i.test(html),'The artwork must not display music controls');
 assert(html.includes('<script type="module" src="music.mjs"></script>'),'The procedural groove must load as a module');
 assert(!html.includes('id="bpm"'),'The depth-study page must not show tempo controls');
 assert(!html.includes('scene.js'),'The page must not load the unrelated procedural scene');
