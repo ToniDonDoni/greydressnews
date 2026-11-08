@@ -1,0 +1,4 @@
+coremltools==9.0
+numpy==2.4.6
+Pillow==13.0.0
+huggingface-hub==2.4.0

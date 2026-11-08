@@ -1,0 +1,63 @@
+name: Publish to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check dist/scene.js
+          node --check dist/parallax.js
+          node --check dist/music.mjs
+          node --check dist/groove-core.mjs
+      - name: Verify committed depth and static build (no model download)
+        run: python3 scripts/build.py --check
+      - name: Test depth build failures and model cache behavior
+        run: python3 scripts/check_build.py
+      - name: Validate source, assets, and generated audio
+        run: node scripts/check.mjs
+      - name: Test tempo controls and audio rescheduling
+        run: node scripts/check-ui.mjs
+      - name: Upload static website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4

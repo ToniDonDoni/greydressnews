@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101419">
+<meta name="description" content="A depth-parallax experiment using a late-night news-window image.">
+<title>Teaser - Depth Parallax</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%8C%83%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <figure class="painting" id="painting">
+    <img id="poster" src="assets/ElGrayPimenovLeiterWindow.png" alt="A television presenter in a blue studio beside a rain-streaked city window at night.">
+    <canvas id="depth-view" aria-hidden="true"></canvas>
+    <div class="loading" id="loading">Preparing the depth view...</div>
+  </figure>
+  <footer><span>WINDOW / DEPTH STUDY</span><span class="hint">move the pointer or drag to explore</span></footer>
+</main>
+<script src="parallax.js"></script>
+</body>
+</html>

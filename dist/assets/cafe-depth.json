@@ -1,0 +1,30 @@
+{
+  "model": "apple/coreml-depth-anything-v2-small",
+  "revision": "cfef6f6f2a70783dedc0bfae40cecbc2052285d3",
+  "variant": "DepthAnythingV2SmallF16.mlpackage",
+  "license": "Apache-2.0",
+  "source": "assets/cafe.jpg",
+  "source_sha256": "0a8f3fc2df0bbb33e6ae0511bd86b87ede44aac25ac758b636a20be5d746a1f2",
+  "depth_sha256": "2f4d33c6f8d5c769b1d9fa231035eb8154f1858bf0de10a21d7277d41f37d045",
+  "generator_sha256": "a8bed8dffddd6b97b0ece92eb9252547381cf13db953cacc3f398d3f10f387af",
+  "input_size": [
+    518,
+    392
+  ],
+  "depth_size": [
+    512,
+    512
+  ],
+  "preprocessing": "aspect-preserving letterbox; remove padding from prediction",
+  "semantics": "relative inverse depth; white is near; not meters",
+  "normalization_percentiles": [
+    1,
+    99
+  ],
+  "versions": {
+    "coremltools": "9.0",
+    "numpy": "2.4.6",
+    "pillow": "13.0.0"
+  },
+  "weights_sha256": "fa60d9b6a155734f59029ebb882fd54e549bfaee3539c1a9cbd2cbbab64a0fed"
+}
