@@ -27,13 +27,15 @@ const dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.htm
 assert(html.includes('lang="en"'),'The document must declare English');
 assert(html.includes('id="poster"')&&html.includes('id="depth-view"'),'The static image and depth canvas must exist');
 assert(html.includes('assets/ElGrayPimenovLeiterWindow2.png'),'The reference image must be used');
-for(const id of ['music','musicLabel','volume','soundbar'])
-  assert(html.includes(`id="${id}"`),`Missing groove control: ${id}`);
+for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue'])
+  assert(!html.includes(`id="${id}"`),`Unexpected audio control: ${id}`);
+assert(!/<(?:button|input)\\b/i.test(html),'The artwork must not display music controls');
 assert(html.includes('<script type="module" src="music.mjs"></script>'),'The procedural groove must load as a module');
 assert(!html.includes('id="bpm"'),'The depth-study page must not show tempo controls');
 assert(!html.includes('scene.js'),'The page must not load the unrelated procedural scene');
 assert(!html.includes('<header>')&&!html.includes('the cafe is open'),'Removed top labels must stay hidden');
 const css=fs.readFileSync(path.join(dist,'style.css'),'utf8');
+assert(!css.includes('.soundbar'),'Removed music controls must have no CSS');
 assert(!css.includes("content:'74 BPM'"),'Mobile tempo must not be hard-coded in CSS');
 for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){
   if(/^(?:https?:|data:)/.test(match[1]))continue;
