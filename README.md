@@ -17,6 +17,29 @@ A living, code-painted cafe scene with an orange cat, a laptop, coffee, and an e
   Drag the compact **3D** arc at the bottom center to turn the view. A short tap
   toggles depth; Left/Right arrows adjust it by keyboard and Home centers it.
 
+## Reference photo: foreground glass depth correction
+
+The photo displayed in the `teaser` experience uses
+`dist/assets/ElGrayPimenovLeiterWindow-depth.png`, a 1024 x 576
+relative inverse-depth map (lighter means nearer). The original neural map
+assigned varying depth to the textured glass at the right of the photograph.
+The corrected, committed depth PNG makes that visible glass region one
+screen-parallel near plane: x >= 662 uses grayscale value 248, with a
+four-pixel transition starting at x = 658. The presenter and left background
+retain their original neural depth values.
+
+`scripts/flatten_reference_glass.py` documents and reproduces this correction
+without loading the neural model. Future full Core ML depth regeneration via
+`scripts/make_reference_depth.py` applies the same correction automatically.
+The companion JSON keeps the model attribution and records the edited depth
+checksum and postprocessing script fingerprint.
+
+**Limitation:** a single-channel depth map cannot encode both transparent
+glass and the presenter behind it at the same pixel. This correction flattens
+the existing *visible right-side glass*, not an invisible pane across the
+entire photograph. A full-screen glass overlay would require a separate
+transparent foreground texture/layer.
+
 ## Depth parallax experiment
 
 This branch uses a real Depth Anything V2 Small FP16 prediction of `assets/cafe.jpg`.
