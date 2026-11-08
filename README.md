@@ -20,7 +20,7 @@ A living, code-painted cafe scene with an orange cat, a laptop, coffee, and an e
 ## Reference photo: foreground glass depth correction
 
 The photo displayed in the `teaser` experience uses
-`dist/assets/ElGrayPimenovLeiterWindow-depth.png`, a 1024 x 576
+`dist/assets/ElGrayPimenovLeiterWindow2-depth.png`, a 1024 x 574
 relative inverse-depth map (lighter means nearer). The original neural map
 assigned varying depth to the textured glass at the right of the photograph.
 The corrected, committed depth PNG makes that visible glass region one

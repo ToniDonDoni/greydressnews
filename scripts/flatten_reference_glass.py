@@ -10,9 +10,9 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-DEPTH = ROOT / "dist/assets/ElGrayPimenovLeiterWindow-depth.png"
+DEPTH = ROOT / "dist/assets/ElGrayPimenovLeiterWindow2-depth.png"
 META = DEPTH.with_suffix(".json")
-SOURCE = ROOT / "references/ElGrayPimenovLeiterWindow.png"
+SOURCE = ROOT / "references/ElGrayPimenovLeiterWindow2.png"
 
 # The glass frame begins at x=658 on the 1024px depth raster.
 GLASS_LEFT = 658
@@ -21,8 +21,8 @@ GLASS_DEPTH = 248  # inverse relative depth: white means close to the viewer
 
 
 def flatten_glass_plane(image):
-    if image.mode != "L" or image.size != (1024, 576):
-        raise ValueError("Expected the original 1024x576 8-bit grayscale depth")
+    if image.mode != "L" or image.width != 1024:
+        raise ValueError("Expected a 1024px-wide 8-bit grayscale depth map")
     result = image.copy()
     pixels = result.load()
     original = image.load()

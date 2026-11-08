@@ -14,8 +14,8 @@ from download_depth_model import MODEL_ID, REVISION, ensure_model, model_errors,
 from flatten_reference_glass import GLASS_LEFT, FEATHER_PX, GLASS_DEPTH, flatten_glass_plane
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'references/ElGrayPimenovLeiterWindow.png'
-OUTPUT = ROOT / 'dist/assets/ElGrayPimenovLeiterWindow-depth.png'
+SOURCE = ROOT / 'references/ElGrayPimenovLeiterWindow2.png'
+OUTPUT = ROOT / 'dist/assets/ElGrayPimenovLeiterWindow2-depth.png'
 MODEL = ROOT / 'output/models/DepthAnythingV2SmallF16.mlpackage'
 
 
@@ -62,7 +62,7 @@ def main():
     metadata = {
         'model': MODEL_ID,
         'revision': REVISION,
-        'source': 'references/ElGrayPimenovLeiterWindow.png',
+        'source': 'references/ElGrayPimenovLeiterWindow2.png',
         'source_sha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
         'depth_sha256': hashlib.sha256(OUTPUT.read_bytes()).hexdigest(),
         'generator_sha256': sha256(Path(__file__)),

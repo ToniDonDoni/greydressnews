@@ -26,7 +26,7 @@ inspect(root);
 const dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
 assert(html.includes('lang="en"'),'The document must declare English');
 assert(html.includes('id="poster"')&&html.includes('id="depth-view"'),'The static image and depth canvas must exist');
-assert(html.includes('assets/ElGrayPimenovLeiterWindow.png'),'The reference image must be used');
+assert(html.includes('assets/ElGrayPimenovLeiterWindow2.png'),'The reference image must be used');
 assert(!html.includes('id="music"')&&!html.includes('id="bpm"')&&!html.includes('<button'),'The test page must not show music controls or buttons');
 assert(!html.includes('scene.js')&&!html.includes('music.mjs'),'The test page must not load the procedural scene or audio');
 assert(!html.includes('<header>')&&!html.includes('the cafe is open'),'Removed top labels must stay hidden');
@@ -36,7 +36,7 @@ for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){
   if(/^(?:https?:|data:)/.test(match[1]))continue;
   assert(fs.existsSync(path.join(dist,match[1])),`Missing local resource: ${match[1]}`);
 }
-for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow.png','assets/ElGrayPimenovLeiterWindow-depth.png','assets/ElGrayPimenovLeiterWindow-depth.json','groove-core.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
+for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
 const windows=JSON.parse(fs.readFileSync(path.join(dist,'assets/windows.json'),'utf8'));
 assert(windows.length>0&&windows.every(w=>w.x>=0&&w.x<1024&&w.y>=0&&w.y<1024&&/^#[0-9a-f]{6}$/i.test(w.color)),'Invalid window data');
 

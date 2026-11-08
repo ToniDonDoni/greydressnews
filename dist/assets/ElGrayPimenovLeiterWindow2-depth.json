@@ -1,0 +1,36 @@
+{
+  "model": "apple/coreml-depth-anything-v2-small",
+  "revision": "cfef6f6f2a70783dedc0bfae40cecbc2052285d3",
+  "source": "references/ElGrayPimenovLeiterWindow2.png",
+  "source_sha256": "c75794dbfe69920916fae155722dff042b3db787884db44a97a668b618406bd3",
+  "depth_sha256": "c66a4ceea69a1b36726f6ec31ce94e109ea2de7fee4d4eb329e0b2659446d385",
+  "generator_sha256": "854aac072f9165e85a3baafb2eb0d205802fb4f72d9a6f668a980bc179fa70a7",
+  "source_size": [
+    1920,
+    1077
+  ],
+  "depth_size": [
+    1024,
+    574
+  ],
+  "preprocessing": "aspect-preserving letterbox; remove padding from prediction",
+  "semantics": "relative inverse depth; white is near; not meters",
+  "normalization_percentiles": [
+    1,
+    99
+  ],
+  "glass_postprocess": {
+    "method": "flat_foreground_glass_plane",
+    "raster_left_x": 658,
+    "feather_pixels": 4,
+    "inverse_depth": 248,
+    "semantics": "same near depth across the visible right-side glass; woman and studio behind",
+    "script_sha256": "e66c7127ae07c449b6e9178848d7b28614b8e6e6ee9e8a97eda1f1ae54125a27"
+  },
+  "prediction_ms": 47.4,
+  "versions": {
+    "coremltools": "9.0",
+    "numpy": "2.4.6",
+    "pillow": "13.0.0"
+  }
+}
