@@ -18,7 +18,12 @@ LIGHT_SEARCH_LEFT = 800
 FAR_DEPTH = 96
 MID_DEPTH = 156
 NEAR_DEPTH = 236
-MIN_LIGHT_COMPONENT_AREA = 6
+MIN_LIGHT_COMPONENT_AREA = 18
+SHADER_BASELINE = 0.38
+CAMERA_SHIFT = 0.045
+SHADER_ITERATIONS = 7
+SHADER_RELAXATION = 0.6
+CANVAS_WIDTH = 1920
 
 # The left edge follows the curved boundary between the city building and studio.
 STUDIO_POLYGON = [(350, 0), (657, 0), (657, 573), (405, 573)]
@@ -111,7 +116,6 @@ def detect_right_side_lights(source):
                 output[x, y] = 255
 
     # Remove isolated droplet highlights while retaining coherent light sources.
-    raw = raw.filter(ImageFilter.MaxFilter(3))
     raw = raw.filter(ImageFilter.MedianFilter(5))
     raw = remove_small_components(raw, MIN_LIGHT_COMPONENT_AREA)
     raw = raw.filter(ImageFilter.MaxFilter(3))
@@ -292,11 +296,18 @@ def provenance():
             "warm_core": "R>=175, G>=65, G<=0.82*R, B<=155",
             "neutral_light": "x>=960, min(R,G,B)>=205, channel_range<=55",
             "minimum_component_area": MIN_LIGHT_COMPONENT_AREA,
-            "postprocessing": "3px maximum filter, 5px median filter, connected-component filtering, 3px maximum filter",
+            "postprocessing": "5px median filter, connected-component filtering, 3px maximum filter",
         },
         "semantics": "Far: plain background, left house and visible right-side lights behind glass; midground: studio and presenter; near: glass, water droplets and rain.",
         "script_sha256": sha256(Path(__file__)),
     }
+
+
+
+def expected_displacement(value):
+    convergence = 1 - (1 - SHADER_RELAXATION) ** SHADER_ITERATIONS
+    depth_delta = abs(value / 255 - SHADER_BASELINE)
+    return round(depth_delta * 2 * CAMERA_SHIFT * CANVAS_WIDTH * convergence, 1)
 
 
 def make_report(depth, masks, lights):
@@ -310,6 +321,18 @@ def make_report(depth, masks, lights):
         "passed": True,
         "size": [WIDTH, HEIGHT],
         "depth_order": [FAR_DEPTH, MID_DEPTH, NEAR_DEPTH],
+        "expected_displacement_between_camera_extremes_px": {
+            "far": expected_displacement(FAR_DEPTH),
+            "midground": expected_displacement(MID_DEPTH),
+            "near": expected_displacement(NEAR_DEPTH),
+        },
+        "shader_parameters": {
+            "depth_baseline": SHADER_BASELINE,
+            "camera_shift": CAMERA_SHIFT,
+            "iterations": SHADER_ITERATIONS,
+            "relaxation": SHADER_RELAXATION,
+            "canvas_width_px": CANVAS_WIDTH,
+        },
         "regions": stats,
         "right_side_lights": {
             "pixel_count": sum(1 for value in lights.tobytes() if value),
@@ -330,6 +353,11 @@ def make_report(depth, masks, lights):
             "masks_partition_image": sum(item["pixel_count"] for item in stats.values()) == WIDTH * HEIGHT,
             "right_side_lights_detected": bool(centroid),
             "right_side_lights_excluded_from_near": True,
+            "parallax_ordering": (
+                expected_displacement(NEAR_DEPTH)
+                > expected_displacement(MID_DEPTH)
+                > expected_displacement(FAR_DEPTH)
+            ),
         },
     }
     return report
@@ -344,6 +372,8 @@ def validate(source, depth, metadata):
         raise ValueError("Depth levels are not ordered far < midground < near")
     if not report["checks"]["masks_partition_image"]:
         raise ValueError("Depth masks do not partition the full image")
+    if not report["checks"]["parallax_ordering"]:
+        raise ValueError("Expected parallax displacement is not ordered near > midground > far")
     if not report["checks"]["right_side_lights_detected"]:
         raise ValueError("No right-side background lights were detected; review the light mask")
     if report["right_side_lights"]["pixel_count"] < 50:
