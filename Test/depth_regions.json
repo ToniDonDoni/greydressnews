@@ -1,0 +1,608 @@
+{
+  "schema_version": 1,
+  "reference_image": "references/ElGrayPimenovLeiterWindow2.png",
+  "reference_size": [
+    1920,
+    1077
+  ],
+  "depth_scale": {
+    "nearest": 1,
+    "farthest": 100,
+    "status": "provisional"
+  },
+  "notes": "Review overlay only. Geometry is in reference-image pixels. Light and red-trail regions overlap the foreground glass in image space but sit behind it in depth.",
+  "regions": [
+    {
+      "id": "city",
+      "label": "\u0413\u041e\u0420\u041e\u0414",
+      "depth": 100,
+      "color": "#348bef",
+      "opacity": 48,
+      "outline": "solid",
+      "badge": [
+        64,
+        45
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            0,
+            0
+          ],
+          [
+            664,
+            0
+          ],
+          [
+            681,
+            94
+          ],
+          [
+            705,
+            214
+          ],
+          [
+            732,
+            341
+          ],
+          [
+            749,
+            490
+          ],
+          [
+            751,
+            646
+          ],
+          [
+            735,
+            800
+          ],
+          [
+            713,
+            949
+          ],
+          [
+            713,
+            978
+          ],
+          [
+            0,
+            978
+          ]
+        ]
+      }
+    },
+    {
+      "id": "studio_wall",
+      "label": "\u0421\u0422\u0415\u041d\u0410 \u0421\u0422\u0423\u0414\u0418\u0418",
+      "depth": 48,
+      "color": "#9d71e5",
+      "opacity": 47,
+      "outline": "solid",
+      "badge": [
+        777,
+        45
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            664,
+            0
+          ],
+          [
+            1235,
+            0
+          ],
+          [
+            1235,
+            978
+          ],
+          [
+            713,
+            978
+          ],
+          [
+            713,
+            949
+          ],
+          [
+            735,
+            800
+          ],
+          [
+            751,
+            646
+          ],
+          [
+            749,
+            490
+          ],
+          [
+            732,
+            341
+          ],
+          [
+            705,
+            214
+          ],
+          [
+            681,
+            94
+          ]
+        ]
+      }
+    },
+    {
+      "id": "presenter",
+      "label": "\u0412\u0415\u0414\u0423\u0429\u0410\u042f",
+      "depth": 26,
+      "color": "#ffb241",
+      "opacity": 44,
+      "outline": "solid",
+      "badge": [
+        802,
+        589
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            945,
+            76
+          ],
+          [
+            999,
+            74
+          ],
+          [
+            1043,
+            85
+          ],
+          [
+            1074,
+            115
+          ],
+          [
+            1096,
+            158
+          ],
+          [
+            1110,
+            214
+          ],
+          [
+            1119,
+            272
+          ],
+          [
+            1135,
+            338
+          ],
+          [
+            1158,
+            391
+          ],
+          [
+            1200,
+            448
+          ],
+          [
+            1235,
+            519
+          ],
+          [
+            1235,
+            976
+          ],
+          [
+            1180,
+            976
+          ],
+          [
+            1140,
+            944
+          ],
+          [
+            1071,
+            937
+          ],
+          [
+            1018,
+            936
+          ],
+          [
+            958,
+            941
+          ],
+          [
+            896,
+            951
+          ],
+          [
+            834,
+            964
+          ],
+          [
+            770,
+            970
+          ],
+          [
+            719,
+            946
+          ],
+          [
+            693,
+            910
+          ],
+          [
+            686,
+            857
+          ],
+          [
+            690,
+            794
+          ],
+          [
+            705,
+            713
+          ],
+          [
+            710,
+            641
+          ],
+          [
+            705,
+            576
+          ],
+          [
+            714,
+            514
+          ],
+          [
+            740,
+            467
+          ],
+          [
+            790,
+            443
+          ],
+          [
+            832,
+            417
+          ],
+          [
+            864,
+            374
+          ],
+          [
+            880,
+            313
+          ],
+          [
+            879,
+            250
+          ],
+          [
+            886,
+            174
+          ],
+          [
+            906,
+            112
+          ]
+        ]
+      }
+    },
+    {
+      "id": "ticker",
+      "label": "\u0422\u0418\u0422\u0420",
+      "depth": 21,
+      "color": "#bec7cf",
+      "opacity": 42,
+      "outline": "solid",
+      "badge": [
+        55,
+        995
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            0,
+            978
+          ],
+          [
+            1919,
+            978
+          ],
+          [
+            1919,
+            1076
+          ],
+          [
+            0,
+            1076
+          ]
+        ]
+      }
+    },
+    {
+      "id": "front_glass",
+      "label": "\u0421\u0422\u0415\u041a\u041b\u041e",
+      "depth": 1,
+      "color": "#30cabe",
+      "opacity": 47,
+      "outline": "solid",
+      "badge": [
+        1280,
+        820
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            1235,
+            0
+          ],
+          [
+            1919,
+            0
+          ],
+          [
+            1919,
+            978
+          ],
+          [
+            1235,
+            978
+          ]
+        ]
+      }
+    },
+    {
+      "id": "red_trail",
+      "label": "\u041a\u0420\u0410\u0421\u041d\u042b\u0419 \u0428\u041b\u0415\u0419\u0424",
+      "depth": 68,
+      "color": "#f44b78",
+      "opacity": 43,
+      "outline": "dashed",
+      "badge": [
+        1470,
+        45
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            1575,
+            0
+          ],
+          [
+            1850,
+            0
+          ],
+          [
+            1800,
+            105
+          ],
+          [
+            1815,
+            190
+          ],
+          [
+            1880,
+            272
+          ],
+          [
+            1840,
+            427
+          ],
+          [
+            1790,
+            570
+          ],
+          [
+            1797,
+            710
+          ],
+          [
+            1755,
+            788
+          ],
+          [
+            1570,
+            784
+          ],
+          [
+            1570,
+            680
+          ],
+          [
+            1580,
+            538
+          ],
+          [
+            1550,
+            410
+          ],
+          [
+            1568,
+            255
+          ]
+        ]
+      }
+    },
+    {
+      "id": "light_a",
+      "label": "A",
+      "depth": 93,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1720,
+        170
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1893,
+          219
+        ],
+        "radius": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "light_b",
+      "label": "B",
+      "depth": 90,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1635,
+        326
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1798,
+          328
+        ],
+        "radius": [
+          55,
+          55
+        ]
+      }
+    },
+    {
+      "id": "light_c",
+      "label": "C",
+      "depth": 87,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1695,
+        548
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1865,
+          553
+        ],
+        "radius": [
+          35,
+          35
+        ]
+      }
+    },
+    {
+      "id": "light_d",
+      "label": "D",
+      "depth": 84,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1669,
+        756
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1844,
+          770
+        ],
+        "radius": [
+          39,
+          39
+        ]
+      }
+    },
+    {
+      "id": "light_e",
+      "label": "E",
+      "depth": 81,
+      "color": "#ffdb56",
+      "opacity": 26,
+      "outline": "dashed",
+      "badge": [
+        1570,
+        886
+      ],
+      "geometry": {
+        "type": "ellipse",
+        "center": [
+          1742,
+          902
+        ],
+        "radius": [
+          36,
+          36
+        ]
+      }
+    }
+  ],
+  "legend": [
+    {
+      "title": "\u0413\u041e\u0420\u041e\u0414",
+      "region_ids": [
+        "city"
+      ],
+      "note": "\u0434\u0430\u043b\u044c\u043d\u0438\u0439 \u043f\u043b\u0430\u043d; \u043a\u043e\u043d\u0442\u0443\u0440 \u0437\u0434\u0430\u043d\u0438\u044f \u0435\u0449\u0451 \u0443\u0442\u043e\u0447\u043d\u0438\u043c"
+    },
+    {
+      "title": "\u041f\u042f\u0422\u042c \u041e\u0413\u041d\u0415\u0419",
+      "region_ids": [
+        "light_a",
+        "light_b",
+        "light_c",
+        "light_d",
+        "light_e"
+      ],
+      "note": "\u043a\u0430\u0436\u0434\u044b\u0439 \u043e\u0433\u043e\u043d\u044c \u0438\u043c\u0435\u0435\u0442 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u0443\u044e \u0433\u043b\u0443\u0431\u0438\u043d\u0443"
+    },
+    {
+      "title": "\u041a\u0420\u0410\u0421\u041d\u042b\u0419 \u0428\u041b\u0415\u0419\u0424",
+      "region_ids": [
+        "red_trail"
+      ],
+      "note": "\u0431\u043b\u0438\u0436\u0435 \u043e\u0433\u043d\u0435\u0439, \u043d\u043e \u043f\u043e\u0437\u0430\u0434\u0438 \u0441\u0442\u0435\u043a\u043b\u0430"
+    },
+    {
+      "title": "\u0421\u0422\u0415\u041d\u0410 \u0421\u0422\u0423\u0414\u0418\u0418",
+      "region_ids": [
+        "studio_wall"
+      ],
+      "note": "\u043e\u0442\u0434\u0435\u043b\u044c\u043d\u043e \u043e\u0442 \u0432\u0435\u0434\u0443\u0449\u0435\u0439"
+    },
+    {
+      "title": "\u0412\u0415\u0414\u0423\u0429\u0410\u042f",
+      "region_ids": [
+        "presenter"
+      ],
+      "note": "\u043f\u0435\u0440\u0435\u0434 \u0441\u0442\u0435\u043d\u043e\u0439; \u0441\u0438\u043b\u0443\u044d\u0442 \u0435\u0449\u0451 \u0443\u0442\u043e\u0447\u043d\u0438\u043c"
+    },
+    {
+      "title": "\u0422\u0418\u0422\u0420",
+      "region_ids": [
+        "ticker"
+      ],
+      "note": "\u043f\u0435\u0440\u0435\u0434 \u0432\u0435\u0434\u0443\u0449\u0435\u0439, \u043d\u043e \u0437\u0430 \u0441\u0442\u0435\u043a\u043b\u043e\u043c"
+    },
+    {
+      "title": "\u0421\u0422\u0415\u041a\u041b\u041e",
+      "region_ids": [
+        "front_glass"
+      ],
+      "note": "\u043a\u0430\u043f\u043b\u0438 \u0438 \u043f\u043e\u0442\u0451\u043a\u0438 \u043d\u0430 \u0431\u043b\u0438\u0436\u043d\u0435\u0439 \u043f\u043b\u043e\u0441\u043a\u043e\u0441\u0442\u0438"
+    }
+  ]
+}
