@@ -13,10 +13,10 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from scripts.apply_depth_regions import corrected_depth, grayscale_for_depth, run  # noqa: E402
-from Test.render_depth_regions import load_map  # noqa: E402
+from test.render_depth_regions import load_map  # noqa: E402
 
 
-MAP = ROOT / "Test/depth_regions.json"
+MAP = ROOT / "test/depth_regions.json"
 
 
 def at_reference_pixel(image, x, y):

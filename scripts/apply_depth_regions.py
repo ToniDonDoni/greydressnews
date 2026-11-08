@@ -12,9 +12,9 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from Test.render_depth_regions import load_map  # noqa: E402
+from test.render_depth_regions import load_map  # noqa: E402
 
-DEFAULT_MAP = ROOT / "Test/depth_regions.json"
+DEFAULT_MAP = ROOT / "test/depth_regions.json"
 
 
 def sha256(path):

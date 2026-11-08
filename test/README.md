@@ -1,5 +1,7 @@
 # Depth-region review mask
 
+For the complete generation, validation, preview, and publication workflow, start with [scripts/README.md](../scripts/README.md).
+
 `depth_regions.json` is the editable, project-local draft of the scene's semantic depth regions. The colors and labels let us compare a regenerated photograph with the agreed regions. `scripts/apply_depth_regions.py` then applies the same configuration to an uncorrected neural depth PNG. Both outputs are review artifacts until explicitly promoted to the website.
 
 The map stores every polygon and light ellipse in pixel coordinates of the 1920 x 1077 reference image. It also stores each region's proposed depth, tint color, opacity, and label position. **Depth 1 is nearest; depth 100 is farthest.** Current values are provisional:
@@ -18,12 +20,11 @@ The right-side light regions and red trail overlap the glass in image coordinate
 
 ## Render a comparison
 
-Install the repository's Python dependencies, then run from the project root:
+Follow the setup in `scripts/README.md`, then run from the project root:
 
 ```sh
-python3 -m pip install -r requirements.txt
-python3 Test/render_depth_regions.py references/ElGrayPimenovLeiterWindow2.png --output output/depth-mask-original.png
-python3 Test/render_depth_regions.py path/to/new-photo.png --output output/depth-mask-new.png
+output/depth_venv/bin/python test/render_depth_regions.py references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/depth-mask-original.png
+output/depth_venv/bin/python test/render_depth_regions.py path/to/new-photo.png --output output/depth_review/depth-mask-new.png
 ```
 
 The renderer leaves the input untouched and writes an annotated PNG with a legend. A new image may have different pixel dimensions if its aspect ratio is within 1% of the reference; the renderer scales it to the reference size for visual comparison. If the framing or composition changes, adjust the coordinates in `depth_regions.json` before treating the overlay as aligned.
@@ -35,14 +36,13 @@ Edit the JSON to move a boundary, change a depth, or reposition a label. Polygon
 First save the raw neural prediction on an Apple Silicon Mac with Python 3.11 and the project's Core ML dependencies installed:
 
 ```sh
-python3 -m pip install -r scripts/depth-requirements.txt
-python3 scripts/generate_raw_reference_depth.py --source path/to/new-photo.png --output output/reference-depth/raw-depth.png
+output/depth_venv/bin/python scripts/generate_raw_reference_depth.py --source path/to/new-photo.png --output output/depth_review/raw-depth.png
 ```
 
 Then apply the JSON to that raw map:
 
 ```sh
-python3 scripts/apply_depth_regions.py --photo path/to/new-photo.png --input-depth output/reference-depth/raw-depth.png --output output/reference-depth/corrected-depth.png
+output/depth_venv/bin/python scripts/apply_depth_regions.py --photo path/to/new-photo.png --input-depth output/depth_review/raw-depth.png --output output/depth_review/corrected-depth.png
 ```
 
 For the current reference image, `specs/evidence/depth-before.png` can be used as the saved raw neural map. The correction script writes an 8-bit inverse-depth PNG and a JSON report beside it. It never overwrites its input. The review scale maps 1 (nearest) to grayscale 236 and 100 (farthest) to grayscale 96, matching the existing shader's working range. `neural_detail_strength` in each region keeps a controlled amount of the neural map's local variation; zero makes a region flat. Mask edges are antialiased when scaled to the neural map's resolution.
@@ -52,8 +52,8 @@ Review the corrected map and browser motion before replacing `dist/assets/ElGray
 ## Check the reusable overlay
 
 ```sh
-python3 Test/test_depth_regions.py
-python3 Test/test_apply_depth_regions.py
+output/depth_venv/bin/python test/test_depth_regions.py
+output/depth_venv/bin/python test/test_apply_depth_regions.py
 ```
 
-This checks the region contract and renders the reference twice to confirm a deterministic preview. `Test/test_apply_depth_regions.py` checks depth conversion and input preservation. Generated comparison PNGs belong under ignored `output/`; keep mask data and reproducible tests in `Test/`.
+This checks the region contract and renders the reference twice to confirm a deterministic preview. `test/test_apply_depth_regions.py` checks depth conversion and input preservation. Generated comparison PNGs belong under ignored `output/`; keep mask data and reproducible tests in `test/`.

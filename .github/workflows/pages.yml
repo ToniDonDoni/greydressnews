@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reference-depth-parallax-evidence
-          path: output/reference-parallax-check/
+          path: output/reference_parallax_check/
           if-no-files-found: warn
       - name: Upload static website
         uses: actions/upload-pages-artifact@v4

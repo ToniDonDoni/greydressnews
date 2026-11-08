@@ -183,8 +183,8 @@ def render(photo_path, map_path, output_path):
         badge(draw, region)
 
     draw.rectangle((0, height, width, height + panel_height), fill=(13, 22, 33, 255))
-    draw.text((60, height + 23), "\u0427\u0415\u0420\u041d\u041e\u0412\u0418\u041a \u041a\u0410\u0420\u0422\u042b \u0413\u041b\u0423\u0411\u0418\u041d\u042b", font=font(43), fill="white")
-    draw.text((60, height + 78), "1 = \u0431\u043b\u0438\u0436\u0435 \u0432\u0441\u0435\u0433\u043e  \u00b7  100 = \u0434\u0430\u043b\u044c\u0448\u0435 \u0432\u0441\u0435\u0433\u043e. \u0412\u0441\u0435 \u0447\u0438\u0441\u043b\u0430 \u043f\u043e\u043a\u0430 \u0443\u0441\u043b\u043e\u0432\u043d\u044b\u0435.", font=font(25), fill=(190, 207, 219))
+    draw.text((60, height + 23), "DRAFT DEPTH MAP", font=font(43), fill="white")
+    draw.text((60, height + 78), "1 = nearest  |  100 = farthest. All depths are provisional.", font=font(25), fill=(190, 207, 219))
     by_id = {region["id"]: region for region in data["regions"]}
     for index, entry in enumerate(data["legend"]):
         legend_card(draw, index, entry, by_id)

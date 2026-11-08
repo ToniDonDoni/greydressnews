@@ -8,7 +8,7 @@ const require=createRequire(import.meta.url);
 const {chromium}=require('playwright');
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const evidence=JSON.parse(fs.readFileSync(path.join(root,'specs/evidence/depth-report.json'),'utf8'));
-const out=path.join(root,'output/reference-parallax-check');
+const out=path.join(root,'output/reference_parallax_check');
 fs.mkdirSync(out,{recursive:true});
 const url=process.env.TEASER_URL||'http://127.0.0.1:8000/';
 const errors=[];
