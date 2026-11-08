@@ -69,6 +69,7 @@ Additional requirements:
 
 ## 4. Analysis
 
+- Artistic background: [SPEC-004: Blonde News Presenter in a City](https://github.com/ToniDonDoni/adavilazil/blob/main/test/explore_visual_styles/test6/SPEC-004-PRESENTER.md) explores Yuri Pimenov's muted urban painting as the primary visual reference and Saul Leiter's translucent red reflections as its complementary counterpart. The presenter's gray dress anchors this dialogue; the depth edit extends the study spatially rather than changing the artwork.
 - The existing depth map is the starting point and must be edited directly.
 - Use hand-authored, object-aware masks rather than another model prediction.
 - A single-channel Z-map stores only one depth per pixel. Where a light and a glass detail overlap at the same pixel, the visible pixel must be assigned to one layer; prioritize clearly visible light regions as far and distinguishable droplets/rain as near.
