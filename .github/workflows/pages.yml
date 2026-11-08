@@ -2,9 +2,9 @@ name: Publish to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [teaser]
   pull_request:
-    branches: [main]
+    branches: [teaser]
   workflow_dispatch:
 
 permissions:
