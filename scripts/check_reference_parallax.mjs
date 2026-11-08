@@ -12,7 +12,10 @@ const out=path.join(root,'output/reference-parallax-check');
 fs.mkdirSync(out,{recursive:true});
 const url=process.env.TEASER_URL||'http://127.0.0.1:8000/';
 const errors=[];
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({
+  headless:true,
+  args:['--enable-webgl','--ignore-gpu-blocklist','--use-gl=angle','--use-angle=swiftshader'],
+});
 try{
   const page=await browser.newPage({viewport:{width:1200,height:820},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push(String(error)));
@@ -48,15 +51,18 @@ try{
   async function capture(name,normalizedX){
     await page.mouse.move(painting.x+painting.width*(normalizedX+1)/2,painting.y+painting.height*.5);
     await page.waitForTimeout(900);
-    await page.locator('#depth-view').screenshot({path:path.join(out,name+'.png')});
-    await page.locator('#depth-view').evaluate((canvas,key)=>{
+    const screenshot=await page.locator('#depth-view').screenshot({path:path.join(out,name+'.png')});
+    await page.evaluate(async({key,encoded})=>{
+      const image=new Image();
+      image.src='data:image/png;base64,'+encoded;
+      await image.decode();
       const copy=document.createElement('canvas');
-      copy.width=canvas.width;copy.height=canvas.height;
-      const context=copy.getContext('2d');
-      context.drawImage(canvas,0,0);
+      copy.width=image.naturalWidth;copy.height=image.naturalHeight;
+      const context=copy.getContext('2d',{willReadFrequently:true});
+      context.drawImage(image,0,0);
       window.__depthCaptures=window.__depthCaptures||{};
       window.__depthCaptures[key]={width:copy.width,height:copy.height,data:context.getImageData(0,0,copy.width,copy.height).data};
-    },name);
+    },{key:name,encoded:screenshot.toString('base64')});
   }
   await capture('center',0);
   await capture('left',-.98);
