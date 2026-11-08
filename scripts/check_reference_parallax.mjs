@@ -161,9 +161,51 @@ try{
   assert.equal(afterSecondClick.started,audioProbe.started,
     'Later artwork clicks must not restart the groove');
 
+  // Test the gesture path used by mobile browsers, without an on-screen button.
+  const mobileContext=await browser.newContext({
+    viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true
+  });
+  const mobilePage=await mobileContext.newPage();
+  await mobilePage.addInitScript(()=>{
+    window.__mobileGroove={events:[],started:0,sourcesStartedDuringGesture:0,resumes:0};
+    let inGesture=false;
+    for(const name of ['pointerdown','touchstart','click']){
+      document.addEventListener(name,event=>{
+        if(event.isTrusted){
+          window.__mobileGroove.events.push(name);
+          inGesture=true;
+        }
+      },{capture:true});
+    }
+    const nativeStart=AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start=function(...args){
+      window.__mobileGroove.started++;
+      if(inGesture)window.__mobileGroove.sourcesStartedDuringGesture++;
+      return nativeStart.apply(this,args);
+    };
+    const nativeResume=AudioContext.prototype.resume;
+    AudioContext.prototype.resume=function(...args){
+      window.__mobileGroove.resumes++;
+      return nativeResume.apply(this,args);
+    };
+  });
+  await mobilePage.goto(url);
+  const mobilePainting=await mobilePage.locator('#painting').boundingBox();
+  assert(mobilePainting,'Mobile artwork did not render');
+  await mobilePage.touchscreen.tap(
+    mobilePainting.x+mobilePainting.width*.5,mobilePainting.y+mobilePainting.height*.5);
+  await mobilePage.waitForFunction(()=>window.__mobileGroove?.started>=2);
+  const mobileProbe=await mobilePage.evaluate(()=>window.__mobileGroove);
+  assert(mobileProbe.events.includes('touchstart'),'Mobile tap did not dispatch touchstart');
+  assert(mobileProbe.resumes>=1,'Mobile gesture did not call AudioContext.resume');
+  assert(mobileProbe.sourcesStartedDuringGesture>=1,
+    'AudioBufferSource must start inside the mobile gesture');
+  await mobileContext.close();
+
   const report={
     groove:{
       audio_probe:audioProbe,
+      mobile_probe:mobileProbe,
       no_audio_before_interaction:true,
       no_visible_audio_controls:true,
       first_trusted_page_click_starts:true,
