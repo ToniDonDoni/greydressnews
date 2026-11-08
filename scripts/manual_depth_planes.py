@@ -14,11 +14,15 @@ EVIDENCE = ROOT / "specs/evidence"
 
 WIDTH, HEIGHT = 1024, 574
 GLASS_LEFT = 658
-LIGHT_SEARCH_LEFT = 800
+LIGHT_SEARCH_LEFT = 940
 FAR_DEPTH = 96
 MID_DEPTH = 156
 NEAR_DEPTH = 236
-MIN_LIGHT_COMPONENT_AREA = 18
+MIN_LIGHT_COMPONENT_AREA = 10
+MAX_LIGHT_COMPONENT_AREA = 1200
+MAX_LIGHT_COMPONENT_SIDE = 64
+MAX_LIGHT_ASPECT_RATIO = 3.5
+MAX_LIGHT_COVERAGE_PERCENT = 4.0
 SHADER_BASELINE = 0.38
 CAMERA_SHIFT = 0.045
 SHADER_ITERATIONS = 7
@@ -50,7 +54,8 @@ def resized_source(source):
     return source.convert("RGB").resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
 
 
-def remove_small_components(mask, minimum_area):
+def filter_light_components(mask):
+    """Keep compact light cores; reject long rain streaks and broad glass reflections."""
     width, height = mask.size
     source = bytearray(mask.tobytes())
     visited = bytearray(width * height)
@@ -62,11 +67,15 @@ def remove_small_components(mask, minimum_area):
         visited[start] = 1
         component = []
         cursor = 0
+        min_x = max_x = start % width
+        min_y = max_y = start // width
         while cursor < len(queue):
             index = queue[cursor]
             cursor += 1
             component.append(index)
             x, y = index % width, index // width
+            min_x, max_x = min(min_x, x), max(max_x, x)
+            min_y, max_y = min(min_y, y), max(max_y, y)
             for dy in (-1, 0, 1):
                 ny = y + dy
                 if ny < 0 or ny >= height:
@@ -81,14 +90,21 @@ def remove_small_components(mask, minimum_area):
                     if source[neighbor] and not visited[neighbor]:
                         visited[neighbor] = 1
                         queue.append(neighbor)
-        if len(component) >= minimum_area:
+
+        area = len(component)
+        box_width, box_height = max_x - min_x + 1, max_y - min_y + 1
+        aspect = max(box_width / box_height, box_height / box_width)
+        if (
+            MIN_LIGHT_COMPONENT_AREA <= area <= MAX_LIGHT_COMPONENT_AREA
+            and max(box_width, box_height) <= MAX_LIGHT_COMPONENT_SIDE
+            and aspect <= MAX_LIGHT_ASPECT_RATIO
+        ):
             for index in component:
                 kept[index] = 255
     return Image.frombytes("L", (width, height), bytes(kept))
 
-
 def detect_right_side_lights(source):
-    """Select visible red/warm light cores behind the right-side glass."""
+    """Select compact, isolated light cores on the far-right side of the glass."""
     rgb = source.load()
     raw = Image.new("L", (WIDTH, HEIGHT), 0)
     output = raw.load()
@@ -96,28 +112,34 @@ def detect_right_side_lights(source):
         for x in range(LIGHT_SEARCH_LEFT, WIDTH):
             red, green, blue = rgb[x, y]
             red_core = (
-                red >= 100
-                and red - green >= 25
-                and red - blue >= 18
-                and red >= green * 1.18
+                red >= 180
+                and red - green >= 35
+                and red - blue >= 25
+                and red >= green * 1.22
             )
             warm_core = (
-                red >= 175
-                and green >= 65
-                and green <= red * 0.82
-                and blue <= 155
+                red >= 200
+                and green >= 80
+                and green <= red * 0.78
+                and blue <= 145
             )
             neutral_light = (
-                x >= 960
-                and min(red, green, blue) >= 205
-                and max(red, green, blue) - min(red, green, blue) <= 55
+                x >= 980
+                and min(red, green, blue) >= 210
+                and max(red, green, blue) - min(red, green, blue) <= 45
             )
-            if red_core or warm_core or neutral_light:
+            blue_core = (
+                x >= 980
+                and blue >= 205
+                and blue - red >= 30
+                and blue - green >= 15
+            )
+            if red_core or warm_core or neutral_light or blue_core:
                 output[x, y] = 255
 
-    # Remove isolated droplet highlights while retaining coherent light sources.
-    raw = raw.filter(ImageFilter.MedianFilter(5))
-    raw = remove_small_components(raw, MIN_LIGHT_COMPONENT_AREA)
+    # Smooth single-pixel noise, then retain only compact light-shaped components.
+    raw = raw.filter(ImageFilter.MedianFilter(3))
+    raw = filter_light_components(raw)
     raw = raw.filter(ImageFilter.MaxFilter(3))
 
     # Keep the search area strictly behind the right-side glass boundary.
@@ -126,7 +148,6 @@ def detect_right_side_lights(source):
         for x in range(LIGHT_SEARCH_LEFT):
             pixels[x, y] = 0
     return raw
-
 
 def build_masks(source):
     image = resized_source(source)
@@ -292,11 +313,16 @@ def provenance():
         },
         "right_side_lights": {
             "search_left_x": LIGHT_SEARCH_LEFT,
-            "red_core": "R>=100, R-G>=25, R-B>=18, R>=1.18*G",
-            "warm_core": "R>=175, G>=65, G<=0.82*R, B<=155",
-            "neutral_light": "x>=960, min(R,G,B)>=205, channel_range<=55",
+            "red_core": "R>=180, R-G>=35, R-B>=25, R>=1.22*G",
+            "warm_core": "R>=200, G>=80, G<=0.78*R, B<=145",
+            "neutral_light": "x>=980, min(R,G,B)>=210, channel_range<=45",
+            "blue_core": "x>=980, B>=205, B-R>=30, B-G>=15",
             "minimum_component_area": MIN_LIGHT_COMPONENT_AREA,
-            "postprocessing": "5px median filter, connected-component filtering, 3px maximum filter",
+            "maximum_component_area": MAX_LIGHT_COMPONENT_AREA,
+            "maximum_component_side": MAX_LIGHT_COMPONENT_SIDE,
+            "maximum_aspect_ratio": MAX_LIGHT_ASPECT_RATIO,
+            "maximum_mask_coverage_percent": MAX_LIGHT_COVERAGE_PERCENT,
+            "postprocessing": "3px median filter, compact connected-component filtering, 3px maximum filter",
         },
         "semantics": "Far: plain background, left house and visible right-side lights behind glass; midground: studio and presenter; near: glass, water droplets and rain.",
         "script_sha256": sha256(Path(__file__)),
@@ -376,8 +402,14 @@ def validate(source, depth, metadata):
         raise ValueError("Expected parallax displacement is not ordered near > midground > far")
     if not report["checks"]["right_side_lights_detected"]:
         raise ValueError("No right-side background lights were detected; review the light mask")
-    if report["right_side_lights"]["pixel_count"] < 50:
+    light_count = report["right_side_lights"]["pixel_count"]
+    light_bbox = report["right_side_lights"]["bbox"]
+    if light_count < 50:
         raise ValueError("The right-side background-light mask is unexpectedly small")
+    if light_count > WIDTH * HEIGHT * MAX_LIGHT_COVERAGE_PERCENT / 100:
+        raise ValueError("The right-side light mask covers too much of the glass; inspect the light segmentation")
+    if not light_bbox or light_bbox[0] < LIGHT_SEARCH_LEFT:
+        raise ValueError("The right-side light mask escaped its restricted search region")
     near_bytes = masks["near"].tobytes()
     light_bytes = lights.tobytes()
     if any(near and light for near, light in zip(near_bytes, light_bytes)):
