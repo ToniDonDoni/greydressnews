@@ -11,7 +11,7 @@ import PIL
 from PIL import Image
 
 from download_depth_model import MODEL_ID, REVISION, ensure_model, model_errors, sha256
-from flatten_reference_glass import GLASS_LEFT, FEATHER_PX, GLASS_DEPTH, flatten_glass_plane
+from manual_depth_planes import apply_manual_depth_planes, provenance
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'references/ElGrayPimenovLeiterWindow2.png'
@@ -57,7 +57,9 @@ def main():
     if high <= low:
         raise ValueError('The model returned constant depth')
     normalized = np.clip((aligned - low) / (high - low), 0, 1)
-    flatten_glass_plane(Image.fromarray(np.round(normalized * 255).astype(np.uint8))).save(OUTPUT)
+    predicted = Image.fromarray(np.round(normalized * 255).astype(np.uint8))
+    corrected, _, _, _ = apply_manual_depth_planes(source, predicted)
+    corrected.save(OUTPUT, optimize=True)
 
     metadata = {
         'model': MODEL_ID,
@@ -71,14 +73,7 @@ def main():
         'preprocessing': 'aspect-preserving letterbox; remove padding from prediction',
         'semantics': 'relative inverse depth; white is near; not meters',
         'normalization_percentiles': [1, 99],
-        'glass_postprocess': {
-            'method': 'flat_foreground_glass_plane',
-            'raster_left_x': GLASS_LEFT,
-            'feather_pixels': FEATHER_PX,
-            'inverse_depth': GLASS_DEPTH,
-            'semantics': 'same near depth across the visible right-side glass; woman and studio behind',
-            'script_sha256': sha256(ROOT / 'scripts/flatten_reference_glass.py'),
-        },
+        'manual_depth_planes': provenance(),
         'prediction_ms': round(elapsed_ms, 1),
         'versions': {'coremltools': ct.__version__, 'numpy': np.__version__, 'pillow': PIL.__version__},
     }
