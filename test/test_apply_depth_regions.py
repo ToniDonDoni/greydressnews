@@ -46,6 +46,8 @@ class ApplyDepthRegionsTest(unittest.TestCase):
         revised, _ = corrected_depth(neural, changed)
         self.assertNotEqual(at_reference_pixel(result, 950, 600), at_reference_pixel(revised, 950, 600))
         self.assertNotEqual(at_reference_pixel(result, 950, 966), at_reference_pixel(revised, 950, 966))
+        self.assertNotEqual(at_reference_pixel(result, 720, 966), at_reference_pixel(revised, 720, 966))
+        self.assertEqual(at_reference_pixel(result, 690, 966), at_reference_pixel(revised, 690, 966))
         self.assertEqual(at_reference_pixel(result, 950, 995), at_reference_pixel(revised, 950, 995))
 
     def test_cli_operation_keeps_neural_input(self):
