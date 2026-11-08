@@ -20,12 +20,44 @@ For the full depth workflow, use macOS on Apple Silicon and Python 3.11. The Cor
 
 ```sh
 python3.11 -m venv output/depth_venv
-output/depth_venv/bin/python -m pip install -r scripts/depth-requirements.txt
+source output/depth_venv/bin/activate
+python -m pip install -r scripts/depth-requirements.txt
 ```
 
-The model is a pinned, checksum-verified Apple Depth Anything V2 Small FP16 package. The raw generator reuses `output/models/DepthAnythingV2SmallF16.mlpackage/` when present and downloads it there when needed. `python3 scripts/download_depth_model.py` prepares the cache separately.
+The model is a pinned, checksum-verified Apple Depth Anything V2 Small FP16 package. The raw generator reuses `output/models/DepthAnythingV2SmallF16.mlpackage/` when present and downloads it there when needed. `output/depth_venv/bin/python scripts/download_depth_model.py` prepares the cache separately.
 
 For overlay-only work, a normal Python environment with `requirements.txt` is sufficient. Do not install both requirement files into one environment: they specify different Pillow versions. Node.js 22 or newer is recommended for the JavaScript checks. Playwright and Chromium are needed only for the browser check.
+
+## Copy-paste walkthrough with the committed photo
+
+Run the Setup block above from the repository root. The following blocks use the real `references/ElGrayPimenovLeiterWindow2.png` file already in the repository. Paste them in order in the same terminal, pausing to inspect each image. For another photo, replace that one source path in the overlay, raw-depth, correction, and site-preview commands.
+
+First draw and inspect the region overlay:
+
+```sh
+python test/render_depth_regions.py references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/photo_overlay.png
+open output/depth_review/photo_overlay.png
+```
+
+After the regions align with the photo, generate a raw neural map, apply `test/depth_regions.json`, and inspect the corrected map:
+
+```sh
+python scripts/generate_raw_reference_depth.py --source references/ElGrayPimenovLeiterWindow2.png --output output/depth_review/raw_depth.png
+python scripts/apply_depth_regions.py --photo references/ElGrayPimenovLeiterWindow2.png --input-depth output/depth_review/raw_depth.png --output output/depth_review/corrected_depth.png
+open output/depth_review/corrected_depth.png
+```
+
+Preview that corrected map in a copy of the static page:
+
+```sh
+mkdir -p output/site_preview
+cp -R dist/. output/site_preview/
+cp references/ElGrayPimenovLeiterWindow2.png output/site_preview/assets/ElGrayPimenovLeiterWindow2.png
+cp output/depth_review/corrected_depth.png output/site_preview/assets/ElGrayPimenovLeiterWindow2-depth.png
+python -m http.server 8001 --directory output/site_preview
+```
+
+Open `http://127.0.0.1:8001/` on the Mac. Stop the server with Ctrl-C. This preview does not replace the committed `dist/` depth map. If you prefer not to activate the environment, the detailed sections below call `output/depth_venv/bin/python` explicitly.
 
 ## Compare a new photo with the region map
 
