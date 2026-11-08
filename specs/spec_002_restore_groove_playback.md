@@ -58,3 +58,4 @@
 - `scripts/check-ui.mjs` uses a mock AudioContext to verify silence before interaction, trusted-click start, later-click behavior, explicit playback control, and bar scheduling.
 - `scripts/check_reference_parallax.mjs` uses actual Chromium page clicks to verify the first-click start, later artwork clicks, volume availability, manual pause/resume, and absence of a tempo slider alongside the three-plane parallax test.
 - Browser captures and the test report are available in the workflow's `reference-depth-parallax-evidence` artifact.
+- [GitHub Actions run #42511756565](https://github.com/ToniDonDoni/greydressnews/actions/runs/42511756565) verified the restored groove with real Chromium Web Audio instrumentation: the AudioContext entered `running`, three audio buffer sources started, and all three contained non-silent synthesized samples. All browser and project checks passed.
