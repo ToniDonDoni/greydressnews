@@ -18,6 +18,8 @@ def load_map(path):
     width, height = data["reference_size"]
     if width <= 0 or height <= 0:
         raise ValueError("Reference dimensions must be positive")
+    if data["depth_scale"]["nearest"] != 1 or data["depth_scale"]["farthest"] != 100:
+        raise ValueError("The review depth scale must run from nearest=1 to farthest=100")
     ids = set()
     for region in data["regions"]:
         region_id = region["id"]
@@ -28,6 +30,8 @@ def load_map(path):
             raise ValueError(f"Depth must be between 1 and 100: {region_id}")
         if not 0 <= region["opacity"] <= 255:
             raise ValueError(f"Opacity must be between 0 and 255: {region_id}")
+        if not 0 <= region.get("neural_detail_strength", 0) <= 1:
+            raise ValueError(f"Neural detail strength must be between 0 and 1: {region_id}")
         geometry = region["geometry"]
         if geometry["type"] == "polygon":
             if len(geometry["points"]) < 3:
@@ -44,6 +48,15 @@ def load_map(path):
     legend_ids = [region_id for entry in data["legend"] for region_id in entry["region_ids"]]
     if set(legend_ids) != ids or len(legend_ids) != len(ids):
         raise ValueError("The legend must include every region exactly once")
+    bake = data.get("depth_bake")
+    if bake is not None:
+        near_gray = bake["inverse_gray_at_nearest"]
+        far_gray = bake["inverse_gray_at_farthest"]
+        if not (0 <= far_gray < near_gray <= 255):
+            raise ValueError("Inverse grayscale anchors must satisfy 0 <= far < near <= 255")
+        write_order = bake["write_order"]
+        if set(write_order) != ids or len(write_order) != len(ids):
+            raise ValueError("Depth write order must include every region exactly once")
     return data
 
 

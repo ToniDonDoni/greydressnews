@@ -71,7 +71,8 @@
             978
           ]
         ]
-      }
+      },
+      "neural_detail_strength": 0.2
     },
     {
       "id": "studio_wall",
@@ -132,7 +133,8 @@
             94
           ]
         ]
-      }
+      },
+      "neural_detail_strength": 0.12
     },
     {
       "id": "presenter",
@@ -293,7 +295,8 @@
             112
           ]
         ]
-      }
+      },
+      "neural_detail_strength": 0.12
     },
     {
       "id": "ticker",
@@ -326,7 +329,8 @@
             1076
           ]
         ]
-      }
+      },
+      "neural_detail_strength": 0.0
     },
     {
       "id": "front_glass",
@@ -359,7 +363,8 @@
             978
           ]
         ]
-      }
+      },
+      "neural_detail_strength": 0.0
     },
     {
       "id": "red_trail",
@@ -432,7 +437,8 @@
             255
           ]
         ]
-      }
+      },
+      "neural_detail_strength": 0.08
     },
     {
       "id": "light_a",
@@ -455,7 +461,8 @@
           32,
           32
         ]
-      }
+      },
+      "neural_detail_strength": 0.0
     },
     {
       "id": "light_b",
@@ -478,7 +485,8 @@
           55,
           55
         ]
-      }
+      },
+      "neural_detail_strength": 0.0
     },
     {
       "id": "light_c",
@@ -501,7 +509,8 @@
           35,
           35
         ]
-      }
+      },
+      "neural_detail_strength": 0.0
     },
     {
       "id": "light_d",
@@ -524,7 +533,8 @@
           39,
           39
         ]
-      }
+      },
+      "neural_detail_strength": 0.0
     },
     {
       "id": "light_e",
@@ -547,7 +557,8 @@
           36,
           36
         ]
-      }
+      },
+      "neural_detail_strength": 0.0
     }
   ],
   "legend": [
@@ -604,5 +615,23 @@
       ],
       "note": "\u043a\u0430\u043f\u043b\u0438 \u0438 \u043f\u043e\u0442\u0451\u043a\u0438 \u043d\u0430 \u0431\u043b\u0438\u0436\u043d\u0435\u0439 \u043f\u043b\u043e\u0441\u043a\u043e\u0441\u0442\u0438"
     }
-  ]
+  ],
+  "depth_bake": {
+    "inverse_gray_at_nearest": 236,
+    "inverse_gray_at_farthest": 96,
+    "write_order": [
+      "city",
+      "studio_wall",
+      "presenter",
+      "front_glass",
+      "red_trail",
+      "light_a",
+      "light_b",
+      "light_c",
+      "light_d",
+      "light_e",
+      "ticker"
+    ],
+    "notes": "One grayscale value can represent only one visible surface per pixel. Later regions override earlier ones in overlapping areas."
+  }
 }
