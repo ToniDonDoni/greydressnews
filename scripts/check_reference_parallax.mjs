@@ -111,7 +111,35 @@ try{
   assert(measured.midground.absolute_px>measured.far.absolute_px+8,
     'Midground does not move sufficiently more than the far plane');
 
+  // Confirm the preserved VibeCat audio is reachable through a genuine first page click.
+  const music=page.locator('#music'),volume=page.locator('#volume');
+  assert.equal(await music.getAttribute('aria-pressed'),'false','Groove must start silent');
+  assert.equal(await volume.isVisible(),false,'Volume should be hidden before playback');
+  await page.mouse.click(painting.x+painting.width*.5,painting.y+painting.height*.5);
+  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='true');
+  assert.equal(await volume.isVisible(),true,'First page click must reveal volume');
+  await page.mouse.click(painting.x+painting.width*.62,painting.y+painting.height*.42);
+  assert.equal(await music.getAttribute('aria-pressed'),'true','Later artwork clicks must not pause the groove');
+  await music.click();
+  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='false');
+  await page.mouse.click(painting.x+painting.width*.45,painting.y+painting.height*.42);
+  assert.equal(await music.getAttribute('aria-pressed'),'false','Later clicks must respect manual pause');
+  await music.click();
+  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='true');
+  assert.equal(await page.locator('#bpm').count(),0,'The reference-photo page should not have a tempo control');
+  await volume.evaluate(input=>{input.value='35';input.dispatchEvent(new Event('input',{bubbles:true}));});
+  assert.equal(await volume.inputValue(),'35','The volume control must respond to input');
+  await music.click();
+  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='false');
+
   const report={
+    groove:{
+      first_trusted_page_click_starts:true,
+      later_page_click_does_not_pause:true,
+      explicit_pause_and_resume:true,
+      volume_revealed_and_adjustable:true,
+      tempo_control_absent:true,
+    },
     passed:true,
     camera_positions:[-.98,.98],
     browser_depth_samples:browserDepth,
