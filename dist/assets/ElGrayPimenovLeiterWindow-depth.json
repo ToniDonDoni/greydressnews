@@ -3,8 +3,8 @@
   "revision": "cfef6f6f2a70783dedc0bfae40cecbc2052285d3",
   "source": "references/ElGrayPimenovLeiterWindow.png",
   "source_sha256": "83c5822274a8683c3c9c5d58d2cf167e3984095706808e903d87fbff9ca3e767",
-  "depth_sha256": "44f9dd21755e860892c7ce8a9a355e2f39f93547d3e7e2ee0a9c28f9f55066bc",
-  "generator_sha256": "4e0bad1d366a47edb4db7f8da67eb3c19d1942c457c19e2a96d69b9d169eb6c7",
+  "depth_sha256": "2119f81d167122df7c9a8549ea7802af29d8f77b5294cfe7af6de4052d64183b",
+  "generator_sha256": "c145c3d977b9527ce3bab79259221d1c96abac772f2ce733ed2c98bf8bb908f4",
   "source_size": [
     1672,
     941
@@ -24,5 +24,13 @@
     "coremltools": "9.0",
     "numpy": "2.4.6",
     "pillow": "13.0.0"
+  },
+  "glass_postprocess": {
+    "method": "flat_foreground_glass_plane",
+    "raster_left_x": 658,
+    "feather_pixels": 4,
+    "inverse_depth": 248,
+    "semantics": "same near depth across the visible right-side glass; woman and studio behind",
+    "script_sha256": "5404d508740f8058872cd9770fc5fe110d252996165cce0a37078132ef2bf647"
   }
 }
