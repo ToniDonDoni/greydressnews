@@ -21,7 +21,12 @@ try{
   page.on('pageerror',error=>errors.push(String(error)));
   // Observe real Web Audio sources without replacing or mocking the synthesizer.
   await page.addInitScript(()=>{
-    window.__grooveProbe={started:0,nonSilent:0,running:false};
+    window.__grooveProbe={started:0,nonSilent:0,running:false,gainTargets:[]};
+    const nativeSetTarget=AudioParam.prototype.setTargetAtTime;
+    AudioParam.prototype.setTargetAtTime=function(value,...args){
+      window.__grooveProbe.gainTargets.push(value);
+      return nativeSetTarget.call(this,value,...args);
+    };
     const nativeStart=AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start=function(...args){
       const data=this.buffer?.getChannelData(0);
@@ -132,39 +137,38 @@ try{
   assert(measured.midground.absolute_px>measured.far.absolute_px+8,
     'Midground does not move sufficiently more than the far plane');
 
-  // Confirm the preserved VibeCat audio is reachable through a genuine first page click.
-  const music=page.locator('#music'),volume=page.locator('#volume');
-  assert.equal(await music.getAttribute('aria-pressed'),'false','Groove must start silent');
-  assert.equal(await volume.isVisible(),false,'Volume should be hidden before playback');
+  // Confirm unobtrusive first-click playback through the actual browser Web Audio engine.
+  for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue']){
+    assert.equal(await page.locator('#'+id).count(),0,'Audio control must not exist: '+id);
+  }
+  assert.equal(await page.locator('button,input[type="range"]').count(),0,
+    'The image must not display any playback or volume control');
+  const initialProbe=await page.evaluate(()=>window.__grooveProbe);
+  assert.equal(initialProbe.started,0,'The groove must remain silent until user interaction');
+
   await page.mouse.click(painting.x+painting.width*.5,painting.y+painting.height*.5);
-  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='true');
-  assert.equal(await volume.isVisible(),true,'First page click must reveal volume');
+  await page.waitForFunction(()=>window.__grooveProbe?.running
+    &&window.__grooveProbe.started>=2
+    &&window.__grooveProbe.gainTargets.some(value=>Math.abs(value-.8)<1e-8));
   const audioProbe=await page.evaluate(()=>window.__grooveProbe);
-  assert(audioProbe.running,'The actual browser AudioContext did not enter running state');
   assert(audioProbe.started>=2,'The groove scheduler did not start Web Audio buffer sources');
-  assert(audioProbe.nonSilent>=2,'The synthesized audio buffers were silent');
+  assert(audioProbe.nonSilent>=2,'The generated audio buffers were silent');
+  assert(audioProbe.gainTargets.some(value=>Math.abs(value-.8)<1e-8),
+    'The audio output must use 80 percent default gain');
   await page.mouse.click(painting.x+painting.width*.62,painting.y+painting.height*.42);
-  assert.equal(await music.getAttribute('aria-pressed'),'true','Later artwork clicks must not pause the groove');
-  await music.click();
-  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='false');
-  await page.mouse.click(painting.x+painting.width*.45,painting.y+painting.height*.42);
-  assert.equal(await music.getAttribute('aria-pressed'),'false','Later clicks must respect manual pause');
-  await music.click();
-  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='true');
-  assert.equal(await page.locator('#bpm').count(),0,'The reference-photo page should not have a tempo control');
-  await volume.evaluate(input=>{input.value='35';input.dispatchEvent(new Event('input',{bubbles:true}));});
-  assert.equal(await volume.inputValue(),'35','The volume control must respond to input');
-  await music.click();
-  await page.waitForFunction(()=>document.querySelector('#music')?.getAttribute('aria-pressed')==='false');
+  await page.waitForTimeout(60);
+  const afterSecondClick=await page.evaluate(()=>window.__grooveProbe);
+  assert.equal(afterSecondClick.started,audioProbe.started,
+    'Later artwork clicks must not restart the groove');
 
   const report={
     groove:{
       audio_probe:audioProbe,
+      no_audio_before_interaction:true,
+      no_visible_audio_controls:true,
       first_trusted_page_click_starts:true,
-      later_page_click_does_not_pause:true,
-      explicit_pause_and_resume:true,
-      volume_revealed_and_adjustable:true,
-      tempo_control_absent:true,
+      later_page_click_does_not_restart:true,
+      default_volume_gain:.8,
     },
     passed:true,
     camera_positions:[-.98,.98],
