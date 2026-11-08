@@ -10,12 +10,12 @@ try{
   const stored=localStorage.getItem('teaser-bpm'),value=Number(stored);
   if(stored!==null&&Number.isFinite(value)&&value>=MIN_BPM&&value<=MAX_BPM)bpm=Math.round(value);
 }catch{}
-tempo.value=String(bpm);
+if(tempo)tempo.value=String(bpm);
 function ui(){
   button.setAttribute('aria-pressed',String(playing));
   button.setAttribute('aria-label',playing?'Pause hip-hop':'Play hip-hop');
   label.textContent=playing?'BOOM BAP':'PLAY THE GROOVE';
-  tempoValue.textContent=`${bpm} BPM`;
+  if(tempoValue)tempoValue.textContent=`${bpm} BPM`;
   document.getElementById('soundbar').classList.toggle('playing',playing);
 }
 function schedule(){
@@ -81,7 +81,7 @@ function applyTempo(){
     master.gain.setTargetAtTime(volumeValue*.95,cutAt,.06);
   }
 }
-tempo.addEventListener('input',()=>{
+tempo?.addEventListener('input',()=>{
   bpm=Number(tempo.value);
   tempoValue.textContent=`${bpm} BPM`;
   try{localStorage.setItem('teaser-bpm',String(bpm));}catch{}
