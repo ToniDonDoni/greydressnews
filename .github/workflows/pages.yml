@@ -2,7 +2,7 @@ name: Publish to GitHub Pages
 
 on:
   push:
-    branches: [teaser]
+    branches: [teaser, fix/flat-front-glass-depth]
   pull_request:
     branches: [teaser]
   workflow_dispatch:
@@ -76,7 +76,7 @@ jobs:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/teaser'
     needs: build
     runs-on: ubuntu-latest
     permissions:
