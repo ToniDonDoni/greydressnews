@@ -1,9 +1,7 @@
 # Grey Dress News
 
-[View the work](https://tonidondoni.github.io/greydressnews/)
+[View the artwork](https://tonidondoni.github.io/greydressnews/)
 
-*Interactive image, depth, and generative sound.*
+An interactive study of urban painting, photographic perception, and the interplay of color, light, and depth.
 
-A news presenter in a gray dress stands between two visions of the city. To the left, architecture dissolves into the muted light and broken rhythms of Yuri Pimenov's urban painting. To the right, rain-streaked glass and a sudden red recall Saul Leiter's world of reflections and translucent color.
-
-The image unfolds in three shifting distances: the city beyond, the figure in the studio, and the glass almost touching the viewer.
+At the center of the composition, the news anchor's gray dress suggests a new green: the color of urban nature, shaped by concrete, glass, and diffused light. Yuri Pimenov's atmospheric cityscapes enter into dialogue with Saul Leiter's photographic poetry of urban lights and reflections.
