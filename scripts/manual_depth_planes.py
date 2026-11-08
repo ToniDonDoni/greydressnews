@@ -231,6 +231,22 @@ def mask_centroid(mask):
         return None
     return [round(sum_x / count), round(sum_y / count)]
 
+def mask_sample_point(mask):
+    """Return an active pixel nearest the centroid, not an empty centroid gap."""
+    centroid = mask_centroid(mask)
+    if centroid is None:
+        return None
+    pixels = mask.load()
+    best = None
+    best_distance = float("inf")
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            if pixels[x, y]:
+                distance = (x - centroid[0]) ** 2 + (y - centroid[1]) ** 2
+                if distance < best_distance:
+                    best, best_distance = [x, y], distance
+    return best
+
 
 def save_diagnostics(source, depth, masks, lights, report):
     EVIDENCE.mkdir(parents=True, exist_ok=True)
@@ -343,6 +359,7 @@ def make_report(depth, masks, lights):
         "near": region_statistics(masks["near"], depth, NEAR_DEPTH),
     }
     centroid = mask_centroid(lights)
+    light_sample = mask_sample_point(lights)
     report = {
         "passed": True,
         "size": [WIDTH, HEIGHT],
@@ -371,7 +388,7 @@ def make_report(depth, masks, lights):
             "studio": {"xy": [620, 100], "expected_depth": MID_DEPTH},
             "presenter": {"xy": [510, 260], "expected_depth": MID_DEPTH},
             "glass": {"xy": [720, 250], "expected_depth": NEAR_DEPTH},
-            "right_side_light_centroid": {"xy": centroid, "expected_depth": FAR_DEPTH},
+            "right_side_light": {"xy": light_sample, "expected_depth": FAR_DEPTH},
         },
         "checks": {
             "three_distinct_levels": len(set((FAR_DEPTH, MID_DEPTH, NEAR_DEPTH))) == 3,
