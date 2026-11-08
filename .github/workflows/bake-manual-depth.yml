@@ -31,7 +31,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm -f specs/evidence/reference-preview.jpg specs/evidence/current-depth.png
+          rm -f specs/evidence/reference-preview.jpg specs/evidence/current-depth.png
           git add dist/assets/ElGrayPimenovLeiterWindow2-depth.png dist/assets/ElGrayPimenovLeiterWindow2-depth.json specs/evidence/
           if ! git diff --cached --quiet; then
             git commit -m "Bake manually corrected three-plane depth map"
