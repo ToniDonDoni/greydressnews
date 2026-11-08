@@ -23,8 +23,8 @@
   },
   "regions": {
     "far": {
-      "pixel_count": 279218,
-      "coverage_percent": 47.504,
+      "pixel_count": 207424,
+      "coverage_percent": 35.29,
       "expected_depth": 96,
       "min": 96,
       "p05": 96,
@@ -43,8 +43,8 @@
       "max": 156
     },
     "near": {
-      "pixel_count": 137743,
-      "coverage_percent": 23.435,
+      "pixel_count": 209537,
+      "coverage_percent": 35.649,
       "expected_depth": 236,
       "min": 236,
       "p05": 236,
@@ -54,16 +54,16 @@
     }
   },
   "right_side_lights": {
-    "pixel_count": 72341,
+    "pixel_count": 547,
     "centroid": [
-      909,
-      202
+      980,
+      83
     ],
     "bbox": [
-      800,
+      958,
       0,
       1024,
-      574
+      292
     ],
     "assigned_depth": 96
   },
@@ -96,10 +96,10 @@
       ],
       "expected_depth": 236
     },
-    "right_side_light_centroid": {
+    "right_side_light": {
       "xy": [
-        909,
-        202
+        1005,
+        108
       ],
       "expected_depth": 96
     }
@@ -112,7 +112,7 @@
     "right_side_lights_excluded_from_near": true,
     "parallax_ordering": true
   },
-  "depth_sha256": "31fb685db199d9712c35cbc1f5e73082ec7b9216efe2356ada62387c945c17c8",
+  "depth_sha256": "d760e4299ce696e246027869c61a61540d5a71bd7f8bd9faee08473fecdd2e64",
   "source_sha256": "c75794dbfe69920916fae155722dff042b3db787884db44a97a668b618406bd3",
   "diagnostics": {
     "regions_image": "specs/evidence/depth-regions.png",

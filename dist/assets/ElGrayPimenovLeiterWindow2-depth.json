@@ -3,7 +3,7 @@
   "revision": "cfef6f6f2a70783dedc0bfae40cecbc2052285d3",
   "source": "references/ElGrayPimenovLeiterWindow2.png",
   "source_sha256": "c75794dbfe69920916fae155722dff042b3db787884db44a97a668b618406bd3",
-  "depth_sha256": "31fb685db199d9712c35cbc1f5e73082ec7b9216efe2356ada62387c945c17c8",
+  "depth_sha256": "d760e4299ce696e246027869c61a61540d5a71bd7f8bd9faee08473fecdd2e64",
   "generator_sha256": "1cf34995c6f37e5cd921d32d35c68296bfb04e87efbebb6664e01e6abf0151c4",
   "source_size": [
     1920,
@@ -109,14 +109,19 @@
       "glass_left_x": 658
     },
     "right_side_lights": {
-      "search_left_x": 800,
-      "red_core": "R>=100, R-G>=25, R-B>=18, R>=1.18*G",
-      "warm_core": "R>=175, G>=65, G<=0.82*R, B<=155",
-      "neutral_light": "x>=960, min(R,G,B)>=205, channel_range<=55",
-      "minimum_component_area": 18,
-      "postprocessing": "5px median filter, connected-component filtering, 3px maximum filter"
+      "search_left_x": 940,
+      "red_core": "R>=180, R-G>=35, R-B>=25, R>=1.22*G",
+      "warm_core": "R>=200, G>=80, G<=0.78*R, B<=145",
+      "neutral_light": "x>=980, min(R,G,B)>=210, channel_range<=45",
+      "blue_core": "x>=980, B>=205, B-R>=30, B-G>=15",
+      "minimum_component_area": 10,
+      "maximum_component_area": 1200,
+      "maximum_component_side": 64,
+      "maximum_aspect_ratio": 3.5,
+      "maximum_mask_coverage_percent": 4.0,
+      "postprocessing": "3px median filter, compact connected-component filtering, 3px maximum filter"
     },
     "semantics": "Far: plain background, left house and visible right-side lights behind glass; midground: studio and presenter; near: glass, water droplets and rain.",
-    "script_sha256": "e7c34f0dbf0fe1526f082641f490061154c926514e632451648d9c52ff69082a"
+    "script_sha256": "8d4561b2bdec983517205def5e2b88c6095bfbedc673f7793fb750db975bb4f0"
   }
 }
