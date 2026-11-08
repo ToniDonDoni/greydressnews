@@ -348,6 +348,10 @@ def validate(source, depth, metadata):
         raise ValueError("No right-side background lights were detected; review the light mask")
     if report["right_side_lights"]["pixel_count"] < 50:
         raise ValueError("The right-side background-light mask is unexpectedly small")
+    near_bytes = masks["near"].tobytes()
+    light_bytes = lights.tobytes()
+    if any(near and light for near, light in zip(near_bytes, light_bytes)):
+        raise ValueError("Right-side background lights overlap the foreground glass mask")
 
     for name, mask in masks.items():
         expected = {"far": FAR_DEPTH, "midground": MID_DEPTH, "near": NEAR_DEPTH}[name]
@@ -387,6 +391,11 @@ def main():
         report_path = EVIDENCE / "depth-report.json"
         if not report_path.is_file():
             raise SystemExit("Missing depth evidence report")
+        stored_report = json.loads(report_path.read_text())
+        if stored_report.get("depth_sha256") != metadata.get("depth_sha256"):
+            raise SystemExit("Depth evidence report checksum is stale")
+        if stored_report.get("regions") != report.get("regions"):
+            raise SystemExit("Depth evidence report statistics are stale")
         print(json.dumps(report, indent=2))
         return
 
