@@ -16,7 +16,7 @@ The map stores every polygon and light ellipse in pixel coordinates of the 1920 
 | News ticker, in front of the presenter and behind the glass | 21 |
 | Foreground glass with droplets | 1 |
 
-The right-side light regions and red trail overlap the glass in image coordinates. Their separate values express the intended depth ordering; this draft does not yet extract them into transparent image layers. The ticker is depth 21 across its full visible band. A single-channel depth PNG can hold only one value per pixel, so the `depth_bake.write_order` in the JSON resolves overlaps, with the ticker written last. This is a deliberate approximation until image layers are separated. Boundaries are intentionally rough and need review against every new photograph.
+The right-side light regions and red trail overlap the glass in image coordinates. Their separate values express the intended depth ordering; this draft does not yet extract them into transparent image layers. The presenter mask reaches the ticker top at y=978; the ticker is a distinct depth-21 region across the lower-third graphic. A single-channel depth PNG can hold only one value per pixel, so the `depth_bake.write_order` in the JSON resolves overlaps, with the ticker written last. This is a deliberate approximation until image layers are separated. Boundaries are intentionally rough and need review against every new photograph.
 
 ## Render a comparison
 

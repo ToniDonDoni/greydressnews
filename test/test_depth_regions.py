@@ -36,6 +36,8 @@ class DepthRegionTest(unittest.TestCase):
             with Image.open(first) as preview:
                 self.assertEqual(preview.size, (1920, 1585))
                 self.assertEqual(preview.format, "PNG")
+                ticker = next(region for region in load_map(MAP)["regions"] if region["id"] == "ticker")
+                self.assertEqual(preview.getpixel((1500, 978)), tuple(bytes.fromhex(ticker["color"][1:])))
 
     def test_new_photo_at_matching_aspect_ratio(self):
         with tempfile.TemporaryDirectory() as directory:

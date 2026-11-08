@@ -170,16 +170,19 @@ def render(photo_path, map_path, output_path):
     if photo.size != (width, height):
         photo = photo.resize((width, height), Image.Resampling.LANCZOS)
 
-    for region in data["regions"]:
+    by_id = {region["id"]: region for region in data["regions"]}
+    draw_order = data.get("depth_bake", {}).get("write_order", list(by_id))
+    regions = [by_id[region_id] for region_id in draw_order]
+    for region in regions:
         tint(photo, region)
 
     panel_height = 508
     canvas = Image.new("RGBA", (width, height + panel_height), (13, 22, 33, 255))
     canvas.paste(photo.convert("RGBA"), (0, 0))
     draw = ImageDraw.Draw(canvas)
-    for region in data["regions"]:
+    for region in regions:
         outline(draw, region)
-    for region in data["regions"]:
+    for region in regions:
         badge(draw, region)
 
     draw.rectangle((0, height, width, height + panel_height), fill=(13, 22, 33, 255))

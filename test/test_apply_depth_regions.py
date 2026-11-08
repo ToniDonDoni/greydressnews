@@ -45,6 +45,8 @@ class ApplyDepthRegionsTest(unittest.TestCase):
         next(region for region in changed["regions"] if region["id"] == "presenter")["depth"] = 35
         revised, _ = corrected_depth(neural, changed)
         self.assertNotEqual(at_reference_pixel(result, 950, 600), at_reference_pixel(revised, 950, 600))
+        self.assertNotEqual(at_reference_pixel(result, 950, 966), at_reference_pixel(revised, 950, 966))
+        self.assertEqual(at_reference_pixel(result, 950, 995), at_reference_pixel(revised, 950, 995))
 
     def test_cli_operation_keeps_neural_input(self):
         with tempfile.TemporaryDirectory() as directory:
