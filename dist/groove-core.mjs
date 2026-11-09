@@ -24,22 +24,60 @@ export function randomGenerator(seed) {
 
 // Each tuple is [MIDI note, beat offset, notated duration in beats].
 const THEME_A = [
-  [[70, 0, 0.5], [68, 0.5, 0.5], [70, 1, 1], [72, 2, 1]],
+  [
+    [70, 0, 0.5],
+    [68, 0.5, 0.5],
+    [70, 1, 1],
+    [72, 2, 1],
+  ],
   [[73, 0, 3]],
-  [[73, 0, 0.5], [72, 0.5, 0.5], [73, 1, 1], [75, 2, 1]],
+  [
+    [73, 0, 0.5],
+    [72, 0.5, 0.5],
+    [73, 1, 1],
+    [75, 2, 1],
+  ],
   [[77, 0, 3]],
-  [[77, 1, 1], [73, 2, 1]],
-  [[75, 0, 1.5], [70, 1.5, 0.5], [68, 2, 1]],
+  [
+    [77, 1, 1],
+    [73, 2, 1],
+  ],
+  [
+    [75, 0, 1.5],
+    [70, 1.5, 0.5],
+    [68, 2, 1],
+  ],
   [[69, 0, 3]],
-  [[77, 0, 1.5], [70, 1.5, 0.5], [68, 2, 1]],
+  [
+    [77, 0, 1.5],
+    [70, 1.5, 0.5],
+    [68, 2, 1],
+  ],
   [[68, 0, 3]],
   [[73, 0, 3]],
-  [[80, 0, 0.5], [78, 0.5, 0.5], [77, 1, 1], [80, 2, 1]],
+  [
+    [80, 0, 0.5],
+    [78, 0.5, 0.5],
+    [77, 1, 1],
+    [80, 2, 1],
+  ],
   [[77, 0, 3]],
-  [[80, 0, 1], [78, 1, 1], [77, 2, 1]],
-  [[81, 0, 1.5], [80, 1.5, 0.5], [78, 2, 1]],
+  [
+    [80, 0, 1],
+    [78, 1, 1],
+    [77, 2, 1],
+  ],
+  [
+    [81, 0, 1.5],
+    [80, 1.5, 0.5],
+    [78, 2, 1],
+  ],
   [[70, 0, 3]],
-  [[77, 0, 1.5], [75, 1.5, 0.5], [73, 2, 1]],
+  [
+    [77, 0, 1.5],
+    [75, 1.5, 0.5],
+    [73, 2, 1],
+  ],
   [[70, 0, 3]],
   [[78, 0, 3]],
 ];
@@ -120,7 +158,7 @@ function makePianoNote(note, velocityLayer) {
   for (let harmonic = 1; harmonic <= partials; harmonic++) {
     const frequencyOfPartial =
       frequency * harmonic * Math.sqrt(1 + inharmonicity * harmonic * harmonic);
-    const amplitude = (1 / harmonic ** 1.38) * (1 + (brightness - 1) * (harmonic - 1) / partials);
+    const amplitude = (1 / harmonic ** 1.38) * (1 + ((brightness - 1) * (harmonic - 1)) / partials);
     const damping = 0.86 + Math.max(0, note - 60) * 0.012 + harmonic * harmonic * 0.052;
     partialData.push({
       amplitude,
@@ -138,8 +176,7 @@ function makePianoNote(note, velocityLayer) {
       const envelope = Math.exp(-time * partial.damping) * partial.amplitude;
       let stringSignal = 0;
       for (let string = 0; string < strings.length; string++) {
-        stringSignal +=
-          Math.sin(TAU * partial.frequencies[string] * time) * stringWeights[string];
+        stringSignal += Math.sin(TAU * partial.frequencies[string] * time) * stringWeights[string];
       }
       sample += stringSignal * envelope;
     }
@@ -168,7 +205,10 @@ function addRoom(left, right) {
     Math.round(value * SAMPLE_RATE),
   );
 
-  for (const [channel, delays] of [[left, leftDelays], [right, rightDelays]]) {
+  for (const [channel, delays] of [
+    [left, leftDelays],
+    [right, rightDelays],
+  ]) {
     const dry = channel.slice();
     const wet = new Float32Array(length);
     for (let line = 0; line < delays.length; line++) {
