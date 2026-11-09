@@ -32,6 +32,10 @@ jobs:
           npm install --no-save --no-package-lock prettier playwright
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
+      - name: Preview formatted piano engine
+        run: |
+          npx prettier --write dist/groove-core.mjs
+          git --no-pager diff -- dist/groove-core.mjs
       - name: Check formatter
         run: npm run format:check
       - name: Validate committed semantic-region reference depth map
