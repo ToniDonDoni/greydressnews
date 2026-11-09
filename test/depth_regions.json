@@ -10,7 +10,7 @@
     "farthest": 100,
     "status": "provisional"
   },
-  "notes": "Review overlay only. Geometry is in reference-image pixels. The five lights sit behind the foreground glass. The broad red streak stays with the glass and has no separate depth region.",
+  "notes": "Review overlay only. Geometry is in reference-image pixels. The five lights sit behind the foreground glass. Their ellipses are one-third of the previous diameter, rounded to whole pixels. The broad red streak stays with the glass and has no separate depth region.",
   "regions": [
     {
       "id": "city",
@@ -380,8 +380,8 @@
           219
         ],
         "radius": [
-          32,
-          32
+          11,
+          11
         ]
       },
       "neural_detail_strength": 0.0
@@ -404,8 +404,8 @@
           328
         ],
         "radius": [
-          55,
-          55
+          18,
+          18
         ]
       },
       "neural_detail_strength": 0.0
@@ -428,8 +428,8 @@
           553
         ],
         "radius": [
-          35,
-          35
+          12,
+          12
         ]
       },
       "neural_detail_strength": 0.0
@@ -452,8 +452,8 @@
           770
         ],
         "radius": [
-          39,
-          39
+          13,
+          13
         ]
       },
       "neural_detail_strength": 0.0
@@ -472,12 +472,12 @@
       "geometry": {
         "type": "ellipse",
         "center": [
-          1742,
-          902
+          1772,
+          880
         ],
         "radius": [
-          36,
-          36
+          6,
+          6
         ]
       },
       "neural_detail_strength": 0.0

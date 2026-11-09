@@ -3,8 +3,8 @@
   "revision": "cfef6f6f2a70783dedc0bfae40cecbc2052285d3",
   "source": "references/ElGrayPimenovLeiterWindow2.png",
   "source_sha256": "c75794dbfe69920916fae155722dff042b3db787884db44a97a668b618406bd3",
-  "depth_sha256": "d760e4299ce696e246027869c61a61540d5a71bd7f8bd9faee08473fecdd2e64",
-  "generator_sha256": "1cf34995c6f37e5cd921d32d35c68296bfb04e87efbebb6664e01e6abf0151c4",
+  "depth_sha256": "1b051b2a3f311a883dfcf476d305ece50543fc91664279686d7bb48ba34cc415",
+  "generator_sha256": "bbe83fa6925ff5d59767762ccf37a18b1c82a33cef08bea1498dd027c6f13bf5",
   "source_size": [
     1920,
     1077
@@ -25,103 +25,81 @@
     "numpy": "2.4.6",
     "pillow": "13.0.0"
   },
-  "manual_depth_planes": {
-    "method": "hand_authored_three_plane_masks",
-    "depth_values": {
-      "far": 96,
-      "midground": 156,
-      "near": 236
-    },
-    "inverse_depth_semantics": "larger grayscale values are nearer",
-    "geometry": {
-      "studio_polygon": [
-        [
-          350,
-          0
+  "semantic_regions": {
+    "method": "semantic_regions_over_neural_depth",
+    "map": "test/depth_regions.json",
+    "map_sha256": "fa2faf0060dd01ddbeb1b71cbe209580c8282748f7d782a58f83c3320719e110",
+    "input_depth": "specs/evidence/depth-before.png",
+    "input_sha256": "a40cf327e5e7df65744ac7df33d7b0f50b3219b2ecb5f3dbe0e6505caee3987e",
+    "write_order": [
+      "city",
+      "studio_wall",
+      "presenter",
+      "front_glass",
+      "light_a",
+      "light_b",
+      "light_c",
+      "light_d",
+      "light_e",
+      "ticker"
+    ],
+    "light_ellipses": {
+      "light_a": {
+        "depth": 93,
+        "center": [
+          1893,
+          219
         ],
-        [
-          657,
-          0
-        ],
-        [
-          657,
-          573
-        ],
-        [
-          405,
-          573
+        "radius": [
+          11,
+          11
         ]
-      ],
-      "woman_left_extension": [
-        [
-          350,
-          190
+      },
+      "light_b": {
+        "depth": 90,
+        "center": [
+          1798,
+          328
         ],
-        [
-          378,
-          184
-        ],
-        [
-          399,
-          205
-        ],
-        [
-          410,
-          255
-        ],
-        [
-          402,
-          320
-        ],
-        [
-          394,
-          382
-        ],
-        [
-          408,
-          445
-        ],
-        [
-          431,
-          500
-        ],
-        [
-          403,
-          525
-        ],
-        [
-          376,
-          486
-        ],
-        [
-          357,
-          430
-        ],
-        [
-          345,
-          350
-        ],
-        [
-          342,
-          278
+        "radius": [
+          18,
+          18
         ]
-      ],
-      "glass_left_x": 658
+      },
+      "light_c": {
+        "depth": 87,
+        "center": [
+          1865,
+          553
+        ],
+        "radius": [
+          12,
+          12
+        ]
+      },
+      "light_d": {
+        "depth": 84,
+        "center": [
+          1844,
+          770
+        ],
+        "radius": [
+          13,
+          13
+        ]
+      },
+      "light_e": {
+        "depth": 81,
+        "center": [
+          1772,
+          880
+        ],
+        "radius": [
+          6,
+          6
+        ]
+      }
     },
-    "right_side_lights": {
-      "search_left_x": 940,
-      "red_core": "R>=180, R-G>=35, R-B>=25, R>=1.22*G",
-      "warm_core": "R>=200, G>=80, G<=0.78*R, B<=145",
-      "neutral_light": "x>=980, min(R,G,B)>=210, channel_range<=45",
-      "blue_core": "x>=980, B>=205, B-R>=30, B-G>=15",
-      "minimum_component_area": 10,
-      "maximum_component_area": 1200,
-      "maximum_component_side": 64,
-      "maximum_aspect_ratio": 3.5,
-      "maximum_mask_coverage_percent": 4.0,
-      "postprocessing": "3px median filter, compact connected-component filtering, 3px maximum filter"
-    },
-    "semantics": "Far: plain background, left house and visible right-side lights behind glass; midground: studio and presenter; near: glass, water droplets and rain.",
-    "script_sha256": "8d4561b2bdec983517205def5e2b88c6095bfbedc673f7793fb750db975bb4f0"
+    "notes": "Light ellipses A-D are one-third of their previous diameter. E was shifted up by half its previous diameter and then reduced to half of that diameter. Semantic regions are baked over the saved neural depth map."
   }
 }

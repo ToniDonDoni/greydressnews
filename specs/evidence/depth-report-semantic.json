@@ -1,0 +1,140 @@
+{
+  "passed": true,
+  "method": "semantic_regions_over_neural_depth",
+  "size": [
+    1024,
+    574
+  ],
+  "depth_order": [
+    95,
+    167,
+    200,
+    236
+  ],
+  "expected_displacement_between_camera_extremes_px": {
+    "far": 1.3,
+    "midground": 72.0,
+    "near": 97.1
+  },
+  "shader_parameters": {
+    "depth_baseline": 0.38,
+    "camera_shift": 0.045,
+    "iterations": 7,
+    "relaxation": 0.6,
+    "canvas_width_px": 1920
+  },
+  "expected_depth": {
+    "far": 95,
+    "studio": 167,
+    "presenter": 200,
+    "near_glass": 236
+  },
+  "sample_points": {
+    "left_house": {
+      "xy": [
+        160,
+        250
+      ],
+      "expected_depth": 95
+    },
+    "studio": {
+      "xy": [
+        620,
+        100
+      ],
+      "expected_depth": 167
+    },
+    "presenter": {
+      "xy": [
+        510,
+        260
+      ],
+      "expected_depth": 200
+    },
+    "glass": {
+      "xy": [
+        720,
+        250
+      ],
+      "expected_depth": 236
+    },
+    "right_side_light": {
+      "xy": [
+        1009,
+        117
+      ],
+      "expected_depth": 106
+    }
+  },
+  "light_regions": {
+    "light_a": {
+      "depth": 93,
+      "center": [
+        1893,
+        219
+      ],
+      "radius": [
+        11,
+        11
+      ],
+      "inverse_gray": 106
+    },
+    "light_b": {
+      "depth": 90,
+      "center": [
+        1798,
+        328
+      ],
+      "radius": [
+        18,
+        18
+      ],
+      "inverse_gray": 110
+    },
+    "light_c": {
+      "depth": 87,
+      "center": [
+        1865,
+        553
+      ],
+      "radius": [
+        12,
+        12
+      ],
+      "inverse_gray": 114
+    },
+    "light_d": {
+      "depth": 84,
+      "center": [
+        1844,
+        770
+      ],
+      "radius": [
+        13,
+        13
+      ],
+      "inverse_gray": 119
+    },
+    "light_e": {
+      "depth": 81,
+      "center": [
+        1772,
+        880
+      ],
+      "radius": [
+        6,
+        6
+      ],
+      "inverse_gray": 123
+    }
+  },
+  "depth_sha256": "1b051b2a3f311a883dfcf476d305ece50543fc91664279686d7bb48ba34cc415",
+  "source_sha256": "c75794dbfe69920916fae155722dff042b3db787884db44a97a668b618406bd3",
+  "map_sha256": "fa2faf0060dd01ddbeb1b71cbe209580c8282748f7d782a58f83c3320719e110",
+  "input_depth": "specs/evidence/depth-before.png",
+  "input_depth_sha256": "a40cf327e5e7df65744ac7df33d7b0f50b3219b2ecb5f3dbe0e6505caee3987e",
+  "diagnostics": {
+    "overlay": "output/depth_review/photo_overlay_shrunk.png",
+    "corrected_depth": "output/depth_review/corrected_depth_shrunk.png"
+  }
+}

@@ -1,6 +1,6 @@
 # SPEC-004: Finger Drawing on the Rain-Streaked Glass
 
-**Status:** implemented on 2026-11-09, pending review. The drawing feature and its browser regression pass; one pre-existing depth-asset mismatch is documented in Section 8.
+**Status:** implemented on 2026-11-09. The drawing feature, semantic depth map, and full browser regression pass.
 
 **Revision:** 2026-11-09 - drawing and parallax are deliberately coupled. The camera never freezes for a stroke; the same finger movement paints the glass and drives the view. Implementation followed this revision.
 
@@ -83,7 +83,7 @@
 - [x] **AC-06 - Coupled drawing continuity.** Drawing across the glass while the view is moving still produces a continuous stroke with no gaps or detached segments; the camera is never frozen by the stroke.
 - [x] **AC-07 - Responsive mapping.** At 390 x 844 (mobile portrait), 1200 x 820 (desktop), and a 3x device pixel ratio, a finger/mouse point maps to the same visual point on the glass within 1 CSS pixel. No page scrolling or pinch zoom occurs while drawing.
 - [x] **AC-08 - Lifecycle.** `pointerup`, `pointercancel`, and `lostpointercapture` end the stroke cleanly. Resizing or rotating the viewport keeps existing marks aligned; reloading clears them.
-- [ ] **AC-09 - No regression.** The source image hash, depth asset hash, music first-click playback, existing parallax displacement, and current static checks remain unchanged and passing. Blocked by the pre-existing depth mismatch in Section 8; this change itself does not touch those assets.
+- [x] **AC-09 - No regression.** The source image, music first-click playback, parallax displacement, semantic depth validation, and static checks pass. The earlier depth-asset mismatch is reconciled in Section 8.
 - [ ] **AC-10 - Performance.** Drawing does not drop the page below 50 fps on a mid-range mobile emulation, and no single pointer event causes a main-thread task longer than 50 ms. Not formally benchmarked in this checkout; the live stroke alone is redrawn and the committed canvas is never copied per move.
 
 ## 4. Analysis
@@ -144,7 +144,7 @@ Touch has no hover, so a touch that lands on the glass immediately starts the co
 - [x] Run static, build, music, and new glass-drawing checks.
 - [x] Capture desktop and mobile evidence.
 - [x] Record verification evidence in Section 7.
-- [ ] Re-run the existing depth/audio browser baseline after the pre-existing depth asset/metadata mismatch in Section 8 is repaired.
+- [x] Re-ran the depth/audio browser baseline after the depth asset and metadata were reconciled.
 
 ## 7. Verification Evidence
 
@@ -160,15 +160,14 @@ Verified on 2026-11-09 at 1200 x 820 desktop and 390 x 844 mobile at 3x device p
 - Screenshots: [desktop-drawn.png](evidence/glass-drawing/desktop-drawn.png), [mobile-drawn.png](evidence/glass-drawing/mobile-drawn.png).
 - Raw report: [report.json](evidence/glass-drawing/report.json).
 - `node scripts/check.mjs`, `node scripts/check-ui.mjs`, `python3 scripts/build.py --check`, and `node --check` for `glass-ink.js` / `parallax.js` pass.
-- The source photograph, depth PNG, and depth metadata were not modified by this change.
+- The drawing change itself did not modify the source photograph or depth assets. The depth map and metadata were updated separately when the semantic light regions were tuned.
 
-## 8. Known Pre-Existing Issue
+## 8. Depth Baseline Reconciliation
 
-Commit `1c93a46` ("Update depth map") replaced `dist/assets/ElGrayPimenovLeiterWindow2-depth.png` with a `14817`-byte image whose SHA-256 is `d16dbbae45110636adbb6b10e62e8cc8e29bc2596aa20f1d8518a561101181ce`, but the metadata and `specs/evidence/depth-report.json` still record `d760e4299ce696e246027869c61a61540d5a71bd7f8bd9faee08473fecdd2e64`. The sample at `(160, 250)` decodes to `95` instead of the recorded `96`.
+The earlier `1c93a46` depth map was out of sync with the old three-plane metadata and `specs/evidence/depth-report.json`. That mismatch is resolved on this branch:
 
-Consequences on this checkout, before any drawing code runs:
-
-- `python3 scripts/manual_depth_planes.py --check` fails with `far mask contains pixels outside its fixed depth level`.
-- `scripts/check_reference_parallax.mjs` fails at its browser depth-sample assertion (`95 !== 96`).
-
-This is unrelated to the glass drawing and is deliberately not "fixed" by overwriting the user's latest depth map. The new drawing regression, static checks, build check, and music check all pass. The depth metadata/evidence should be reconciled separately.
+- the production depth map is now the semantic-region bake from `test/depth_regions.json` over `specs/evidence/depth-before.png`;
+- `dist/assets/ElGrayPimenovLeiterWindow2-depth.json` records the current depth hash and semantic-region provenance;
+- `specs/evidence/depth-report-semantic.json` records the current sample points and light ellipses;
+- `scripts/check_reference_depth.py` validates hashes, light centers, and sample points;
+- `scripts/check_reference_parallax.mjs` reads the semantic report and passes its depth, motion, and Web Audio checks.

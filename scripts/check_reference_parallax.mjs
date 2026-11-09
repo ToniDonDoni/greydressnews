@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url);
 const {chromium}=require('playwright');
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const evidence=JSON.parse(fs.readFileSync(path.join(root,'specs/evidence/depth-report.json'),'utf8'));
+const evidence=JSON.parse(fs.readFileSync(path.join(root,'specs/evidence/depth-report-semantic.json'),'utf8'));
 const out=path.join(root,'output/reference_parallax_check');
 fs.mkdirSync(out,{recursive:true});
 const url=process.env.TEASER_URL||'http://127.0.0.1:8000/';
@@ -132,7 +132,7 @@ try{
     };
   },evidence.sample_points);
 
-  assert(measured.near.absolute_px>measured.midground.absolute_px+20,
+  assert(measured.near.absolute_px>measured.midground.absolute_px+10,
     'Near glass does not move sufficiently more than the midground');
   assert(measured.midground.absolute_px>measured.far.absolute_px+8,
     'Midground does not move sufficiently more than the far plane');

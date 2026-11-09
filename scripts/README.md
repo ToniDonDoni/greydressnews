@@ -113,7 +113,7 @@ python3 -m http.server 8001 --directory output/site_preview
 
 Open `http://127.0.0.1:8001/` and move the pointer or drag on a phone. Inspect both camera extremes for cut edges, holes, and whether the city, presenter, studio, ticker, five lights, and glass move in a believable order. The broad red streak should remain attached to the glass. Stop the server with Ctrl-C. `output/` is ignored by Git.
 
-`scripts/check_reference_parallax.mjs` is currently tied to the committed three-plane map and its saved evidence. It is a baseline test for the current published map, not an acceptance test for this new candidate.
+`scripts/check_reference_parallax.mjs` reads `specs/evidence/depth-report-semantic.json` and is the browser acceptance test for the current published semantic-region map.
 
 ## Run and check the current page
 
@@ -121,7 +121,7 @@ The page already lives in `dist/`. The following commands validate the committed
 
 ```sh
 python3 scripts/build.py --check
-output/depth_venv/bin/python scripts/manual_depth_planes.py --check
+python3 scripts/check_reference_depth.py
 node scripts/check.mjs
 node scripts/check-ui.mjs
 python3 scripts/check_build.py
@@ -148,7 +148,7 @@ The glass check writes captures and a report under `output/glass_drawing_check/`
 
 ## Promote a candidate
 
-The new region workflow currently stops at a reviewable candidate. Copying `corrected_depth.png` directly into `dist/assets/` would leave the committed reference-depth metadata, three-plane evidence, `scripts/manual_depth_planes.py --check`, and `scripts/check_reference_parallax.mjs` out of sync. Before publishing a candidate, update those validation rules and the depth metadata for the new map, run the browser test against its expected regions, then commit the new photo, depth PNG, metadata, and evidence together. The older `scripts/make_reference_depth.py` and `scripts/manual_depth_planes.py` still produce the previous three-plane map; do not use them to bake the new region scheme.
+The current reference map is promoted from `test/depth_regions.json`. To rebuild it, run `scripts/apply_depth_regions.py` from `specs/evidence/depth-before.png`, update `dist/assets/ElGrayPimenovLeiterWindow2-depth.png`, its metadata, and `specs/evidence/depth-report-semantic.json`, then run `scripts/check_reference_depth.py` and `scripts/check_reference_parallax.mjs`. The older `scripts/make_reference_depth.py` and `scripts/manual_depth_planes.py` still produce the previous three-plane map; do not use them for the current semantic map.
 
 `.github/workflows/pages.yml` currently builds on pushes to `teaser` and `fix/flat-front-glass-depth`, and on pull requests to `teaser`. Deployment occurs on a push to `teaser` or a manual workflow dispatch. `.github/workflows/bake-manual-depth.yml` is the older three-plane baking workflow on `fix/flat-front-glass-depth`.
 
@@ -162,10 +162,11 @@ The new region workflow currently stops at a reviewable candidate. Copying `corr
 | `test/test_depth_regions.py` | Check mask values and repeatable overlay rendering. |
 | `test/test_apply_depth_regions.py` | Check correction order, depth conversion, and input preservation. |
 | `scripts/download_depth_model.py` | Download or verify the pinned local Core ML model cache. |
+| `scripts/check_reference_depth.py` | Validate hashes, light centers, and sample points for the committed semantic reference depth map. |
 | `scripts/manual_depth_planes.py` | Bake or validate the earlier three-plane reference map and evidence. |
 | `scripts/make_reference_depth.py` | Infer reference depth, then apply the earlier three-plane correction. |
 | `scripts/check_glass_drawing.mjs` | Browser regression for glass hit-testing, finger ink, coupled parallax, clipping, and mobile touch. |
-| `scripts/check_reference_parallax.mjs` | Browser and Web Audio regression for the committed reference page and old depth evidence. |
+| `scripts/check_reference_parallax.mjs` | Browser and Web Audio regression for the committed reference page and semantic depth evidence. |
 | `scripts/build.py` | Validate static assets with `--check`; without it, regenerate the legacy cafe depth. |
 | `scripts/check_build.py` | Check missing/stale cafe map errors and model-cache behavior. |
 | `scripts/check.mjs` | Check repository text, local assets, and procedural audio output. |

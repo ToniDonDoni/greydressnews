@@ -45,7 +45,7 @@ output/depth_venv/bin/python scripts/apply_depth_regions.py --photo references/E
 
 For the current reference image, `specs/evidence/depth-before.png` can be used as the saved raw neural map. The correction script writes an 8-bit inverse-depth PNG and a JSON report beside it. It never overwrites its input. The review scale maps 1 (nearest) to grayscale 236 and 100 (farthest) to grayscale 96, matching the existing shader's working range. `neural_detail_strength` in each region keeps a controlled amount of the neural map's local variation; zero makes a region flat. Mask edges are antialiased when scaled to the neural map's resolution.
 
-Review the corrected map and browser motion before replacing `dist/assets/ElGrayPimenovLeiterWindow2-depth.png`. The existing production generator still uses the earlier three-plane correction; this separate raw generator leaves production files unchanged.
+Review the corrected map and browser motion before replacing `dist/assets/ElGrayPimenovLeiterWindow2-depth.png`. The current production map is the semantic-region bake from this JSON over `specs/evidence/depth-before.png`; `python3 scripts/check_reference_depth.py` validates the committed result.
 
 ## Check the reusable overlay
 
