@@ -1,6 +1,6 @@
 # Project scripts and workflows
 
-Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the reference photograph, its depth PNG, the WebGL parallax script, and the procedural music module directly.
+Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the reference photograph, its depth PNG, the WebGL parallax script, the glass-ink layer, and the procedural music module directly.
 
 This guide is the entry point for working on the current reference-photo page. The depth-region schema and editable coordinates are described in [test/README.md](../test/README.md); project conventions are in [CONTRIBUTING.md](../CONTRIBUTING.md). Photo-taking commands below use the committed `references/ElGrayPimenovLeiterWindow2.png` image and can be pasted as written. For a new photo, replace that path in each command with the path to your actual image; quote paths containing spaces.
 
@@ -140,10 +140,11 @@ For the browser regression, keep that server running in one terminal. In another
 ```sh
 npm install --no-save --no-package-lock playwright
 npx playwright install chromium
+TEASER_URL=http://127.0.0.1:8000/ node scripts/check_glass_drawing.mjs
 TEASER_URL=http://127.0.0.1:8000/ node scripts/check_reference_parallax.mjs
 ```
 
-The browser check writes captures and a report under `output/reference_parallax_check/`. The GitHub Pages workflow runs these checks for the current map, plus JavaScript syntax checks. `python3 scripts/build.py` without `--check` is different: it regenerates the legacy cafe depth asset, not the current reference-photo depth map.
+The glass check writes captures and a report under `output/glass_drawing_check/`; the depth/audio check writes under `output/reference_parallax_check/`. The GitHub Pages workflow runs both, plus JavaScript syntax checks. `python3 scripts/build.py` without `--check` is different: it regenerates the legacy cafe depth asset, not the current reference-photo depth map.
 
 ## Promote a candidate
 
@@ -163,6 +164,7 @@ The new region workflow currently stops at a reviewable candidate. Copying `corr
 | `scripts/download_depth_model.py` | Download or verify the pinned local Core ML model cache. |
 | `scripts/manual_depth_planes.py` | Bake or validate the earlier three-plane reference map and evidence. |
 | `scripts/make_reference_depth.py` | Infer reference depth, then apply the earlier three-plane correction. |
+| `scripts/check_glass_drawing.mjs` | Browser regression for glass hit-testing, finger ink, coupled parallax, clipping, and mobile touch. |
 | `scripts/check_reference_parallax.mjs` | Browser and Web Audio regression for the committed reference page and old depth evidence. |
 | `scripts/build.py` | Validate static assets with `--check`; without it, regenerate the legacy cafe depth. |
 | `scripts/check_build.py` | Check missing/stale cafe map errors and model-cache behavior. |

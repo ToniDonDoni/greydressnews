@@ -12,13 +12,18 @@
 <main>
   <div class="art-shell">
   <figure class="painting" id="painting">
-    <img id="poster" src="assets/ElGrayPimenovLeiterWindow2.png" alt="A television presenter in a gray dress, with a city building on the left and rain-streaked glass and red lights on the right.">
+    <img id="poster" draggable="false" src="assets/ElGrayPimenovLeiterWindow2.png" alt="A television presenter in a gray dress, with a city building on the left and rain-streaked glass and red lights on the right.">
     <canvas id="depth-view" aria-hidden="true"></canvas>
+    <div class="ink-layer" id="ink-layer" aria-hidden="true">
+      <canvas id="glass-ink" width="1920" height="1077"></canvas>
+      <canvas id="glass-ink-live" width="1920" height="1077"></canvas>
+    </div>
     <div class="loading" id="loading">Preparing the depth view...</div>
   </figure>
   </div>
-  <footer><span>WINDOW / DEPTH STUDY</span><span class="hint">move the pointer or drag to explore</span></footer>
+  <footer><span>WINDOW / DEPTH STUDY</span><span class="hint">move to explore / draw on the glass</span></footer>
 </main>
+<script src="glass-ink.js"></script>
 <script src="parallax.js"></script>
 <script type="module" src="music.mjs"></script>
 </body>

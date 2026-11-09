@@ -38,6 +38,7 @@ jobs:
         run: |
           node --check dist/scene.js
           node --check dist/parallax.js
+          node --check dist/glass-ink.js
           node --check dist/music.mjs
           node --check dist/groove-core.mjs
       - name: Verify committed depth and static build (no model download)
@@ -59,10 +60,21 @@ jobs:
           done
           cat /tmp/teaser-http.log
           exit 1
+      - name: Test finger drawing and coupled parallax on the glass
+        env:
+          TEASER_URL: http://127.0.0.1:8000/
+        run: node scripts/check_glass_drawing.mjs
       - name: Measure rendered far, midground, and near parallax
         env:
           TEASER_URL: http://127.0.0.1:8000/
         run: node scripts/check_reference_parallax.mjs
+      - name: Upload glass drawing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: glass-drawing-evidence
+          path: output/glass_drawing_check/
+          if-no-files-found: warn
       - name: Upload depth-plane browser evidence
         if: always()
         uses: actions/upload-artifact@v4

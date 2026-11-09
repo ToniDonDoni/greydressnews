@@ -8,6 +8,10 @@
   const loading=document.getElementById('loading');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const state={ready:false,x:0,y:0,targetX:0,targetY:0,error:null};
+  // The shader's near-glass displacement after seven 0.6 mixes. Exposed to
+  // glass-ink.js so the ink layer stays registered to the same plane.
+  const NEAR_GLASS_SHIFT_UV=0.045*(236/255-0.38)*(1-Math.pow(0.4,7));
+  window.parallaxView={get x(){return state.x},nearShiftUv:NEAR_GLASS_SHIFT_UV};
   let gl=null,program=null,uniforms=null;
   let photoTexture=null,depthTexture=null,dragPointer=null;
   let previous=performance.now();
@@ -39,6 +43,7 @@
     gl.viewport(0,0,view.width,view.height);
     gl.uniform2f(uniforms.camera,state.x,state.y);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    painting.style.setProperty('--ink-shift-x',(state.x*NEAR_GLASS_SHIFT_UV/0.95*100).toFixed(5)+'%');
   }
   function frame(now){
     const dt=Math.min(100,Math.max(0,now-previous));previous=now;
@@ -102,7 +107,9 @@
     dragPointer=null;setTarget(0,0);
   }
   for(const name of ['pointerup','pointercancel','lostpointercapture'])painting.addEventListener(name,release);
-  painting.addEventListener('pointerleave',event=>{if(event.pointerType==='mouse'&&dragPointer===null)setTarget(0,0)});
+  painting.addEventListener('pointerleave',event=>{
+    if(event.pointerType==='mouse'&&dragPointer===null&&!window.glassInk?.active)setTarget(0,0);
+  });
   reduced.addEventListener('change',event=>{if(event.matches)setTarget(0,0)});
   photo.onload=initialize;
   if(photo.complete&&photo.naturalWidth)initialize();
