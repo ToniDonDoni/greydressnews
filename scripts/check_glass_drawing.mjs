@@ -311,7 +311,19 @@ try{
         if (data[offset + 3] > 100) color = data.slice(offset, offset + 3);
       }
     }
-    return { count, bounds: [minX, minY, maxX, maxY], color };
+    const alphaAt = (x, y) => data[(Math.round(y) * canvas.width + Math.round(x)) * 4 + 3];
+    const arcXOffset = 280 * 0.42 * 0.5;
+    const arcYOffset = 230 * 0.42 * Math.sqrt(3) / 2;
+    const lowerLeftArcAlpha = alphaAt(1580 - arcXOffset, 470 + arcYOffset);
+    const lowerRightArcAlpha = alphaAt(1580 + arcXOffset, 470 + arcYOffset);
+
+    return {
+      count,
+      bounds: [minX, minY, maxX, maxY],
+      color,
+      lowerLeftArcAlpha,
+      lowerRightArcAlpha,
+    };
   });
   assert(hintStats.count > 1000, 'The sunlit hint must draw visible pixels');
   assert(hintStats.bounds[0] >= 1240 && hintStats.bounds[2] <= 1920,
@@ -323,6 +335,8 @@ try{
     'The letter hint must include its looped bowl');
   assert(hintStats.color[0] > hintStats.color[1] && hintStats.color[1] > hintStats.color[2],
     'The hint must use a pale warm-yellow color');
+  assert(hintStats.lowerLeftArcAlpha > hintStats.lowerRightArcAlpha + 35,
+    'The letter hint bowl must be mirrored toward the left side of its vertical axis');
   await hintPage.locator('#painting').screenshot({
     path: path.join(out, 'desktop-music-letter-e-hint.png'),
   });

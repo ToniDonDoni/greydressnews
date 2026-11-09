@@ -68,6 +68,10 @@
     hintContext.fillStyle = halo;
     hintContext.fillRect(x - haloRadius, y - haloRadius, haloRadius * 2, haloRadius * 2);
 
+    // Mirror the letter around its own vertical centerline.
+    hintContext.translate(x * 2, 0);
+    hintContext.scale(-1, 1);
+
     hintContext.beginPath();
     hintContext.moveTo(x + width * 0.45, y);
     hintContext.lineTo(x - width * 0.42, y);

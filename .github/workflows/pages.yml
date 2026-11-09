@@ -2,9 +2,9 @@ name: Publish to GitHub Pages
 
 on:
   push:
-    branches: [teaser, fix/flat-front-glass-depth, feat/music-letter-e-gesture]
+    branches: [teaser, fix/flat-front-glass-depth, feat/music-letter-e-gesture, fix/mirror-music-letter-hint]
   pull_request:
-    branches: [teaser, feat/procedural-waltz-piano]
+    branches: [teaser, feat/procedural-waltz-piano, feat/music-letter-e-gesture]
   workflow_dispatch:
 
 permissions:
