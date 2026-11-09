@@ -191,19 +191,29 @@ try{
       x: 0.12 + index * 0.004,
       y: 0.5 + (index % 2) * 0.003,
     }));
+    const irregularLoop = Array.from({ length: 49 }, (_, index) => {
+      const angle = (Math.PI * 2 * index) / 48;
+      const irregularRadius = radius * (1 + 0.55 * Math.sin(3 * angle));
+      return {
+        x: 0.18 + (Math.cos(angle) * irregularRadius) / box.width,
+        y: 0.5 + (Math.sin(angle) * irregularRadius) / box.height,
+      };
+    });
     return {
       leftCircle: window.glassInk.recognizeMusicCircle(circle),
       middleCircle: window.glassInk.recognizeMusicCircle(middleCircle),
       openLine: window.glassInk.recognizeMusicCircle(openLine),
+      irregularLoop: window.glassInk.recognizeMusicCircle(irregularLoop),
     };
   });
   assert.equal(recognition.leftCircle, true, 'A closed circle in the left third must be recognized');
   assert.equal(recognition.middleCircle, false, 'A circle outside the left third must be ignored');
   assert.equal(recognition.openLine, false, 'An open scribble must not change the music');
+  assert.equal(recognition.irregularLoop, false, 'An irregular closed scribble must not change the music');
 
   assert.equal(await page.evaluate(() => window.musicPlayback.theme), 'legacy',
     'The original groove must remain the default theme');
-  const circleCenterX = 0.18;
+  const circleCenterX = 0.27;
   const circleCenterY = 0.5;
   const circleRadius = Math.min(painting.width, painting.height) * 0.12;
   await page.mouse.move(x(circleCenterX + circleRadius / painting.width), y(circleCenterY));
@@ -268,7 +278,7 @@ try{
   // A finger-drawn circle in the left third selects the waltz on mobile as well.
   const mobileRadius = Math.min(mobileBox.width, mobileBox.height) * 0.12;
   const mobileCircleStart = {
-    x: mx(0.18 + mobileRadius / mobileBox.width),
+    x: mx(0.27 + mobileRadius / mobileBox.width),
     y: my(0.5),
   };
   await cdp.send('Input.dispatchTouchEvent', {
@@ -280,7 +290,7 @@ try{
     await cdp.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
       touchPoints: [{
-        x: mx(0.18 + (Math.cos(angle) * mobileRadius) / mobileBox.width),
+        x: mx(0.27 + (Math.cos(angle) * mobileRadius) / mobileBox.width),
         y: my(0.5 + (Math.sin(angle) * mobileRadius) / mobileBox.height),
       }],
     });

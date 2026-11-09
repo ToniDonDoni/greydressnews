@@ -12,7 +12,7 @@
 - Keep the original procedural groove as the default theme. It must start on the first trusted pointer/touch gesture, as it did before the waltz change.
 - Keep the score-aligned piano waltz as a second theme. Preserve its 33-measure, both-hands transcription, Salamander piano samples, and procedural fallback.
 - A closed circle drawn in the left third of the artwork selects the piano waltz. The gesture must be recognized from its path geometry, not from a click, tap, or fixed coordinate alone.
-- Ignore open strokes, irregular scribbles, circles outside the left third, and gestures that are cancelled.
+- Ignore open strokes, irregular closed scribbles, circles outside the left third, and gestures that are cancelled.
 - Switch immediately after the circle is completed, using a short crossfade. Start the waltz at measure 1 without recreating the AudioContext.
 - Keep the original 80 percent master gain, first-gesture activation, mobile resume retry, and no-visible-audio-controls behavior.
 - Preserve the artwork, depth map, glass drawing, parallax renderer, and mobile interaction.
@@ -22,7 +22,7 @@
 - [x] **AC-01 - Default theme.** The original 74 BPM, 4/4 procedural groove remains the first theme and starts on the first trusted gesture.
 - [x] **AC-02 - Alternate theme.** The piano waltz retains the 165 BPM, 3/4 score transcription of measures 1-33 for both hands.
 - [x] **AC-03 - Circle recognition.** A closed, near-circular pointer path whose center is in the left third selects the waltz.
-- [x] **AC-04 - False-positive rejection.** Open scribbles and circles outside the left third do not select the waltz.
+- [x] **AC-04 - False-positive rejection.** Open strokes, irregular closed scribbles, and circles outside the left third do not select the waltz.
 - [x] **AC-05 - Immediate transition.** The completed circle crossfades to the waltz, starting at measure 1, without creating another AudioContext.
 - [x] **AC-06 - Sample readiness.** The waltz uses recorded Salamander piano notes when decoded and its procedural piano remains available while samples load or if loading fails.
 - [x] **AC-07 - Mobile behavior.** Touch circles select the waltz; the original touch activation and blocked-resume retry still work.

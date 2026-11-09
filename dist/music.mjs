@@ -3,11 +3,7 @@ import {
   SAMPLE_RATE as LEGACY_SAMPLE_RATE,
   BPM as LEGACY_BPM,
 } from './legacy-groove.mjs';
-import {
-  WaltzSynth,
-  SAMPLE_RATE as WALTZ_SAMPLE_RATE,
-  BPM as WALTZ_BPM,
-} from './groove-core.mjs';
+import { WaltzSynth, SAMPLE_RATE as WALTZ_SAMPLE_RATE, BPM as WALTZ_BPM } from './groove-core.mjs';
 import { PianoSampler } from './piano-samples.mjs';
 
 const DEFAULT_VOLUME = 0.8;

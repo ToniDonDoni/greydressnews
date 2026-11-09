@@ -128,7 +128,7 @@
     if (circlePointer !== null || event.isPrimary === false) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     const point = normalizedPoint(event.clientX, event.clientY);
-    if (!point || point.x < 0 || point.x > 1 / 3 || point.y < 0 || point.y > 1) return;
+    if (!point || point.x < 0 || point.x > 0.5 || point.y < 0 || point.y > 1) return;
     circlePointer = event.pointerId;
     circlePoints = [point];
     try {
