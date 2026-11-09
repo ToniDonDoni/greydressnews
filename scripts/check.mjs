@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import { SCORE_LEFT_HAND, SCORE_RIGHT_HAND } from '../dist/waltz-score.mjs';
 import {
   WaltzSynth,
   SAMPLE_RATE,
@@ -52,7 +53,7 @@ for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){
   if(/^(?:https?:|data:)/.test(match[1]))continue;
   assert(fs.existsSync(path.join(dist,match[1])),`Missing local resource: ${match[1]}`);
 }
-for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
+for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs','waltz-score.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
 const windows=JSON.parse(fs.readFileSync(path.join(dist,'assets/windows.json'),'utf8'));
 assert(windows.length>0&&windows.every(w=>w.x>=0&&w.x<1024&&w.y>=0&&w.y<1024&&/^#[0-9a-f]{6}$/i.test(w.color)),'Invalid window data');
 
@@ -70,40 +71,70 @@ assert.equal(SECTION_A_BARS,18,'The first score section must span about 20 secon
 assert.equal(SECTION_B_BARS,15,'The second score section must span about 16 seconds');
 assert.equal(PHRASE_CYCLE_BARS,33,'The two score sections must form a 33-bar cycle');
 
-const sectionProbe=new WaltzSynth(112026);
-assert.equal(sectionProbe.planBar(0).section,'A');
-assert.equal(sectionProbe.planBar(17).section,'A');
-assert.equal(sectionProbe.planBar(18).section,'B');
-assert.equal(sectionProbe.planBar(32).section,'B');
-assert.equal(sectionProbe.planBar(33).section,'A','The two sections must alternate and loop');
-assert.equal(sectionProbe.planBar(0).events.filter(e=>e.role==='melody').length,4);
-assert.equal(sectionProbe.planBar(0).events.some(e=>e.role==='bass'),false,
-  'The opening bar must preserve the score opening with no left-hand entry');
-assert.equal(sectionProbe.planBar(1).events.some(e=>e.role==='bass'),true);
-const secondOpening=sectionProbe.planBar(18);
-const secondOpeningMelody=secondOpening.events.filter(e=>e.role==='melody');
-assert.deepEqual(secondOpeningMelody.map(e=>[e.note,e.beat,e.durationBeats]),
-  [[85,0,.5],[84,.5,.5],[85,1,1],[87,2,1]],
-  'The second theme opening must match the approved corrected preview');
-assert.equal(secondOpening.events.some(e=>e.role==='bass'),false,
-  'The corrected preview starts the second theme with a held chord, not bass');
-assert.deepEqual(secondOpening.events.filter(e=>e.role==='chord').map(e=>e.note),
-  [61,65,68],'The opening chord must match the corrected preview');
-assert(secondOpening.events.filter(e=>e.role==='chord').every(e=>e.beat===0&&e.durationBeats===2.8),
-  'The opening accompaniment must sustain rather than strike beats two and three');
-assert.deepEqual(sectionProbe.planBar(19).events.filter(e=>e.role==='melody').map(e=>e.note),
-  [89,85,82,85,82,85],'The second bar of the new section must match the preview');
-assert.deepEqual(sectionProbe.planBar(19).events.filter(e=>e.role==='bass').map(e=>e.note),
-  [42],'Bass must re-enter in the next measure');
-assert.deepEqual(sectionProbe.planBar(25).events.filter(e=>e.role==='melody').map(e=>e.note),
-  [87,82,79,82,79,82],'The middle passage must preserve the corrected contour');
-assert.deepEqual(sectionProbe.planBar(32).events.filter(e=>e.role==='melody').map(e=>e.note),
-  [89,80,87,80,85,80],'The corrected theme must match the preview through its last measure');
-assert.deepEqual(sectionProbe.planBar(33).events.filter(e=>e.role==='melody').map(e=>[e.note,e.beat,e.durationBeats]),
-  sectionProbe.planBar(0).events.filter(e=>e.role==='melody').map(e=>[e.note,e.beat,e.durationBeats]),
-  'The unchanged opening theme must still follow the second section');
-assert(sectionProbe.planBar(18).events.every(e=>e.kind==='piano'),
-  'The arrangement must contain piano only, with no hip-hop drum voices');
+assert.equal(SCORE_RIGHT_HAND.length, PHRASE_CYCLE_BARS);
+assert.equal(SCORE_LEFT_HAND.length, PHRASE_CYCLE_BARS);
+assert.equal(SCORE_RIGHT_HAND.reduce((sum, bar) => sum + bar.length, 0), 124,
+  'The transcription must contain all 124 right-hand notes');
+assert.equal(SCORE_LEFT_HAND.reduce((sum, bar) => sum + bar.length, 0), 157,
+  'The transcription must contain all 157 left-hand notes');
+
+const sectionProbe = new WaltzSynth(112026);
+assert.equal(sectionProbe.planBar(0).section, 'A');
+assert.equal(sectionProbe.planBar(17).section, 'A');
+assert.equal(sectionProbe.planBar(18).section, 'B');
+assert.equal(sectionProbe.planBar(32).section, 'B');
+assert.equal(sectionProbe.planBar(33).section, 'A', 'The 33-measure score must loop');
+
+const tuple = (event) => [event.note, event.beat, event.durationBeats, event.velocity];
+for (let measure = 0; measure < PHRASE_CYCLE_BARS; measure++) {
+  const plan = sectionProbe.planBar(measure);
+  assert.deepEqual(
+    plan.events.filter((event) => event.role === 'melody').map(tuple),
+    SCORE_RIGHT_HAND[measure],
+    'Right-hand transcription mismatch in measure ' + (measure + 1),
+  );
+  assert.deepEqual(
+    plan.events.filter((event) => event.role !== 'melody').map(tuple),
+    SCORE_LEFT_HAND[measure],
+    'Left-hand transcription mismatch in measure ' + (measure + 1),
+  );
+  assert(plan.events.every((event) => event.kind === 'piano'),
+    'The arrangement must contain piano only, with no hip-hop drum voices');
+}
+
+assert.equal(sectionProbe.planBar(0).events.filter((event) => event.role === 'melody').length, 4);
+assert.equal(sectionProbe.planBar(0).events.some((event) => event.role === 'bass'), false,
+  'The opening measure must preserve its right-hand-only entry');
+assert.equal(sectionProbe.planBar(1).events.some((event) => event.role === 'bass'), true);
+
+const secondOpening = sectionProbe.planBar(18);
+assert.equal(secondOpening.events.some((event) => event.role === 'bass'), false,
+  'Measure 19 begins with a sustained left-hand dyad');
+assert.deepEqual(
+  secondOpening.events.filter((event) => event.role === 'chord').map(tuple),
+  [[54, 0, 3, 52], [58, 0, 3, 52]],
+);
+assert.deepEqual(
+  sectionProbe.planBar(19).events.filter((event) => event.role === 'melody').map((event) => event.note),
+  [89, 85, 82, 85, 82, 85],
+);
+assert.deepEqual(
+  sectionProbe.planBar(19).events.filter((event) => event.role === 'bass').map((event) => event.note),
+  [42],
+);
+assert.deepEqual(
+  sectionProbe.planBar(25).events.filter((event) => event.role === 'melody').map((event) => event.note),
+  [87, 82, 79, 82, 79, 82],
+);
+assert.deepEqual(
+  sectionProbe.planBar(32).events.filter((event) => event.role === 'melody').map((event) => event.note),
+  [89, 80, 87, 80, 85, 80],
+);
+assert.deepEqual(
+  sectionProbe.planBar(33).events.filter((event) => event.role === 'melody').map(tuple),
+  SCORE_RIGHT_HAND[0],
+  'The first measure must follow the complete 33-measure transcription',
+);
 
 const synth=new WaltzSynth(112026),bars=PHRASE_CYCLE_BARS,total=Math.ceil((bars*BAR_SECONDS+3.25)*SAMPLE_RATE);
 const left=new Float32Array(total),right=new Float32Array(total);

@@ -1,3 +1,5 @@
+import { SCORE_LEFT_HAND, SCORE_RIGHT_HAND } from './waltz-score.mjs';
+
 // Procedural felt-piano waltz inspired by the supplied D-flat major score.
 export const SAMPLE_RATE = 24000;
 export const BPM = 165;
@@ -22,132 +24,12 @@ export function randomGenerator(seed) {
   };
 }
 
-// Each tuple is [MIDI note, beat offset, notated duration in beats].
-const THEME_A = [
-  [
-    [70, 0, 0.5],
-    [68, 0.5, 0.5],
-    [70, 1, 1],
-    [72, 2, 1],
-  ],
-  [[73, 0, 3]],
-  [
-    [73, 0, 0.5],
-    [72, 0.5, 0.5],
-    [73, 1, 1],
-    [75, 2, 1],
-  ],
-  [[77, 0, 3]],
-  [
-    [77, 1, 1],
-    [73, 2, 1],
-  ],
-  [
-    [75, 0, 1.5],
-    [70, 1.5, 0.5],
-    [68, 2, 1],
-  ],
-  [[69, 0, 3]],
-  [
-    [77, 0, 1.5],
-    [70, 1.5, 0.5],
-    [68, 2, 1],
-  ],
-  [[68, 0, 3]],
-  [[73, 0, 3]],
-  [
-    [80, 0, 0.5],
-    [78, 0.5, 0.5],
-    [77, 1, 1],
-    [80, 2, 1],
-  ],
-  [[77, 0, 3]],
-  [
-    [80, 0, 1],
-    [78, 1, 1],
-    [77, 2, 1],
-  ],
-  [
-    [81, 0, 1.5],
-    [80, 1.5, 0.5],
-    [78, 2, 1],
-  ],
-  [[70, 0, 3]],
-  [
-    [77, 0, 1.5],
-    [75, 1.5, 0.5],
-    [73, 2, 1],
-  ],
-  [[70, 0, 3]],
-  [[78, 0, 3]],
-];
+// MIDI velocities retain the dynamics marked in the score.
+const VELOCITY_GAIN = Object.freeze({ melody: 0.82, bass: 1.05, chord: 0.58 });
 
-// The second theme follows the approved score-aligned piano preview.
-// Each melody tuple is [MIDI note, beat offset, duration in beats].
-const THEME_B = [
-  [
-    [85, 0, 0.5],
-    [84, 0.5, 0.5],
-    [85, 1, 1],
-    [87, 2, 1],
-  ],
-  ...[
-    [89, 85, 82, 85, 82, 85],
-    [89, 85, 82, 85, 90, 85],
-    [89, 85, 82, 85, 82, 85],
-    [89, 85, 82, 85, 92, 85],
-    [89, 85, 80, 85, 80, 85],
-    [89, 85, 80, 85, 92, 85],
-    [87, 82, 79, 82, 79, 82],
-    [87, 85, 84, 85, 87, 89],
-    [89, 82, 94, 82, 92, 82],
-    [90, 82, 89, 82, 87, 82],
-    [89, 82, 94, 82, 92, 82],
-    [90, 82, 89, 82, 87, 82],
-    [89, 80, 92, 80, 90, 80],
-    [89, 80, 87, 80, 85, 80],
-  ].map((notes) => notes.map((note, index) => [note, index * 0.5, 0.5])),
-];
-
-// Bass note plus a close-position triad for the two chord beats.
-const HARMONY_A = [
-  null,
-  [42, [54, 58, 61]], // G-flat
-  [42, [54, 58, 61]],
-  [39, [51, 54, 58]], // E-flat minor
-  [39, [51, 54, 58]],
-  [42, [54, 58, 61]],
-  [37, [49, 53, 56]], // D-flat
-  [37, [49, 53, 56]],
-  [32, [56, 60, 63]], // A-flat
-  [32, [56, 60, 63]],
-  [34, [58, 61, 65]], // B-flat minor
-  [29, [53, 56, 60]], // F minor
-  [30, [54, 58, 61]], // G-flat
-  [37, [49, 53, 56]],
-  [32, [56, 60, 63]],
-  [34, [58, 61, 65]],
-  [29, [53, 56, 60]],
-  [30, [54, 58, 61]],
-];
-
-const HARMONY_B = [
-  [37, [61, 65, 68]], // Opening held chord, without the bass note.
-  [42, [61, 65, 70]],
-  [49, [58, 61, 65]],
-  [42, [61, 65, 70]],
-  [49, [58, 61, 65]],
-  [39, [58, 61, 65]],
-  [49, [58, 61, 65]],
-  [48, [60, 64, 67]],
-  [48, [60, 64, 67]],
-  [39, [58, 61, 65]],
-  [46, [58, 61, 66]],
-  [39, [58, 61, 65]],
-  [46, [58, 61, 66]],
-  [32, [56, 60, 63]],
-  [44, [56, 60, 63]],
-];
+function gainFor(role, velocity) {
+  return (velocity / 127) * VELOCITY_GAIN[role];
+}
 
 function makePianoNote(note, velocityLayer) {
   const frequency = midiHz(note);
@@ -259,7 +141,7 @@ export class WaltzSynth {
   }
 
   piano(note, velocity) {
-    const layer = velocity < 0.58 ? 0 : velocity < 0.78 ? 1 : 2;
+    const layer = velocity < 54 ? 0 : velocity < 67 ? 1 : 2;
     const key = String(note) + ':' + String(layer);
     if (!this.cache.has(key)) {
       this.cache.set(key, makePianoNote(note, layer));
@@ -271,12 +153,12 @@ export class WaltzSynth {
     const cyclePosition = ((bar % PHRASE_CYCLE_BARS) + PHRASE_CYCLE_BARS) % PHRASE_CYCLE_BARS;
     const section = cyclePosition < SECTION_A_BARS ? 'A' : 'B';
     const sectionBar = section === 'A' ? cyclePosition : cyclePosition - SECTION_A_BARS;
-    const melody = section === 'A' ? THEME_A[sectionBar] : THEME_B[sectionBar];
-    const harmony = section === 'A' ? HARMONY_A[sectionBar] : HARMONY_B[sectionBar];
+    const rightHand = SCORE_RIGHT_HAND[cyclePosition];
+    const leftHand = SCORE_LEFT_HAND[cyclePosition];
     const step = 60 / this.bpm;
     const events = [];
 
-    const add = (note, beat, gain, pan, velocity, role, durationBeats = 0.5) => {
+    const add = (note, beat, durationBeats, velocity, role, pan) => {
       const humanize = beat === 0 ? 0 : (this.rng() - 0.5) * 0.006;
       events.push({
         kind: 'piano',
@@ -285,37 +167,33 @@ export class WaltzSynth {
         beat,
         durationBeats,
         time: Math.max(0, beat * step + humanize),
-        gain,
+        gain: gainFor(role, velocity),
         pan,
         velocity,
       });
     };
 
-    if (section === 'A') {
-      for (const [note, beat, duration] of melody) {
-        const phraseLift = sectionBar >= 14 ? 0.025 : 0;
-        add(note, beat, 0.48 + phraseLift, 0.18, 0.78, 'melody', duration);
-      }
-    } else {
-      for (const [note, beat, duration] of melody) {
-        const contourLift = beat === 0 || beat === 1.5 ? 0.025 : 0;
-        add(note, beat, 0.43 + contourLift, 0.2, 0.72, 'melody', duration);
-      }
+    for (const [note, beat, duration, velocity] of rightHand) {
+      add(note, beat, duration, velocity, 'melody', section === 'A' ? 0.18 : 0.2);
     }
 
-    if (harmony) {
-      const [bass, chord] = harmony;
-      if (section === 'B' && sectionBar === 0) {
-        // Match the preview's quiet sustained opening harmony, without bass.
-        chord.forEach((note, index) => {
-          add(note, 0, 0.16, (index - 1) * 0.12, 0.52, 'chord', 2.8);
-        });
+    const leftHandByBeat = new Map();
+    for (const note of leftHand) {
+      const beat = note[1];
+      if (!leftHandByBeat.has(beat)) leftHandByBeat.set(beat, []);
+      leftHandByBeat.get(beat).push(note);
+    }
+
+    for (const note of leftHand) {
+      const [pitch, beat, duration, velocity] = note;
+      const simultaneous = leftHandByBeat.get(beat);
+      const isBass = beat === 0 && duration < 1 && simultaneous.length === 1;
+      if (isBass) {
+        add(pitch, beat, duration, velocity, 'bass', -0.18);
       } else {
-        add(bass, 0, 0.62, -0.18, 0.68, 'bass', 1);
-        chord.forEach((note, index) => {
-          add(note, 1, 0.19, (index - 1) * 0.12, 0.56, 'chord', 1);
-          add(note, 2, 0.17, (1 - index) * 0.12, 0.52, 'chord', 1);
-        });
+        const chordIndex = simultaneous.indexOf(note);
+        const pan = (chordIndex - (simultaneous.length - 1) / 2) * 0.2;
+        add(pitch, beat, duration, velocity, 'chord', pan);
       }
     }
 
