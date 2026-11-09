@@ -2,9 +2,9 @@ name: Publish to GitHub Pages
 
 on:
   push:
-    branches: [teaser, fix/flat-front-glass-depth]
+    branches: [teaser, fix/flat-front-glass-depth, feat/music-letter-e-gesture, fix/mirror-music-letter-hint]
   pull_request:
-    branches: [teaser]
+    branches: [teaser, feat/procedural-waltz-piano, feat/music-letter-e-gesture]
   workflow_dispatch:
 
 permissions:
@@ -43,6 +43,7 @@ jobs:
           node --check dist/glass-ink.js
           node --check dist/music.mjs
           node --check dist/groove-core.mjs
+          node --check dist/legacy-groove.mjs
       - name: Verify committed depth and static build (no model download)
         run: python3 scripts/build.py --check
       - name: Test depth build failures and model cache behavior
