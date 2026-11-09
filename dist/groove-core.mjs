@@ -1,15 +1,15 @@
-import { SCORE_LEFT_HAND, SCORE_RIGHT_HAND } from './waltz-score.mjs';
+import { SCORE_LEFT_HAND, SCORE_METADATA, SCORE_RIGHT_HAND } from './waltz-score.mjs';
 
 // Procedural felt-piano waltz inspired by the supplied D-flat major score.
 export const SAMPLE_RATE = 24000;
-export const BPM = 165;
-export const BEATS_PER_BAR = 3;
+export const BPM = SCORE_METADATA.bpm;
+export const BEATS_PER_BAR = Number(SCORE_METADATA.meter.split('/')[0]);
 export const BAR_SECONDS = (BEATS_PER_BAR * 60) / BPM;
 export const MIN_BPM = 50;
 export const MAX_BPM = 180;
 export const SECTION_A_BARS = 18;
-export const SECTION_B_BARS = 15;
-export const PHRASE_CYCLE_BARS = SECTION_A_BARS + SECTION_B_BARS;
+export const SECTION_B_BARS = SCORE_METADATA.measures - SECTION_A_BARS;
+export const PHRASE_CYCLE_BARS = SCORE_METADATA.measures;
 
 const TAU = Math.PI * 2;
 const midiHz = (note) => 440 * 2 ** ((note - 69) / 12);

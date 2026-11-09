@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import { SCORE_LEFT_HAND, SCORE_RIGHT_HAND } from '../dist/waltz-score.mjs';
+import { SCORE_LEFT_HAND, SCORE_METADATA, SCORE_RIGHT_HAND } from '../dist/waltz-score.mjs';
 import {
   WaltzSynth,
   SAMPLE_RATE,
@@ -71,6 +71,11 @@ assert.equal(SECTION_A_BARS,18,'The first score section must span about 20 secon
 assert.equal(SECTION_B_BARS,15,'The second score section must span about 16 seconds');
 assert.equal(PHRASE_CYCLE_BARS,33,'The two score sections must form a 33-bar cycle');
 
+assert.equal(SCORE_METADATA.measures, PHRASE_CYCLE_BARS);
+assert.equal(SCORE_METADATA.bpm, BPM);
+assert.equal(SCORE_METADATA.meter, '3/4');
+assert.equal(SCORE_METADATA.rightHandOctaveShiftFromMeasure, SECTION_A_BARS + 1);
+assert.equal(SCORE_METADATA.rightHandOctaveShiftSemitones, 12);
 assert.equal(SCORE_RIGHT_HAND.length, PHRASE_CYCLE_BARS);
 assert.equal(SCORE_LEFT_HAND.length, PHRASE_CYCLE_BARS);
 assert.equal(SCORE_RIGHT_HAND.reduce((sum, bar) => sum + bar.length, 0), 124,

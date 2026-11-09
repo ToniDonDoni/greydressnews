@@ -8,6 +8,7 @@ export const SCORE_METADATA = Object.freeze({
   bpm: 165,
   key: 'D-flat major / B-flat minor',
   rightHandOctaveShiftFromMeasure: 19,
+  rightHandOctaveShiftSemitones: 12,
 });
 
 export const SCORE_RIGHT_HAND = [
