@@ -22,16 +22,16 @@
 
 - [x] **AC-01 - Default theme.** The original 74 BPM, 4/4 procedural groove remains the first theme and starts on the first trusted gesture.
 - [x] **AC-02 - Alternate theme.** The piano waltz retains the 165 BPM, 3/4 score transcription of measures 1-33 for both hands.
-- [ ] **AC-03 - Letter recognition.** A single-stroke handwritten lowercase `e` drawn on the right rain glass selects the waltz.
-- [ ] **AC-04 - False-positive rejection.** A plain closed circle, open line, irregular scribble, or letter outside the glass does not select the waltz.
-- [ ] **AC-10 - House cheat.** A double-click on the left building toggles a soft pale-yellow lowercase `e` hint on the glass; double-clicking the presenter does nothing.
-- [ ] **AC-11 - Visible gesture.** The hint follows the glass parallax plane, and drawing a successful letter both selects the waltz and leaves a normal glass-ink stroke.
-- [ ] **AC-12 - Optional hint.** A loose letter selects the waltz without ever showing the yellow hint, on both desktop and mobile.
+- [x] **AC-03 - Letter recognition.** A single-stroke handwritten lowercase `e` drawn on the right rain glass selects the waltz.
+- [x] **AC-04 - False-positive rejection.** A plain closed circle, open line, irregular scribble, or letter outside the glass does not select the waltz.
+- [x] **AC-10 - House cheat.** A double-click on the left building toggles a soft pale-yellow lowercase `e` hint on the glass; double-clicking the presenter does nothing.
+- [x] **AC-11 - Visible gesture.** The hint follows the glass parallax plane, and drawing a successful letter both selects the waltz and leaves a normal glass-ink stroke.
+- [x] **AC-12 - Optional hint.** A loose letter selects the waltz without ever showing the yellow hint, on both desktop and mobile.
 - [x] **AC-05 - Immediate transition.** The completed gesture crossfades to the waltz, starting at measure 1, without creating another AudioContext.
 - [x] **AC-06 - Sample readiness.** The waltz uses recorded Salamander piano notes when decoded and its procedural piano remains available while samples load or if loading fails.
 - [x] **AC-07 - Mobile behavior.** Touch gestures select the waltz; the original touch activation and blocked-resume retry still work.
 - [x] **AC-08 - Visual regression.** Glass drawing, clipping, parallax, and the artwork remain unchanged.
-- [ ] **AC-09 - Automated verification.** Source, audio, UI, desktop letter, mobile letter, and browser regressions pass.
+- [x] **AC-09 - Automated verification.** Source, audio, UI, desktop letter, mobile letter, and browser regressions pass.
 
 ## 4. Analysis
 
@@ -59,15 +59,15 @@
 - [x] Restore the original 74 BPM groove as a separate synthesizer module.
 - [x] Keep the score-aligned piano waltz as the alternate theme.
 - [x] Add independent theme buses and a short crossfade.
-- [ ] Recognize a handwritten lowercase `e` on the right rain glass.
-- [ ] Add a house double-click cheat that displays the same pale-yellow letter.
-- [ ] Keep the music-selection letter as a clipped, visible glass-ink stroke.
-- [ ] Test a loose letter, the old circle gesture, open lines, irregular scribbles, and gestures outside the glass.
+- [x] Recognize a handwritten lowercase `e` on the right rain glass.
+- [x] Add a house double-click cheat that displays the same pale-yellow letter.
+- [x] Keep the music-selection letter as a clipped, visible glass-ink stroke.
+- [x] Test a loose letter, the old circle gesture, open lines, irregular scribbles, and gestures outside the glass.
 - [x] Test default playback, waltz selection, sample scheduling, and mobile retry.
-- [ ] Test letter selection while the hint has never been shown.
-- [ ] Test the house double-click and hint color/placement.
-- [ ] Capture desktop hint/letter and mobile letter screenshots.
-- [ ] Run the full CI workflow and review browser regressions.
+- [x] Test letter selection while the hint has never been shown.
+- [x] Test the house double-click and hint color/placement.
+- [x] Capture desktop hint/letter and mobile letter screenshots.
+- [x] Run the full CI workflow and review browser regressions.
 
 ### Piano sample attribution
 
