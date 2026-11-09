@@ -1,4 +1,4 @@
-import { GrooveSynth, SAMPLE_RATE, BPM } from './groove-core.mjs';
+import { WaltzSynth, SAMPLE_RATE, BPM } from './groove-core.mjs';
 
 const DEFAULT_VOLUME = 0.8;
 let context,
@@ -42,21 +42,21 @@ function initialize() {
   master.gain.value = 0;
   const low = context.createBiquadFilter();
   low.type = 'lowpass';
-  low.frequency.value = 6900;
+  low.frequency.value = 8200;
   low.Q.value = 0.45;
   const high = context.createBiquadFilter();
   high.type = 'highpass';
-  high.frequency.value = 28;
+  high.frequency.value = 30;
   const compressor = context.createDynamicsCompressor();
-  compressor.threshold.value = -13;
+  compressor.threshold.value = -15;
   compressor.knee.value = 14;
-  compressor.ratio.value = 3;
+  compressor.ratio.value = 2.6;
   compressor.attack.value = 0.008;
-  compressor.release.value = 0.16;
+  compressor.release.value = 0.24;
   master.connect(high).connect(low).connect(compressor).connect(context.destination);
   const seed = new Uint32Array(1);
   crypto.getRandomValues(seed);
-  synth = new GrooveSynth(seed[0], BPM);
+  synth = new WaltzSynth(seed[0], BPM);
   nextTime = context.currentTime + 0.06;
 }
 
@@ -84,7 +84,7 @@ function start() {
         if (timer === null) timer = setInterval(schedule, 150);
       })
       .catch((error) => {
-        console.error('Groove could not resume:', error);
+        console.error('Waltz could not resume:', error);
       });
     return;
   }
@@ -108,14 +108,14 @@ function start() {
         if (timer === null) timer = setInterval(schedule, 150);
       })
       .catch((error) => {
-        console.error('Groove could not start:', error);
+        console.error('Waltz could not start:', error);
       })
       .finally(() => {
         starting = false;
       });
   } catch (error) {
     starting = false;
-    console.error('Groove could not start:', error);
+    console.error('Waltz could not start:', error);
   }
 }
 
@@ -129,7 +129,7 @@ function onGesture(event) {
       .resume()
       .then(schedule)
       .catch((error) => {
-        console.error('Groove could not resume:', error);
+        console.error('Waltz could not resume:', error);
       });
   }
 }

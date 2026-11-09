@@ -68,17 +68,17 @@ try{
     'Audio resume and source start must run synchronously inside the user gesture');
   await flush();
   assert.equal(contexts[0]?.state,'running');
-  assert(sources.length>=2,'The first gesture must schedule multiple groove bars');
+  assert(sources.length>=2,'The first gesture must schedule multiple waltz bars');
   assert.equal(gainTargets.at(-1),.8,'The default output gain must be 80 percent');
-  assert(Math.abs(sources[1].startedAt-sources[0].startedAt-240/74)<1e-8,
-    'The original 74 BPM groove must be preserved');
+  assert(Math.abs(sources[1].startedAt-sources[0].startedAt-180/165)<1e-8,
+    'The 165 BPM 3/4 waltz must be preserved');
   assert(buffers.every(buffer=>buffer.sampleRate===24000),'The sample rate must be preserved');
 
   const initial=sources.length;
   documentHandlers.touchstart({isTrusted:true});
   documentHandlers.click({isTrusted:true});
   await flush();
-  assert.equal(sources.length,initial,'Subsequent gesture events must not restart the groove');
+  assert.equal(sources.length,initial,'Subsequent gesture events must not restart the waltz');
   assert.equal(contexts.length,1,'Only one AudioContext should exist');
 
   // Simulate a mobile device that sends touchstart but no click event.
