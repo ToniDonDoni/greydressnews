@@ -2,7 +2,7 @@
 
 **Status:** implemented on 2026-11-09. The drawing feature, semantic depth map, and full browser regression pass.
 
-**Revision:** 2026-11-09 - drawing and parallax are deliberately coupled. The camera never freezes for a stroke; the same finger movement paints the glass and drives the view. A mobile-stability pass keeps the ink backing store at 1024 x 574, removes `desynchronized`/`will-change`, hides a lost WebGL canvas behind the poster, and adds a `touchend` audio fallback.
+**Revision:** 2026-11-09 - drawing and parallax are deliberately coupled. The camera never freezes for a stroke; the same finger movement paints the glass and drives the view. A mobile-stability pass keeps the ink backing store at 1024 x 574, removes `desynchronized`/`will-change`, hides a lost WebGL canvas behind the poster, and adds touch-end/pointer-up audio retries when Android blocks the first resume.
 
 ## 1. Problem and Current State
 
@@ -73,7 +73,7 @@
 - The existing parallax must remain smooth and must continue to work at every viewport size.
 - The ink backing store must be 1024 x 574 rather than 1920 x 1077 to limit Android GPU memory pressure; image-space coordinates are scaled into it.
 - If Android reclaims the WebGL context, hide the depth canvas, show the static photograph, and keep ink/audio usable instead of leaving a black rectangle.
-- Audio must remain startable from `pointerdown`, `touchstart`, and `touchend`.
+- Audio must remain startable from `pointerdown`, `pointerup`, `touchstart`, and `touchend`, with a later trusted gesture retrying a blocked first `resume()`.
 - The page should remain a static, dependency-free site: no framework, no new runtime package, no server requirement beyond a static file server.
 
 ## 3. Acceptance Criteria
@@ -162,7 +162,7 @@ Verified on 2026-11-09 at 1200 x 820 desktop and 390 x 844 mobile at 3x device p
   - the page emits no errors.
 - Screenshots: [desktop-drawn.png](evidence/glass-drawing/desktop-drawn.png), [mobile-drawn.png](evidence/glass-drawing/mobile-drawn.png).
 - Raw report: [report.json](evidence/glass-drawing/report.json).
-- `node scripts/check.mjs`, `node scripts/check-ui.mjs`, `python3 scripts/build.py --check`, and `node --check` for `glass-ink.js` / `parallax.js` pass.
+- `node scripts/check.mjs`, `node scripts/check-ui.mjs` (including the blocked-resume retry), `python3 scripts/build.py --check`, and `node --check` for `glass-ink.js` / `parallax.js` pass.
 - The drawing change itself did not modify the source photograph or depth assets. The depth map and metadata were updated separately when the semantic light regions were tuned.
 
 ## 8. Depth Baseline Reconciliation

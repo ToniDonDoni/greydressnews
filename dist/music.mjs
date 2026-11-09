@@ -45,7 +45,21 @@ function initialize(){
 }
 
 function start(){
-  if(starting||playing)return;
+  if(playing)return;
+  if(starting){
+    // A later trusted gesture may succeed when the first resume was blocked
+    // by Android's audio focus policy. Retry from this gesture.
+    if(!context){starting=false;return start();}
+    if(context.state==='running'){playing=true;schedule();if(timer===null)timer=setInterval(schedule,150);return;}
+    void context.resume().then(()=>{
+      if(playing||context.state!=='running')return;
+      playing=true;schedule();
+      if(timer===null)timer=setInterval(schedule,150);
+    }).catch(error=>{
+      console.error('Groove could not resume:',error);
+    });
+    return;
+  }
   starting=true;
   try{
     initialize();
@@ -74,7 +88,7 @@ function start(){
 
 function onGesture(event){
   if(!event.isTrusted)return;
-  if(!playing&&!starting){
+  if(!playing){
     start();
   }else if(playing&&context?.state!=='running'){
     // Audio may be interrupted when a mobile device locks or changes output.
@@ -86,10 +100,11 @@ function onGesture(event){
 
 // Taps on a non-clickable image do not always produce a delegated click on iOS.
 // Listen at the start of the gesture, while browser audio activation is available.
-document.addEventListener('pointerdown',onGesture,{capture:true,passive:true});
-document.addEventListener('touchstart',onGesture,{capture:true,passive:true});
+document.addEventListener('pointerdown',onGesture,{capture:true});
+document.addEventListener('pointerup',onGesture,{capture:true});
+document.addEventListener('touchstart',onGesture,{capture:true});
 // Some Android WebViews only expose the end of the touch as an activation.
-document.addEventListener('touchend',onGesture,{capture:true,passive:true});
+document.addEventListener('touchend',onGesture,{capture:true});
 document.addEventListener('click',onGesture,{capture:true});
 document.addEventListener('keydown',onGesture,{capture:true});
 document.addEventListener('visibilitychange',()=>{if(playing)schedule();});

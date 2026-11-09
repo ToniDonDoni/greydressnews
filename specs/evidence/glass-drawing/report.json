@@ -7,13 +7,13 @@
     "bottom": 970
   },
   "desktop": {
-    "camera_before": 0.43995920721765747,
-    "camera_during": 0.7938140310741776,
-    "camera_after": 0.7999329706832445,
-    "ink_shift_px": 10.73,
-    "expected_near_shift_px": 10.73,
+    "camera_before": 0.4399166582661558,
+    "camera_during": 0.7974116305634011,
+    "camera_after": 0.7999076592765579,
+    "ink_shift_px": 10.74,
+    "expected_near_shift_px": 10.74,
     "ink": {
-      "count": 3097,
+      "count": 3096,
       "outside": 0,
       "max_alpha": 68,
       "color": [
@@ -37,8 +37,8 @@
       "u": 0.8200000000000001,
       "v": 0.44999999999999996
     },
-    "drag_pixels": 5932,
-    "camera_during": 0.7766123212091453
+    "drag_pixels": 5934,
+    "camera_during": 0.7730653321138309
   },
   "page_errors": []
 }
