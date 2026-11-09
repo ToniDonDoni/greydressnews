@@ -80,8 +80,28 @@ assert.equal(sectionProbe.planBar(0).events.filter(e=>e.role==='melody').length,
 assert.equal(sectionProbe.planBar(0).events.some(e=>e.role==='bass'),false,
   'The opening bar must preserve the score opening with no left-hand entry');
 assert.equal(sectionProbe.planBar(1).events.some(e=>e.role==='bass'),true);
-assert.equal(sectionProbe.planBar(18).events.filter(e=>e.role==='melody').length,6,
-  'The second section must use its flowing eighth-note motif');
+const secondOpening=sectionProbe.planBar(18);
+const secondOpeningMelody=secondOpening.events.filter(e=>e.role==='melody');
+assert.deepEqual(secondOpeningMelody.map(e=>[e.note,e.beat,e.durationBeats]),
+  [[85,0,.5],[84,.5,.5],[85,1,1],[87,2,1]],
+  'The second theme opening must match the approved corrected preview');
+assert.equal(secondOpening.events.some(e=>e.role==='bass'),false,
+  'The corrected preview starts the second theme with a held chord, not bass');
+assert.deepEqual(secondOpening.events.filter(e=>e.role==='chord').map(e=>e.note),
+  [61,65,68],'The opening chord must match the corrected preview');
+assert(secondOpening.events.filter(e=>e.role==='chord').every(e=>e.beat===0&&e.durationBeats===2.8),
+  'The opening accompaniment must sustain rather than strike beats two and three');
+assert.deepEqual(sectionProbe.planBar(19).events.filter(e=>e.role==='melody').map(e=>e.note),
+  [89,85,82,85,82,85],'The second bar of the new section must match the preview');
+assert.deepEqual(sectionProbe.planBar(19).events.filter(e=>e.role==='bass').map(e=>e.note),
+  [42],'Bass must re-enter in the next measure');
+assert.deepEqual(sectionProbe.planBar(25).events.filter(e=>e.role==='melody').map(e=>e.note),
+  [87,82,79,82,79,82],'The middle passage must preserve the corrected contour');
+assert.deepEqual(sectionProbe.planBar(32).events.filter(e=>e.role==='melody').map(e=>e.note),
+  [89,80,87,80,85,80],'The corrected theme must match the preview through its last measure');
+assert.deepEqual(sectionProbe.planBar(33).events.filter(e=>e.role==='melody').map(e=>[e.note,e.beat,e.durationBeats]),
+  sectionProbe.planBar(0).events.filter(e=>e.role==='melody').map(e=>[e.note,e.beat,e.durationBeats]),
+  'The unchanged opening theme must still follow the second section');
 assert(sectionProbe.planBar(18).events.every(e=>e.kind==='piano'),
   'The arrangement must contain piano only, with no hip-hop drum voices');
 

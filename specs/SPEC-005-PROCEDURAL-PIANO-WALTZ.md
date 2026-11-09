@@ -13,14 +13,14 @@
 - Use a 3/4 meter at 165 BPM.
 - Alternate an opening theme lasting approximately 20 seconds with a second, higher-register theme lasting approximately 16 seconds.
 - Use a real, recorded grand-piano timbre in the browser, repitched from a small sample set without physical modeling.
-- Treat the note sequence as a score-inspired adaptation of the opening motifs, not a full note-for-note transcription of the complete score.
+- Keep the opening theme as a score-inspired adaptation. Use the user-approved score-aligned 15-bar preview for the second theme's pitches, rhythm and simplified accompaniment; this is not a note-for-note transcription of the entire score.
 - Keep first trusted pointer/touch activation, the fixed 80 percent master gain, and the existing mobile retry behavior.
 - Preserve the artwork, depth map, glass drawing, parallax renderer, and absence of visible audio controls.
 
 ## 3. Acceptance Criteria
 
 - [x] AC-01: The audio engine uses 165 BPM and three quarter-note beats per bar.
-- [x] AC-02: The arrangement alternates an 18-bar opening theme and a 15-bar upper-register theme.
+- [x] AC-02: The arrangement alternates an 18-bar opening theme and a 15-bar upper-register theme, using the corrected preview's exact second-theme melody and approximate left-hand harmony.
 - [x] AC-03: The playback engine uses the Salamander Grand Piano recordings with nearest-key resampling and note envelopes.
 - [x] AC-04: The arrangement contains no hip-hop drum voices.
 - [x] AC-05: No audio starts before a trusted gesture; the first gesture starts audio synchronously.
@@ -52,6 +52,7 @@
 - [x] Replace the audible timbre with 14 recorded piano notes, retaining the original synthesizer as a network fallback.
 - [x] Attribute the CC BY 3.0 sample recordings.
 - [x] Implement the alternating waltz themes and 3/4 accompaniment.
+- [x] Replace the second theme with the user-approved MIDI pitches, note lengths, and simplified left hand from the preview; preserve the first theme.
 - [x] Update source and gesture tests.
 - [x] Run the full CI workflow and review its browser evidence.
 
@@ -63,3 +64,4 @@
 - License: https://creativecommons.org/licenses/by/3.0/
 - Changes: selected 14 recorded notes, repitched adjacent notes, used Web Audio gain envelopes and effects.
 - Source and browser tests should verify samples are decoded before audible notes start, while mobile Web Audio activation remains synchronous with a trusted gesture.
+- The second theme is driven by the local preview's 15-bar note list and chord list, not a recorded MP3. Real piano sample timbre can differ from the preview's General MIDI SoundFont.

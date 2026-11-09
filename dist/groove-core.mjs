@@ -82,23 +82,31 @@ const THEME_A = [
   [[78, 0, 3]],
 ];
 
-// The second score section moves into the upper register and a flowing eighth-note figure.
+// The second theme follows the approved score-aligned piano preview.
+// Each melody tuple is [MIDI note, beat offset, duration in beats].
 const THEME_B = [
-  [85, 82, 85, 87, 89, 87],
-  [90, 89, 87, 89, 90, 89],
-  [89, 87, 85, 87, 89, 87],
-  [87, 85, 84, 85, 87, 85],
-  [85, 84, 82, 84, 85, 84],
-  [87, 85, 84, 85, 87, 85],
-  [89, 87, 85, 87, 89, 87],
-  [88, 86, 85, 86, 88, 86],
-  [87, 85, 84, 85, 87, 85],
-  [85, 84, 82, 84, 85, 84],
-  [87, 85, 84, 85, 87, 85],
-  [89, 87, 85, 87, 89, 87],
-  [90, 89, 87, 89, 90, 89],
-  [89, 87, 85, 87, 89, 87],
-  [87, 85, 84, 85, 87, 85],
+  [
+    [85, 0, 0.5],
+    [84, 0.5, 0.5],
+    [85, 1, 1],
+    [87, 2, 1],
+  ],
+  ...[
+    [89, 85, 82, 85, 82, 85],
+    [89, 85, 82, 85, 90, 85],
+    [89, 85, 82, 85, 82, 85],
+    [89, 85, 82, 85, 92, 85],
+    [89, 85, 80, 85, 80, 85],
+    [89, 85, 80, 85, 92, 85],
+    [87, 82, 79, 82, 79, 82],
+    [87, 85, 84, 85, 87, 89],
+    [89, 82, 94, 82, 92, 82],
+    [90, 82, 89, 82, 87, 82],
+    [89, 82, 94, 82, 92, 82],
+    [90, 82, 89, 82, 87, 82],
+    [89, 80, 92, 80, 90, 80],
+    [89, 80, 87, 80, 85, 80],
+  ].map((notes) => notes.map((note, index) => [note, index * 0.5, 0.5])),
 ];
 
 // Bass note plus a close-position triad for the two chord beats.
@@ -124,21 +132,21 @@ const HARMONY_A = [
 ];
 
 const HARMONY_B = [
-  [37, [61, 65, 68]], // D-flat
-  [32, [56, 60, 63]], // A-flat
-  [34, [58, 61, 65]], // B-flat minor
-  [30, [54, 58, 61]], // G-flat
-  [37, [61, 65, 68]],
+  [37, [61, 65, 68]], // Opening held chord, without the bass note.
+  [42, [61, 65, 70]],
+  [49, [58, 61, 65]],
+  [42, [61, 65, 70]],
+  [49, [58, 61, 65]],
+  [39, [58, 61, 65]],
+  [49, [58, 61, 65]],
+  [48, [60, 64, 67]],
+  [48, [60, 64, 67]],
+  [39, [58, 61, 65]],
+  [46, [58, 61, 66]],
+  [39, [58, 61, 65]],
+  [46, [58, 61, 66]],
   [32, [56, 60, 63]],
-  [34, [58, 61, 65]],
-  [30, [54, 58, 61]],
-  [37, [61, 65, 68]],
-  [29, [53, 56, 60]], // F minor
-  [30, [54, 58, 61]],
-  [32, [56, 60, 63]],
-  [34, [58, 61, 65]],
-  [30, [54, 58, 61]],
-  [37, [61, 65, 68]],
+  [44, [56, 60, 63]],
 ];
 
 function makePianoNote(note, velocityLayer) {
@@ -263,7 +271,7 @@ export class WaltzSynth {
     const cyclePosition = ((bar % PHRASE_CYCLE_BARS) + PHRASE_CYCLE_BARS) % PHRASE_CYCLE_BARS;
     const section = cyclePosition < SECTION_A_BARS ? 'A' : 'B';
     const sectionBar = section === 'A' ? cyclePosition : cyclePosition - SECTION_A_BARS;
-    const melody = section === 'A' ? THEME_A[sectionBar] : null;
+    const melody = section === 'A' ? THEME_A[sectionBar] : THEME_B[sectionBar];
     const harmony = section === 'A' ? HARMONY_A[sectionBar] : HARMONY_B[sectionBar];
     const step = 60 / this.bpm;
     const events = [];
@@ -289,21 +297,26 @@ export class WaltzSynth {
         add(note, beat, 0.48 + phraseLift, 0.18, 0.78, 'melody', duration);
       }
     } else {
-      const notes = THEME_B[sectionBar];
-      notes.forEach((note, index) => {
-        const beat = index * 0.5;
-        const contourLift = index === 0 || index === 3 ? 0.025 : 0;
-        add(note, beat, 0.43 + contourLift, 0.2, 0.72, 'melody', 0.5);
-      });
+      for (const [note, beat, duration] of melody) {
+        const contourLift = beat === 0 || beat === 1.5 ? 0.025 : 0;
+        add(note, beat, 0.43 + contourLift, 0.2, 0.72, 'melody', duration);
+      }
     }
 
     if (harmony) {
       const [bass, chord] = harmony;
-      add(bass, 0, 0.62, -0.18, 0.68, 'bass', 1);
-      chord.forEach((note, index) => {
-        add(note, 1, 0.19, (index - 1) * 0.12, 0.56, 'chord', 1);
-        add(note, 2, 0.17, (1 - index) * 0.12, 0.52, 'chord', 1);
-      });
+      if (section === 'B' && sectionBar === 0) {
+        // Match the preview's quiet sustained opening harmony, without bass.
+        chord.forEach((note, index) => {
+          add(note, 0, 0.16, (index - 1) * 0.12, 0.52, 'chord', 2.8);
+        });
+      } else {
+        add(bass, 0, 0.62, -0.18, 0.68, 'bass', 1);
+        chord.forEach((note, index) => {
+          add(note, 1, 0.19, (index - 1) * 0.12, 0.56, 'chord', 1);
+          add(note, 2, 0.17, (1 - index) * 0.12, 0.52, 'chord', 1);
+        });
+      }
     }
 
     return { bar, section, sectionBar, events };
