@@ -13,6 +13,16 @@
   const NEAR_GLASS_SHIFT_UV=0.045*(236/255-0.38)*(1-Math.pow(0.4,7));
   window.parallaxView={get x(){return state.x},nearShiftUv:NEAR_GLASS_SHIFT_UV};
   let gl=null,program=null,uniforms=null;
+  // Android may reclaim the WebGL context under memory pressure. Hide the
+  // black canvas and keep the static photograph/ink usable instead of leaving
+  // the whole artwork as a black rectangle.
+  view.addEventListener('webglcontextlost',event=>{
+    event.preventDefault();
+    state.ready=false;
+    view.style.display='none';
+    loading.textContent='Depth view paused; showing the original image.';
+    loading.classList.add('visible');
+  });
   let photoTexture=null,depthTexture=null,dragPointer=null;
   let previous=performance.now();
 

@@ -88,6 +88,8 @@ function onGesture(event){
 // Listen at the start of the gesture, while browser audio activation is available.
 document.addEventListener('pointerdown',onGesture,{capture:true,passive:true});
 document.addEventListener('touchstart',onGesture,{capture:true,passive:true});
+// Some Android WebViews only expose the end of the touch as an activation.
+document.addEventListener('touchend',onGesture,{capture:true,passive:true});
 document.addEventListener('click',onGesture,{capture:true});
 document.addEventListener('keydown',onGesture,{capture:true});
 document.addEventListener('visibilitychange',()=>{if(playing)schedule();});

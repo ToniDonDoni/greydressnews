@@ -8,8 +8,8 @@
   const canvas = document.getElementById('glass-ink');
   const liveCanvas = document.getElementById('glass-ink-live');
   if (!painting || !layer || !canvas || !liveCanvas) return;
-  const context = canvas.getContext('2d', { alpha: true, desynchronized: true });
-  const liveContext = liveCanvas.getContext('2d', { alpha: true, desynchronized: true });
+  const context = canvas.getContext('2d', { alpha: true });
+  const liveContext = liveCanvas.getContext('2d', { alpha: true });
   if (!context || !liveContext) return;
 
   const IMAGE = { width: 1920, height: 1077 };
@@ -81,6 +81,7 @@
 
   function paintDot(target, point) {
     target.save();
+    target.setTransform(canvas.width / IMAGE.width, 0, 0, canvas.height / IMAGE.height, 0, 0);
     clipGlass(target);
     target.beginPath();
     target.arc(point.x, point.y, strokeWidth * 1.3, 0, TAU);
@@ -99,6 +100,7 @@
       return;
     }
     target.save();
+    target.setTransform(canvas.width / IMAGE.width, 0, 0, canvas.height / IMAGE.height, 0, 0);
     clipGlass(target);
     target.lineCap = 'round';
     target.lineJoin = 'round';
@@ -117,14 +119,14 @@
   }
 
   function redrawLive() {
-    liveContext.clearRect(0, 0, IMAGE.width, IMAGE.height);
+    liveContext.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
     paintStroke(liveContext, strokePoints);
   }
 
   function commitStroke() {
     if (!strokePoints.length) return;
     context.drawImage(liveCanvas, 0, 0);
-    liveContext.clearRect(0, 0, IMAGE.width, IMAGE.height);
+    liveContext.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
   }
 
   function start(event) {
@@ -181,12 +183,12 @@
     activePointer = null;
     strokePoints = [];
     strokeMoved = false;
-    liveContext.clearRect(0, 0, IMAGE.width, IMAGE.height);
+    liveContext.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
   }
 
   function clear() {
     cancel();
-    context.clearRect(0, 0, IMAGE.width, IMAGE.height);
+    context.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   painting.addEventListener('pointerdown', start, { passive: true });

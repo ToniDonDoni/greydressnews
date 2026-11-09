@@ -17,6 +17,7 @@ function inspectInk(){
   for(const id of ['glass-ink','glass-ink-live']){
     const canvas=document.getElementById(id);
     const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+    const glassLeft=1240/1920*canvas.width, glassBottom=970/1077*canvas.height;
     let count=0,outside=0,maxAlpha=0,r=0,g=0,b=0,minX=canvas.width,maxX=-1,minY=canvas.height,maxY=-1;
     for(let y=0;y<canvas.height;y++){
       for(let x=0;x<canvas.width;x++){
@@ -24,7 +25,7 @@ function inspectInk(){
         const alpha=data[offset+3];
         if(!alpha)continue;
         count++;
-        if(x<1240||y>970)outside++;
+        if(x<glassLeft||y>glassBottom)outside++;
         if(x<minX)minX=x;
         if(x>maxX)maxX=x;
         if(y<minY)minY=y;
@@ -141,7 +142,10 @@ try{
   const tapInk=await page.evaluate(inspectInk);
   const tapCenterAlpha=await page.evaluate(({imageX,imageY})=>{
     const canvas=document.querySelector('#glass-ink');
-    return canvas.getContext('2d').getImageData(Math.round(imageX),Math.round(imageY),1,1).data[3];
+    return canvas.getContext('2d').getImageData(
+      Math.round(imageX/1920*canvas.width),
+      Math.round(imageY/1077*canvas.height),
+      1,1).data[3];
   },{imageX:tapImage.x,imageY:tapImage.y});
   assert(tapInk['glass-ink'].count>20,'A tap on the glass must leave a dot');
   assert(tapInk['glass-ink'].bounds[2]-tapInk['glass-ink'].bounds[0]<60,'A tap must not draw a line');

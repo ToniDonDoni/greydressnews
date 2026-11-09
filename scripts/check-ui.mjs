@@ -55,7 +55,7 @@ try{
   await import('../dist/music.mjs');
   assert.equal(sources.length,0,'Loading the page must not start sound');
   assert.equal(contexts.length,0,'AudioContext must await a user gesture');
-  for(const name of ['pointerdown','touchstart','click']){
+  for(const name of ['pointerdown','touchstart','touchend','click']){
     assert.equal(typeof documentHandlers[name],'function',name+' must support playback');
   }
 
@@ -90,7 +90,17 @@ try{
   await flush();
   assert(sources.length>=2,'Touchstart alone must start actual audio');
   assert.equal(gainTargets.at(-1),.8,'Touch-only playback must use 80 percent gain');
-  console.log('Trusted pointer and touch startup, synchronous mobile audio unlock, fixed gain, and single scheduling passed.');
+
+  // Some Android WebViews only expose the end of the touch as an activation.
+  sources.length=0;contexts.length=0;gainTargets.length=0;calls.length=0;
+  await import('../dist/music.mjs?touchend-only');
+  documentHandlers.touchend({isTrusted:true});
+  assert.deepEqual(calls.slice(0,2),['resume','source.start'],
+    'A touchend-only gesture must unlock audio synchronously');
+  await flush();
+  assert(sources.length>=2,'Touchend alone must start actual audio');
+  assert.equal(gainTargets.at(-1),.8,'Touchend-only playback must use 80 percent gain');
+  console.log('Trusted pointer, touchstart, and touchend startup, synchronous mobile audio unlock, fixed gain, and single scheduling passed.');
 }finally{
   globalThis.setInterval=realSetInterval;
 }
