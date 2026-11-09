@@ -25,8 +25,8 @@
 - [x] AC-04: The arrangement contains no hip-hop drum voices.
 - [x] AC-05: No audio starts before a trusted gesture; the first gesture starts audio synchronously.
 - [x] AC-06: Later page gestures do not restart playback, and master gain remains 0.8.
-- [ ] AC-07: Existing visual and parallax behavior remains unchanged (browser regression pending).
-- [ ] AC-08: Full source, audio, mobile gesture, browser, and CI regressions pass.
+- [x] AC-07: Existing visual and parallax behavior remains unchanged (browser regression passed).
+- [x] AC-08: Full source, audio, mobile gesture, browser, and CI regressions pass.
 
 ## 4. Analysis
 
@@ -49,4 +49,4 @@
 - [x] Implement the procedural piano voice.
 - [x] Implement the alternating waltz themes and 3/4 accompaniment.
 - [x] Update source and gesture tests.
-- [ ] Run the full CI workflow and review its browser evidence.
+- [x] Run the full CI workflow and review its browser evidence.
