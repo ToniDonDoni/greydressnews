@@ -16,6 +16,17 @@ npm run format:check
 
 `npm run format` rewrites `dist/*.{js,mjs,css,html}`. `npm run format:check` is the non-mutating version used by GitHub Actions. Keep generated assets and review evidence out of the formatter; `.prettierignore` already excludes them.
 
+## Build stamp
+
+The page footer reads `dist/build.json` and shows the short commit hash with a link to the exact commit. Locally the file is absent, so the footer stays at `BUILD local`.
+
+GitHub Actions writes the file after the browser tests and before uploading the Pages artifact:
+
+- pull request events use `github.event.pull_request.head.sha`, not the synthetic PR merge commit;
+- push and manual events use the pushed commit, or the second parent when `HEAD` is a merge commit, so a merged branch shows the branch-head commit. Squash and rebase merges have no second parent and show the resulting commit.
+
+`python3 scripts/write_build_info.py <full-sha>` regenerates the file for a manual preview.
+
 ## Quick route
 
 | Goal | Start here |

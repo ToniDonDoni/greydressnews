@@ -7,3 +7,4 @@ node_modules/
 *.wav
 *.swp
 *.swo
+dist/build.json
