@@ -175,41 +175,40 @@ try{
   assert.equal(outsideInk['glass-ink'].count,0,'A gesture outside the glass must not draw');
   assert(Math.abs(outsideAfter-outsideBefore)>.1,'A gesture outside the glass must still pan the view');
 
-  // The music circle belongs to the rain glass; house double-click reveals its target.
+  // The music hint is optional; a rough circle must work while the hint is hidden.
   const recognition = await page.evaluate(() => {
     const box = document.querySelector('#painting').getBoundingClientRect();
     const radius = Math.min(box.width, box.height) * 0.12;
-    const glassCircle = Array.from({ length: 49 }, (_, index) => {
+    const makeCircle = (amplitude) => Array.from({ length: 49 }, (_, index) => {
       const angle = (Math.PI * 2 * index) / 48;
+      const wobble = 1 + amplitude * Math.sin(3 * angle);
       return {
-        x: 0.82 + (Math.cos(angle) * radius) / box.width,
-        y: 0.46 + (Math.sin(angle) * radius) / box.height,
+        x: 0.82 + (Math.cos(angle) * radius * wobble) / box.width,
+        y: 0.46 + (Math.sin(angle) * radius * wobble) / box.height,
       };
     });
+    const glassCircle = makeCircle(0);
+    const approximateCircle = makeCircle(0.45);
     const outsideCircle = glassCircle.map((point) => ({ ...point, x: point.x - 0.4 }));
     const openLine = Array.from({ length: 24 }, (_, index) => ({
       x: 0.75 + index * 0.003,
       y: 0.46 + (index % 2) * 0.003,
     }));
-    const irregularLoop = Array.from({ length: 49 }, (_, index) => {
-      const angle = (Math.PI * 2 * index) / 48;
-      const irregularRadius = radius * (1 + 0.55 * Math.sin(3 * angle));
-      return {
-        x: 0.82 + (Math.cos(angle) * irregularRadius) / box.width,
-        y: 0.46 + (Math.sin(angle) * irregularRadius) / box.height,
-      };
-    });
+    const irregularLoop = makeCircle(0.55);
     return {
       glassCircle: window.glassInk.recognizeMusicCircle(glassCircle),
+      approximateCircle: window.glassInk.recognizeMusicCircle(approximateCircle),
       outsideCircle: window.glassInk.recognizeMusicCircle(outsideCircle),
       openLine: window.glassInk.recognizeMusicCircle(openLine),
       irregularLoop: window.glassInk.recognizeMusicCircle(irregularLoop),
     };
   });
   assert.equal(recognition.glassCircle, true, 'A closed circle on the rain glass must be recognized');
+  assert.equal(recognition.approximateCircle, true,
+    'A moderately uneven circle must be accepted');
   assert.equal(recognition.outsideCircle, false, 'A circle outside the glass must be ignored');
   assert.equal(recognition.openLine, false, 'An open scribble must not change the music');
-  assert.equal(recognition.irregularLoop, false, 'An irregular closed scribble must not change the music');
+  assert.equal(recognition.irregularLoop, false, 'A severely irregular loop must not select the waltz');
 
   assert.equal(await page.evaluate(() => window.musicPlayback.theme), 'legacy',
     'The original groove must remain the default theme');
@@ -220,9 +219,50 @@ try{
   assert.equal(await page.evaluate(() => window.glassInk.musicHintVisible), false,
     'Double-clicking the presenter must not reveal the house hint');
 
-  await page.mouse.dblclick(x(0.22), y(0.45), { delay: 90 });
-  await page.waitForFunction(() => window.glassInk?.musicHintVisible === true);
-  const hintStats = await page.evaluate(() => {
+  const circleCenterX = 0.82;
+  const circleCenterY = 0.46;
+  const circleRadius = Math.min(painting.width, painting.height) * 0.12;
+  await page.mouse.move(x(circleCenterX + circleRadius / painting.width), y(circleCenterY));
+  await page.mouse.down();
+  for (let step = 1; step <= 48; step++) {
+    const angle = (Math.PI * 2 * step) / 48;
+    const wobble = 1 + 0.45 * Math.sin(3 * angle);
+    await page.mouse.move(
+      x(circleCenterX + (Math.cos(angle) * circleRadius * wobble) / painting.width),
+      y(circleCenterY + (Math.sin(angle) * circleRadius * wobble) / painting.height),
+    );
+  }
+  await page.mouse.up();
+  await page.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
+  assert.equal(await page.evaluate(() => window.glassInk.musicHintVisible), false,
+    'The waltz must switch while the optional hint has never been shown');
+  const circleInk = await page.evaluate(inspectInk);
+  assert(circleInk['glass-ink'].count > 1000, 'The selection circle must also leave a glass-ink mark');
+  assert.equal(circleInk['glass-ink'].outside, 0, 'The selection circle must remain clipped to the glass');
+  await page.locator('#painting').screenshot({
+    path: path.join(out, 'desktop-music-circle-without-hint.png'),
+  });
+
+  // The house double-click only reveals a visual hint; it does not unlock music.
+  const hintPage = await browser.newPage({
+    viewport: { width: 1200, height: 820 },
+    deviceScaleFactor: 1,
+  });
+  hintPage.on('pageerror', error => errors.push(String(error)));
+  await hintPage.goto(url);
+  await waitForReady(hintPage);
+  const hintPainting = await hintPage.locator('#painting').boundingBox();
+  assert(hintPainting, 'The hint artwork is not visible');
+  const hx = normalized => hintPainting.x + hintPainting.width * normalized;
+  const hy = normalized => hintPainting.y + hintPainting.height * normalized;
+  assert.equal(await hintPage.evaluate(() => window.musicPlayback.theme), 'legacy',
+    'The original groove must also be the default on the hint page');
+  await hintPage.mouse.dblclick(hx(0.52), hy(0.45), { delay: 90 });
+  assert.equal(await hintPage.evaluate(() => window.glassInk.musicHintVisible), false,
+    'Double-clicking the presenter must not reveal the house hint');
+  await hintPage.mouse.dblclick(hx(0.22), hy(0.45), { delay: 90 });
+  await hintPage.waitForFunction(() => window.glassInk?.musicHintVisible === true);
+  const hintStats = await hintPage.evaluate(() => {
     const canvas = document.querySelector('#music-hint');
     const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
     let count = 0;
@@ -251,44 +291,39 @@ try{
   assert(hintStats.bounds[3] <= 970, 'The sunlit hint must stay above the ticker');
   assert(hintStats.color[0] > hintStats.color[1] && hintStats.color[1] > hintStats.color[2],
     'The hint must use a pale warm-yellow color');
-  await page.locator('#painting').screenshot({
+  await hintPage.locator('#painting').screenshot({
     path: path.join(out, 'desktop-music-hint.png'),
   });
 
-  // An open stroke on the glass remains ordinary ink and must not select the waltz.
-  await page.mouse.move(x(0.75), y(0.46));
-  await page.mouse.down();
+  // An open stroke is not a circle and leaves the optional hint visible.
+  await hintPage.mouse.move(hx(0.75), hy(0.46));
+  await hintPage.mouse.down();
   for (let step = 1; step <= 18; step++) {
-    await page.mouse.move(x(0.75 + 0.003 * step), y(0.46 + (step % 2) * 0.002));
+    await hintPage.mouse.move(hx(0.75 + 0.003 * step), hy(0.46 + (step % 2) * 0.002));
   }
-  await page.mouse.up();
-  assert.equal(await page.evaluate(() => window.musicPlayback.theme), 'legacy',
+  await hintPage.mouse.up();
+  assert.equal(await hintPage.evaluate(() => window.musicPlayback.theme), 'legacy',
     'An open stroke must not switch the theme');
-  assert.equal(await page.evaluate(() => window.glassInk.musicHintVisible), true,
+  assert.equal(await hintPage.evaluate(() => window.glassInk.musicHintVisible), true,
     'An unsuccessful stroke must leave the hint visible');
 
-  const circleCenterX = 0.82;
-  const circleCenterY = 0.46;
-  const circleRadius = Math.min(painting.width, painting.height) * 0.12;
-  await page.mouse.move(x(circleCenterX + circleRadius / painting.width), y(circleCenterY));
-  await page.mouse.down();
+  await hintPage.mouse.move(hx(circleCenterX + circleRadius / hintPainting.width), hy(circleCenterY));
+  await hintPage.mouse.down();
   for (let step = 1; step <= 48; step++) {
     const angle = (Math.PI * 2 * step) / 48;
-    await page.mouse.move(
-      x(circleCenterX + (Math.cos(angle) * circleRadius) / painting.width),
-      y(circleCenterY + (Math.sin(angle) * circleRadius) / painting.height),
+    await hintPage.mouse.move(
+      hx(circleCenterX + (Math.cos(angle) * circleRadius) / hintPainting.width),
+      hy(circleCenterY + (Math.sin(angle) * circleRadius) / hintPainting.height),
     );
   }
-  await page.mouse.up();
-  await page.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
-  assert.equal(await page.evaluate(() => window.glassInk.musicHintVisible), false,
+  await hintPage.mouse.up();
+  await hintPage.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
+  assert.equal(await hintPage.evaluate(() => window.glassInk.musicHintVisible), false,
     'A successful circle must dismiss the hint');
-  const circleInk = await page.evaluate(inspectInk);
-  assert(circleInk['glass-ink'].count > 1000, 'The selection circle must also leave a glass-ink mark');
-  assert.equal(circleInk['glass-ink'].outside, 0, 'The selection circle must remain clipped to the glass');
-  await page.locator('#painting').screenshot({
-    path: path.join(out, 'desktop-music-circle.png'),
-  });
+  const hintedCircleInk = await hintPage.evaluate(inspectInk);
+  assert(hintedCircleInk['glass-ink'].count > 1000,
+    'A hinted selection circle must also leave a glass-ink mark');
+  await hintPage.close();
 
   // Mobile touch: tap and drag must both work, and the drag must move the camera.
   const mobileContext=await browser.newContext({
@@ -350,8 +385,8 @@ try{
     await cdp.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
       touchPoints: [{
-        x: mx(0.82 + (Math.cos(angle) * mobileRadius) / mobileBox.width),
-        y: my(0.46 + (Math.sin(angle) * mobileRadius) / mobileBox.height),
+        x: mx(0.82 + (Math.cos(angle) * mobileRadius * (1 + 0.45 * Math.sin(3 * angle))) / mobileBox.width),
+        y: my(0.46 + (Math.sin(angle) * mobileRadius * (1 + 0.45 * Math.sin(3 * angle))) / mobileBox.height),
       }],
     });
     await mobilePage.waitForTimeout(8);
@@ -359,7 +394,9 @@ try{
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await mobilePage.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
   assert.equal(await mobilePage.evaluate(() => window.musicPlayback.theme), 'waltz',
-    'A mobile circle on the rain glass must select the piano waltz');
+    'A moderately uneven mobile circle must select the piano waltz');
+  assert.equal(await mobilePage.evaluate(() => window.glassInk.musicHintVisible), false,
+    'Mobile music selection must not require the optional hint');
   const mobileCircleInk = await mobilePage.evaluate(inspectInk);
   assert(mobileCircleInk['glass-ink'].count > 1000,
     'A mobile selection circle must also leave a glass-ink mark');

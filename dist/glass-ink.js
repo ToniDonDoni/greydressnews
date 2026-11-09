@@ -148,7 +148,7 @@
 
     if (radius < 22 || radius > Math.min(width, height) * 0.24) return false;
     const aspect = diameterX / Math.max(1, diameterY);
-    if (aspect < 0.68 || aspect > 1.47) return false;
+    if (aspect < 0.62 || aspect > 1.62) return false;
 
     const box = painting.getBoundingClientRect();
     for (const point of samples) {
@@ -163,7 +163,7 @@
     const radialError =
       Math.sqrt(radii.reduce((sum, value) => sum + (value - meanRadius) ** 2, 0) / radii.length) /
       meanRadius;
-    if (radialError > 0.3) return false;
+    if (radialError > 0.36) return false;
 
     let pathLength = 0;
     let totalTurn = 0;
@@ -183,12 +183,13 @@
       samples[0].x - samples[samples.length - 1].x,
       samples[0].y - samples[samples.length - 1].y,
     );
-    if (closure > Math.max(16, meanRadius * 0.38)) return false;
-    if (pathLength < meanRadius * 4.2 || pathLength > meanRadius * 8.5) return false;
-    if (Math.abs(totalTurn) < Math.PI * 1.6 || Math.abs(totalTurn) > Math.PI * 2.5) return false;
+    if (closure > Math.max(18, meanRadius * 0.45)) return false;
+    if (pathLength < meanRadius * 3.8 || pathLength > meanRadius * 9.5) return false;
+    if (Math.abs(totalTurn) < Math.PI * 1.45 || Math.abs(totalTurn) > Math.PI * 2.65) return false;
     return true;
   }
 
+  // The yellow hint is visual-only. Music-circle recognition never depends on its visibility.
   function startMusicGesture(event) {
     if (circlePointer !== null || event.isPrimary === false) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
