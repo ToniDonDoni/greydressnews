@@ -95,9 +95,9 @@
 
     const radii = samples.map((point) => Math.hypot(point.x - centerX, point.y - centerY));
     const meanRadius = radii.reduce((sum, value) => sum + value, 0) / radii.length;
-    const radialError = Math.sqrt(
-      radii.reduce((sum, value) => sum + (value - meanRadius) ** 2, 0) / radii.length,
-    ) / meanRadius;
+    const radialError =
+      Math.sqrt(radii.reduce((sum, value) => sum + (value - meanRadius) ** 2, 0) / radii.length) /
+      meanRadius;
     if (radialError > 0.3) return false;
 
     let pathLength = 0;
