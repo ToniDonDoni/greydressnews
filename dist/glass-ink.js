@@ -8,8 +8,8 @@
   const canvas = document.getElementById('glass-ink');
   const liveCanvas = document.getElementById('glass-ink-live');
   if (!painting || !layer || !canvas || !liveCanvas) return;
-  const context = canvas.getContext('2d', { alpha: true, desynchronized: true });
-  const liveContext = liveCanvas.getContext('2d', { alpha: true, desynchronized: true });
+  const context = canvas.getContext('2d', { alpha: true, desynchronized: false });
+  const liveContext = liveCanvas.getContext('2d', { alpha: true, desynchronized: false });
   if (!context || !liveContext) return;
 
   const IMAGE = { width: 1920, height: 1077 };
