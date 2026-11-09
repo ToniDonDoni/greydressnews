@@ -55,22 +55,26 @@
       x: clamp((SHADER.zoom * u + SHADER.offset - shift) * IMAGE.width, 0, IMAGE.width),
       y: clamp((SHADER.zoom * v + SHADER.offset) * IMAGE.height, 0, IMAGE.height),
       u,
-      v
+      v,
     };
   }
 
   function screenPoint(imageX, imageY) {
     const box = painting.getBoundingClientRect();
     const shift = nearShiftUv() * cameraX();
-    const u = ((imageX / IMAGE.width) + shift - SHADER.offset) / SHADER.zoom;
-    const v = ((imageY / IMAGE.height) - SHADER.offset) / SHADER.zoom;
+    const u = (imageX / IMAGE.width + shift - SHADER.offset) / SHADER.zoom;
+    const v = (imageY / IMAGE.height - SHADER.offset) / SHADER.zoom;
     return { x: box.left + u * box.width, y: box.top + v * box.height };
   }
 
   function inGlass(point) {
-    return point !== null
-      && point.x >= GLASS.left && point.x <= GLASS.right
-      && point.y >= GLASS.top && point.y <= GLASS.bottom;
+    return (
+      point !== null &&
+      point.x >= GLASS.left &&
+      point.x <= GLASS.right &&
+      point.y >= GLASS.top &&
+      point.y <= GLASS.bottom
+    );
   }
 
   function clipGlass(target) {
@@ -149,7 +153,8 @@
 
   function move(event) {
     if (event.pointerId !== activePointer) return;
-    const coalesced = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
+    const coalesced =
+      typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
     const samples = coalesced.length ? coalesced : [event];
     let last = strokePoints[strokePoints.length - 1];
     for (const sample of samples) {
@@ -193,10 +198,10 @@
 
   painting.addEventListener('pointerdown', start, { passive: true });
   painting.addEventListener('pointermove', move, { passive: false });
-  painting.addEventListener('pointerup', event => finish(event, true));
-  painting.addEventListener('pointercancel', event => finish(event, true));
-  painting.addEventListener('lostpointercapture', event => finish(event, true));
-  painting.addEventListener('dragstart', event => event.preventDefault());
+  painting.addEventListener('pointerup', (event) => finish(event, true));
+  painting.addEventListener('pointercancel', (event) => finish(event, true));
+  painting.addEventListener('lostpointercapture', (event) => finish(event, true));
+  painting.addEventListener('dragstart', (event) => event.preventDefault());
   window.addEventListener('blur', cancel);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) cancel();
@@ -204,9 +209,11 @@
 
   window.glassInk = {
     glass: GLASS,
-    get active() { return activePointer !== null; },
+    get active() {
+      return activePointer !== null;
+    },
     imagePoint,
     screenPoint,
-    clear
+    clear,
   };
 })();

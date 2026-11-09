@@ -1,0 +1,4 @@
+node_modules/
+output/
+dist/assets/
+specs/evidence/

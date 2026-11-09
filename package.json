@@ -1,0 +1,11 @@
+{
+  "name": "greydressnews",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write \"dist/*.{js,mjs,css,html}\"",
+    "format:check": "prettier --check \"dist/*.{js,mjs,css,html}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}

@@ -4,6 +4,18 @@ Run commands from the repository root. The current artwork is a static site in `
 
 This guide is the entry point for working on the current reference-photo page. The depth-region schema and editable coordinates are described in [test/README.md](../test/README.md); project conventions are in [CONTRIBUTING.md](../CONTRIBUTING.md). Photo-taking commands below use the committed `references/ElGrayPimenovLeiterWindow2.png` image and can be pasted as written. For a new photo, replace that path in each command with the path to your actual image; quote paths containing spaces.
 
+## Formatting
+
+The static page sources in `dist/` are formatted with Prettier. Install the local tool once, then format or verify:
+
+```sh
+npm install
+npm run format
+npm run format:check
+```
+
+`npm run format` rewrites `dist/*.{js,mjs,css,html}`. `npm run format:check` is the non-mutating version used by GitHub Actions. Keep generated assets and review evidence out of the formatter; `.prettierignore` already excludes them.
+
 ## Quick route
 
 | Goal | Start here |
