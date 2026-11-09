@@ -20,10 +20,7 @@ npm run format:check
 
 The page footer reads `dist/build.json` and shows the short commit hash with a link to the exact commit. Locally the file is absent, so the footer stays at `BUILD local`.
 
-GitHub Actions writes the file after the browser tests and before uploading the Pages artifact:
-
-- pull request events use `github.event.pull_request.head.sha`, not the synthetic PR merge commit;
-- push and manual events use the pushed commit, or the second parent when `HEAD` is a merge commit, so a merged branch shows the branch-head commit. Squash and rebase merges have no second parent and show the resulting commit.
+GitHub Actions writes the file after the browser tests and before uploading the Pages artifact using `github.sha`. When the Pages workflow is dispatched manually from Actions and a branch is selected, `github.sha` is the tip of that branch, and checkout uses the same ref. The footer therefore identifies the exact commit that was built.
 
 `python3 scripts/write_build_info.py <full-sha>` regenerates the file for a manual preview.
 
