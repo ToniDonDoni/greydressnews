@@ -7,13 +7,17 @@
   const layer = document.getElementById('ink-layer');
   const canvas = document.getElementById('glass-ink');
   const liveCanvas = document.getElementById('glass-ink-live');
+  const hintCanvas = document.getElementById('music-hint');
   if (!painting || !layer || !canvas || !liveCanvas) return;
   const context = canvas.getContext('2d', { alpha: true, desynchronized: false });
   const liveContext = liveCanvas.getContext('2d', { alpha: true, desynchronized: false });
+  const hintContext = hintCanvas?.getContext('2d', { alpha: true, desynchronized: false });
   if (!context || !liveContext) return;
 
   const IMAGE = { width: 1920, height: 1077 };
   const GLASS = { left: 1240, top: 0, right: 1920, bottom: 970 };
+  const HOUSE = { left: 0, top: 0, right: 720, bottom: 970 };
+  const MUSIC_HINT = { x: 1580, y: 470, radius: 126 };
   const SHADER = { zoom: 0.95, offset: 0.025 };
   const TAU = Math.PI * 2;
   const FALLBACK_NEAR_SHIFT_UV = 0.045 * (236 / 255 - 0.38) * (1 - Math.pow(0.4, 7));
@@ -47,6 +51,63 @@
 
   let circlePointer = null;
   let circlePoints = [];
+  let musicHintVisible = false;
+
+  function drawMusicHint() {
+    if (!hintContext || !hintCanvas) return;
+    hintContext.clearRect(0, 0, hintCanvas.width, hintCanvas.height);
+    const { x, y, radius } = MUSIC_HINT;
+    hintContext.save();
+    hintContext.globalCompositeOperation = 'screen';
+
+    const halo = hintContext.createRadialGradient(x, y, radius * 0.5, x, y, radius * 1.8);
+    halo.addColorStop(0, 'rgba(255,229,171,0.025)');
+    halo.addColorStop(0.68, 'rgba(255,224,157,0.08)');
+    halo.addColorStop(1, 'rgba(255,224,157,0)');
+    hintContext.fillStyle = halo;
+    hintContext.fillRect(x - radius * 1.8, y - radius * 1.8, radius * 3.6, radius * 3.6);
+
+    hintContext.beginPath();
+    hintContext.arc(x, y, radius, 0, TAU);
+    hintContext.shadowColor = 'rgba(255,226,160,0.9)';
+    hintContext.shadowBlur = 38;
+    hintContext.lineWidth = 10;
+    hintContext.strokeStyle = 'rgba(255,223,153,0.24)';
+    hintContext.stroke();
+
+    hintContext.shadowBlur = 12;
+    hintContext.lineWidth = 2.2;
+    hintContext.strokeStyle = 'rgba(255,241,203,0.62)';
+    hintContext.stroke();
+    hintContext.restore();
+  }
+
+  function setMusicHint(visible) {
+    musicHintVisible = Boolean(visible);
+    if (!hintCanvas) return;
+    if (musicHintVisible) drawMusicHint();
+    hintCanvas.classList.toggle('is-visible', musicHintVisible);
+  }
+
+  function toggleMusicHint() {
+    setMusicHint(!musicHintVisible);
+  }
+
+  function isHousePoint(point) {
+    return (
+      point !== null &&
+      point.x >= HOUSE.left &&
+      point.x <= HOUSE.right &&
+      point.y >= HOUSE.top &&
+      point.y <= HOUSE.bottom
+    );
+  }
+
+  function handleHouseDoubleClick(event) {
+    if (!event.isTrusted) return;
+    const point = imagePoint(event.clientX, event.clientY);
+    if (isHousePoint(point)) toggleMusicHint();
+  }
 
   function normalizedPoint(clientX, clientY) {
     const box = painting.getBoundingClientRect();
@@ -88,10 +149,14 @@
     if (radius < 22 || radius > Math.min(width, height) * 0.24) return false;
     const aspect = diameterX / Math.max(1, diameterY);
     if (aspect < 0.68 || aspect > 1.47) return false;
-    if (centerX > width / 3) return false;
 
-    const leftSamples = samples.filter((point) => point.x <= width / 3 + 8).length;
-    if (leftSamples / samples.length < 0.78) return false;
+    const box = painting.getBoundingClientRect();
+    for (const point of samples) {
+      const image = imagePoint(box.left + point.x, box.top + point.y);
+      if (!inGlass(image)) return false;
+    }
+    const center = imagePoint(box.left + centerX, box.top + centerY);
+    if (!inGlass(center)) return false;
 
     const radii = samples.map((point) => Math.hypot(point.x - centerX, point.y - centerY));
     const meanRadius = radii.reduce((sum, value) => sum + value, 0) / radii.length;
@@ -128,7 +193,7 @@
     if (circlePointer !== null || event.isPrimary === false) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     const point = normalizedPoint(event.clientX, event.clientY);
-    if (!point || point.x < 0 || point.x > 0.5 || point.y < 0 || point.y > 1) return;
+    if (!point || !inGlass(imagePoint(event.clientX, event.clientY))) return;
     circlePointer = event.pointerId;
     circlePoints = [point];
     try {
@@ -166,6 +231,7 @@
     circlePointer = null;
     circlePoints = [];
     if (recognized) {
+      setMusicHint(false);
       document.dispatchEvent(new CustomEvent('music-theme-change', { detail: { theme: 'waltz' } }));
     }
   }
@@ -327,6 +393,7 @@
     context.clearRect(0, 0, canvas.width, canvas.height);
   }
 
+  painting.addEventListener('dblclick', handleHouseDoubleClick);
   painting.addEventListener('pointerdown', start, { passive: true });
   painting.addEventListener('pointerdown', startMusicGesture, { passive: true });
   painting.addEventListener('pointermove', moveMusicGesture, { passive: true });
@@ -353,6 +420,9 @@
     glass: GLASS,
     get active() {
       return activePointer !== null;
+    },
+    get musicHintVisible() {
+      return musicHintVisible;
     },
     imagePoint,
     screenPoint,

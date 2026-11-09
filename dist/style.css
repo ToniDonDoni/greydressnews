@@ -67,6 +67,28 @@ main {
   will-change: transform;
 }
 
+.music-hint {
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 0.65s ease;
+}
+
+.music-hint.is-visible {
+  opacity: 0.82;
+  animation: sunlight-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes sunlight-breathe {
+  0%,
+  100% {
+    opacity: 0.62;
+  }
+
+  50% {
+    opacity: 0.92;
+  }
+}
+
 .loading {
   position: absolute;
   inset: 0;
@@ -159,6 +181,11 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .loading {
     transition: none;
+  }
+
+  .music-hint.is-visible {
+    animation: none;
+    opacity: 0.82;
   }
 }
 
