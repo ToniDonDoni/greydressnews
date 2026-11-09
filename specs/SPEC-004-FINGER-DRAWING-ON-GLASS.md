@@ -2,7 +2,7 @@
 
 **Status:** implemented on 2026-11-09. The drawing feature, semantic depth map, and full browser regression pass.
 
-**Revision:** 2026-11-09 - drawing and parallax are deliberately coupled. The camera never freezes for a stroke; the same finger movement paints the glass and drives the view. A mobile-stability pass keeps the ink canvases at the full 1920 x 1077 resolution, removes `will-change`, restores `desynchronized: true` on the 2D contexts, reports a lost WebGL context in a status line below the artwork while falling back to the poster, and adds touch-end/pointer-up audio retries when Android blocks the first resume.
+**Revision:** 2026-11-09 - drawing and parallax are deliberately coupled. The camera never freezes for a stroke; the same finger movement paints the glass and drives the view. A mobile-stability pass keeps the ink canvases at the full 1920 x 1077 resolution, uses `desynchronized: false`, restores `will-change: transform` for the Android comparison, reports a lost WebGL context in a status line below the artwork while falling back to the poster, and adds touch-end/pointer-up audio retries when Android blocks the first resume.
 
 ## 1. Problem and Current State
 
