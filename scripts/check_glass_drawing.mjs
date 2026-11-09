@@ -311,11 +311,19 @@ try{
         if (data[offset + 3] > 100) color = data.slice(offset, offset + 3);
       }
     }
-    const alphaAt = (x, y) => data[(Math.round(y) * canvas.width + Math.round(x)) * 4 + 3];
-    const arcXOffset = 280 * 0.42 * 0.5;
-    const arcYOffset = 230 * 0.42 * Math.sqrt(3) / 2;
-    const lowerLeftArcAlpha = alphaAt(1580 - arcXOffset, 470 + arcYOffset);
-    const lowerRightArcAlpha = alphaAt(1580 + arcXOffset, 470 + arcYOffset);
+    const maxAlphaNear = (centerX, centerY) => {
+      let maxAlpha = 0;
+      for (let y = Math.round(centerY) - 5; y <= Math.round(centerY) + 5; y++) {
+        for (let x = Math.round(centerX) - 5; x <= Math.round(centerX) + 5; x++) {
+          maxAlpha = Math.max(maxAlpha, data[(y * canvas.width + x) * 4 + 3]);
+        }
+      }
+      return maxAlpha;
+    };
+    const arcXOffset = 280 * 0.42 * Math.sqrt(3) / 2;
+    const arcYOffset = 230 * 0.42 * 0.5;
+    const lowerLeftArcAlpha = maxAlphaNear(1580 - arcXOffset, 470 + arcYOffset);
+    const lowerRightArcAlpha = maxAlphaNear(1580 + arcXOffset, 470 + arcYOffset);
 
     return {
       count,
@@ -336,7 +344,7 @@ try{
   assert(hintStats.color[0] > hintStats.color[1] && hintStats.color[1] > hintStats.color[2],
     'The hint must use a pale warm-yellow color');
   assert(hintStats.lowerLeftArcAlpha > hintStats.lowerRightArcAlpha + 35,
-    'The letter hint bowl must be mirrored toward the left side of its vertical axis');
+    `The letter hint bowl must be mirrored left (left alpha ${hintStats.lowerLeftArcAlpha}, right alpha ${hintStats.lowerRightArcAlpha})`);
   await hintPage.locator('#painting').screenshot({
     path: path.join(out, 'desktop-music-letter-e-hint.png'),
   });
