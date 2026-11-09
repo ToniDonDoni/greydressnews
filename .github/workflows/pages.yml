@@ -29,15 +29,18 @@ jobs:
       - name: Install depth validation dependencies
         run: |
           python3 -m pip install 'Pillow>=10,<14'
-          npm install --no-save --no-package-lock playwright
+          npm install --no-save --no-package-lock prettier playwright
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
-      - name: Validate manually corrected three-plane depth map
-        run: python3 scripts/manual_depth_planes.py --check
+      - name: Check formatter
+        run: npm run format:check
+      - name: Validate committed semantic-region reference depth map
+        run: python3 scripts/check_reference_depth.py
       - name: Check JavaScript syntax
         run: |
           node --check dist/scene.js
           node --check dist/parallax.js
+          node --check dist/glass-ink.js
           node --check dist/music.mjs
           node --check dist/groove-core.mjs
       - name: Verify committed depth and static build (no model download)
@@ -59,10 +62,23 @@ jobs:
           done
           cat /tmp/teaser-http.log
           exit 1
+      - name: Test finger drawing and coupled parallax on the glass
+        env:
+          TEASER_URL: http://127.0.0.1:8000/
+        run: node scripts/check_glass_drawing.mjs
       - name: Measure rendered far, midground, and near parallax
         env:
           TEASER_URL: http://127.0.0.1:8000/
         run: node scripts/check_reference_parallax.mjs
+      - name: Stamp build commit
+        run: python3 scripts/write_build_info.py "${{ github.sha }}"
+      - name: Upload glass drawing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: glass-drawing-evidence
+          path: output/glass_drawing_check/
+          if-no-files-found: warn
       - name: Upload depth-plane browser evidence
         if: always()
         uses: actions/upload-artifact@v4

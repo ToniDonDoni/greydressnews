@@ -55,7 +55,7 @@ try{
   await import('../dist/music.mjs');
   assert.equal(sources.length,0,'Loading the page must not start sound');
   assert.equal(contexts.length,0,'AudioContext must await a user gesture');
-  for(const name of ['pointerdown','touchstart','click']){
+  for(const name of ['pointerdown','touchstart','touchend','click']){
     assert.equal(typeof documentHandlers[name],'function',name+' must support playback');
   }
 
@@ -90,7 +90,40 @@ try{
   await flush();
   assert(sources.length>=2,'Touchstart alone must start actual audio');
   assert.equal(gainTargets.at(-1),.8,'Touch-only playback must use 80 percent gain');
-  console.log('Trusted pointer and touch startup, synchronous mobile audio unlock, fixed gain, and single scheduling passed.');
+
+  // Some Android WebViews only expose the end of the touch as an activation.
+  sources.length=0;contexts.length=0;gainTargets.length=0;calls.length=0;
+  await import('../dist/music.mjs?touchend-only');
+  documentHandlers.touchend({isTrusted:true});
+  assert.deepEqual(calls.slice(0,2),['resume','source.start'],
+    'A touchend-only gesture must unlock audio synchronously');
+  await flush();
+  assert(sources.length>=2,'Touchend alone must start actual audio');
+  assert.equal(gainTargets.at(-1),.8,'Touchend-only playback must use 80 percent gain');
+
+  // A blocked first resume must be retried by the next trusted gesture.
+  let retryResumes=0;
+  class RetryAudioContext extends MockAudioContext{
+    resume(){
+      calls.push('resume');
+      retryResumes++;
+      if(retryResumes===1)return new Promise(()=>{});
+      this.state='running';
+      return Promise.resolve();
+    }
+  }
+  globalThis.window={AudioContext:RetryAudioContext};
+  sources.length=0;contexts.length=0;gainTargets.length=0;calls.length=0;
+  await import('../dist/music.mjs?retry-after-block');
+  documentHandlers.pointerdown({isTrusted:true});
+  await flush();
+  assert.equal(retryResumes,1,'The first gesture must attempt to resume audio');
+  documentHandlers.touchend({isTrusted:true});
+  await flush();
+  assert.equal(retryResumes,2,'A later gesture must retry a blocked resume');
+  assert(sources.length>=2,'The retry gesture must start actual audio');
+  assert.equal(gainTargets.at(-1),.8,'Retry playback must keep the default gain');
+  console.log('Trusted pointer, touchstart, and touchend startup, synchronous mobile audio unlock, retry after blocked resume, fixed gain, and single scheduling passed.');
 }finally{
   globalThis.setInterval=realSetInterval;
 }

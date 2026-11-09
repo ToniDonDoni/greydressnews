@@ -1,8 +1,28 @@
 # Project scripts and workflows
 
-Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the reference photograph, its depth PNG, the WebGL parallax script, and the procedural music module directly.
+Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the reference photograph, its depth PNG, the WebGL parallax script, the glass-ink layer, and the procedural music module directly.
 
 This guide is the entry point for working on the current reference-photo page. The depth-region schema and editable coordinates are described in [test/README.md](../test/README.md); project conventions are in [CONTRIBUTING.md](../CONTRIBUTING.md). Photo-taking commands below use the committed `references/ElGrayPimenovLeiterWindow2.png` image and can be pasted as written. For a new photo, replace that path in each command with the path to your actual image; quote paths containing spaces.
+
+## Formatting
+
+The static page sources in `dist/` are formatted with Prettier. Install the local tool once, then format or verify:
+
+```sh
+npm install
+npm run format
+npm run format:check
+```
+
+`npm run format` rewrites `dist/*.{js,mjs,css,html}`. `npm run format:check` is the non-mutating version used by GitHub Actions. Keep generated assets and review evidence out of the formatter; `.prettierignore` already excludes them.
+
+## Build stamp
+
+The page footer reads `dist/build.json` and shows the short commit hash with a link to the exact commit. Locally the file is absent, so the footer stays at `BUILD local`.
+
+GitHub Actions writes the file after the browser tests and before uploading the Pages artifact using `github.sha`. When the Pages workflow is dispatched manually from Actions and a branch is selected, `github.sha` is the tip of that branch, and checkout uses the same ref. The footer therefore identifies the exact commit that was built.
+
+`python3 scripts/write_build_info.py <full-sha>` regenerates the file for a manual preview.
 
 ## Quick route
 
@@ -113,7 +133,7 @@ python3 -m http.server 8001 --directory output/site_preview
 
 Open `http://127.0.0.1:8001/` and move the pointer or drag on a phone. Inspect both camera extremes for cut edges, holes, and whether the city, presenter, studio, ticker, five lights, and glass move in a believable order. The broad red streak should remain attached to the glass. Stop the server with Ctrl-C. `output/` is ignored by Git.
 
-`scripts/check_reference_parallax.mjs` is currently tied to the committed three-plane map and its saved evidence. It is a baseline test for the current published map, not an acceptance test for this new candidate.
+`scripts/check_reference_parallax.mjs` reads `specs/evidence/depth-report-semantic.json` and is the browser acceptance test for the current published semantic-region map.
 
 ## Run and check the current page
 
@@ -121,7 +141,7 @@ The page already lives in `dist/`. The following commands validate the committed
 
 ```sh
 python3 scripts/build.py --check
-output/depth_venv/bin/python scripts/manual_depth_planes.py --check
+python3 scripts/check_reference_depth.py
 node scripts/check.mjs
 node scripts/check-ui.mjs
 python3 scripts/check_build.py
@@ -140,14 +160,15 @@ For the browser regression, keep that server running in one terminal. In another
 ```sh
 npm install --no-save --no-package-lock playwright
 npx playwright install chromium
+TEASER_URL=http://127.0.0.1:8000/ node scripts/check_glass_drawing.mjs
 TEASER_URL=http://127.0.0.1:8000/ node scripts/check_reference_parallax.mjs
 ```
 
-The browser check writes captures and a report under `output/reference_parallax_check/`. The GitHub Pages workflow runs these checks for the current map, plus JavaScript syntax checks. `python3 scripts/build.py` without `--check` is different: it regenerates the legacy cafe depth asset, not the current reference-photo depth map.
+The glass check writes captures and a report under `output/glass_drawing_check/`; the depth/audio check writes under `output/reference_parallax_check/`. The GitHub Pages workflow runs both, plus JavaScript syntax checks. `python3 scripts/build.py` without `--check` is different: it regenerates the legacy cafe depth asset, not the current reference-photo depth map.
 
 ## Promote a candidate
 
-The new region workflow currently stops at a reviewable candidate. Copying `corrected_depth.png` directly into `dist/assets/` would leave the committed reference-depth metadata, three-plane evidence, `scripts/manual_depth_planes.py --check`, and `scripts/check_reference_parallax.mjs` out of sync. Before publishing a candidate, update those validation rules and the depth metadata for the new map, run the browser test against its expected regions, then commit the new photo, depth PNG, metadata, and evidence together. The older `scripts/make_reference_depth.py` and `scripts/manual_depth_planes.py` still produce the previous three-plane map; do not use them to bake the new region scheme.
+The current reference map is promoted from `test/depth_regions.json`. To rebuild it, run `scripts/apply_depth_regions.py` from `specs/evidence/depth-before.png`, update `dist/assets/ElGrayPimenovLeiterWindow2-depth.png`, its metadata, and `specs/evidence/depth-report-semantic.json`, then run `scripts/check_reference_depth.py` and `scripts/check_reference_parallax.mjs`. The older `scripts/make_reference_depth.py` and `scripts/manual_depth_planes.py` still produce the previous three-plane map; do not use them for the current semantic map.
 
 `.github/workflows/pages.yml` currently builds on pushes to `teaser` and `fix/flat-front-glass-depth`, and on pull requests to `teaser`. Deployment occurs on a push to `teaser` or a manual workflow dispatch. `.github/workflows/bake-manual-depth.yml` is the older three-plane baking workflow on `fix/flat-front-glass-depth`.
 
@@ -161,9 +182,11 @@ The new region workflow currently stops at a reviewable candidate. Copying `corr
 | `test/test_depth_regions.py` | Check mask values and repeatable overlay rendering. |
 | `test/test_apply_depth_regions.py` | Check correction order, depth conversion, and input preservation. |
 | `scripts/download_depth_model.py` | Download or verify the pinned local Core ML model cache. |
+| `scripts/check_reference_depth.py` | Validate hashes, light centers, and sample points for the committed semantic reference depth map. |
 | `scripts/manual_depth_planes.py` | Bake or validate the earlier three-plane reference map and evidence. |
 | `scripts/make_reference_depth.py` | Infer reference depth, then apply the earlier three-plane correction. |
-| `scripts/check_reference_parallax.mjs` | Browser and Web Audio regression for the committed reference page and old depth evidence. |
+| `scripts/check_glass_drawing.mjs` | Browser regression for glass hit-testing, finger ink, coupled parallax, clipping, and mobile touch. |
+| `scripts/check_reference_parallax.mjs` | Browser and Web Audio regression for the committed reference page and semantic depth evidence. |
 | `scripts/build.py` | Validate static assets with `--check`; without it, regenerate the legacy cafe depth. |
 | `scripts/check_build.py` | Check missing/stale cafe map errors and model-cache behavior. |
 | `scripts/check.mjs` | Check repository text, local assets, and procedural audio output. |
