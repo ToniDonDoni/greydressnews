@@ -27,7 +27,7 @@
 - [x] **AC-10 - House cheat.** A double-click on the left building toggles a soft pale-yellow lowercase `e` hint on the glass; double-clicking the presenter does nothing.
 - [x] **AC-11 - Visible gesture.** The hint follows the glass parallax plane, and drawing a successful letter both selects the waltz and leaves a normal glass-ink stroke.
 - [x] **AC-12 - Optional hint.** A loose letter selects the waltz without ever showing the yellow hint, on both desktop and mobile.
-- [ ] **AC-13 - Hint orientation.** The yellow hint glyph is mirrored horizontally around its vertical centerline, and a browser pixel test confirms the loop opens toward the intended side.
+- [x] **AC-13 - Hint orientation.** The yellow hint glyph is mirrored horizontally around its vertical centerline, and a browser pixel test confirms the loop opens toward the intended side.
 - [x] **AC-05 - Immediate transition.** The completed gesture crossfades to the waltz, starting at measure 1, without creating another AudioContext.
 - [x] **AC-06 - Sample readiness.** The waltz uses recorded Salamander piano notes when decoded and its procedural piano remains available while samples load or if loading fails.
 - [x] **AC-07 - Mobile behavior.** Touch gestures select the waltz; the original touch activation and blocked-resume retry still work.
@@ -67,7 +67,7 @@
 - [x] Test default playback, waltz selection, sample scheduling, and mobile retry.
 - [x] Test letter selection while the hint has never been shown.
 - [x] Test the house double-click and hint color/placement.
-- [ ] Verify the mirrored letter orientation with a browser pixel-position assertion.
+- [x] Verify the mirrored letter orientation with a browser pixel-position assertion.
 - [x] Capture desktop hint/letter and mobile letter screenshots.
 - [x] Run the full CI workflow and review browser regressions.
 
