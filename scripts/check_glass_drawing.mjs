@@ -66,6 +66,42 @@ async function transformOf(page){
   });
 }
 
+function makeLetterEPath(box, centerX=.82, centerY=.46, wobble=.0){
+  const width=Math.min(box.width,box.height)*.34;
+  const height=width*.88;
+  const local=[];
+  for(let step=0;step<=32;step++){
+    const t=step/32;
+    local.push({
+      x:.95+(.08-.95)*t,
+      y:.5+wobble*.035*Math.sin(Math.PI*2*t),
+    });
+  }
+  for(let step=1;step<=64;step++){
+    const angle=Math.PI+(4*Math.PI/3)*step/64;
+    const radius=.42*(1+wobble*.12*Math.sin(3*angle));
+    local.push({
+      x:.5+radius*Math.cos(angle),
+      y:.5+radius*Math.sin(angle),
+    });
+  }
+  return local.map(point=>({
+    x:centerX+(point.x-.5)*width/box.width,
+    y:centerY+(point.y-.5)*height/box.height,
+  }));
+}
+
+async function drawMousePath(page, points, box){
+  const x=normalized=>box.x+box.width*normalized;
+  const y=normalized=>box.y+box.height*normalized;
+  await page.mouse.move(x(points[0].x),y(points[0].y));
+  await page.mouse.down();
+  for(const point of points.slice(1)){
+    await page.mouse.move(x(point.x),y(point.y));
+  }
+  await page.mouse.up();
+}
+
 const browser=await chromium.launch({
   headless:true,
   args:['--enable-webgl','--ignore-gpu-blocklist','--use-gl=angle','--use-angle=swiftshader'],
@@ -175,40 +211,44 @@ try{
   assert.equal(outsideInk['glass-ink'].count,0,'A gesture outside the glass must not draw');
   assert(Math.abs(outsideAfter-outsideBefore)>.1,'A gesture outside the glass must still pan the view');
 
-  // The music hint is optional; a rough circle must work while the hint is hidden.
-  const recognition = await page.evaluate(() => {
-    const box = document.querySelector('#painting').getBoundingClientRect();
-    const radius = Math.min(box.width, box.height) * 0.12;
-    const makeCircle = (amplitude) => Array.from({ length: 49 }, (_, index) => {
-      const angle = (Math.PI * 2 * index) / 48;
-      const wobble = 1 + amplitude * Math.sin(3 * angle);
-      return {
-        x: 0.82 + (Math.cos(angle) * radius * wobble) / box.width,
-        y: 0.46 + (Math.sin(angle) * radius * wobble) / box.height,
-      };
-    });
-    const glassCircle = makeCircle(0);
-    const approximateCircle = makeCircle(0.45);
-    const outsideCircle = glassCircle.map((point) => ({ ...point, x: point.x - 0.4 }));
-    const openLine = Array.from({ length: 24 }, (_, index) => ({
-      x: 0.75 + index * 0.003,
-      y: 0.46 + (index % 2) * 0.003,
-    }));
-    const irregularLoop = makeCircle(0.55);
+  // The recognizer accepts a rough lowercase e, not the old circle gesture.
+  const letterE = makeLetterEPath(painting,.82,.46,.65);
+  const roughLetterE = makeLetterEPath(painting,.82,.46,.9);
+  const closedCircle = Array.from({length:49},(_,index)=>{
+    const angle=Math.PI*2*index/48;
+    const radius=Math.min(painting.width,painting.height)*.12;
     return {
-      glassCircle: window.glassInk.recognizeMusicCircle(glassCircle),
-      approximateCircle: window.glassInk.recognizeMusicCircle(approximateCircle),
-      outsideCircle: window.glassInk.recognizeMusicCircle(outsideCircle),
-      openLine: window.glassInk.recognizeMusicCircle(openLine),
-      irregularLoop: window.glassInk.recognizeMusicCircle(irregularLoop),
+      x:.82+Math.cos(angle)*radius/painting.width,
+      y:.46+Math.sin(angle)*radius/painting.height,
     };
   });
-  assert.equal(recognition.glassCircle, true, 'A closed circle on the rain glass must be recognized');
-  assert.equal(recognition.approximateCircle, true,
-    'A moderately uneven circle must be accepted');
-  assert.equal(recognition.outsideCircle, false, 'A circle outside the glass must be ignored');
-  assert.equal(recognition.openLine, false, 'An open scribble must not change the music');
-  assert.equal(recognition.irregularLoop, false, 'A severely irregular loop must not select the waltz');
+  const outsideLetterE = makeLetterEPath(painting,.42,.46,.25);
+  const openLine = Array.from({length:24},(_,index)=>({
+    x:.75+index*.003,
+    y:.46+(index%2)*.003,
+  }));
+  const irregularLoop = Array.from({length:49},(_,index)=>{
+    const angle=Math.PI*2*index/48;
+    const radius=Math.min(painting.width,painting.height)*.12*(1+.55*Math.sin(3*angle));
+    return {
+      x:.82+Math.cos(angle)*radius/painting.width,
+      y:.46+Math.sin(angle)*radius/painting.height,
+    };
+  });
+  const recognition = await page.evaluate(({letterE,roughLetterE,closedCircle,outsideLetterE,openLine,irregularLoop})=>({
+    letterE:window.glassInk.recognizeMusicLetterE(letterE),
+    roughLetterE:window.glassInk.recognizeMusicLetterE(roughLetterE),
+    closedCircle:window.glassInk.recognizeMusicLetterE(closedCircle),
+    outsideLetterE:window.glassInk.recognizeMusicLetterE(outsideLetterE),
+    openLine:window.glassInk.recognizeMusicLetterE(openLine),
+    irregularLoop:window.glassInk.recognizeMusicLetterE(irregularLoop),
+  }),{letterE,roughLetterE,closedCircle,outsideLetterE,openLine,irregularLoop});
+  assert.equal(recognition.letterE,true,'A handwritten lowercase e on the rain glass must be recognized');
+  assert.equal(recognition.roughLetterE,true,'A loosely drawn lowercase e must be accepted');
+  assert.equal(recognition.closedCircle,false,'The previous circle gesture must no longer select the waltz');
+  assert.equal(recognition.outsideLetterE,false,'A letter outside the glass must be ignored');
+  assert.equal(recognition.openLine,false,'An open line must not change the music');
+  assert.equal(recognition.irregularLoop,false,'An irregular loop without an e crossbar must be ignored');
 
   assert.equal(await page.evaluate(() => window.musicPlayback.theme), 'legacy',
     'The original groove must remain the default theme');
@@ -219,31 +259,19 @@ try{
   assert.equal(await page.evaluate(() => window.glassInk.musicHintVisible), false,
     'Double-clicking the presenter must not reveal the house hint');
 
-  const circleCenterX = 0.82;
-  const circleCenterY = 0.46;
-  const circleRadius = Math.min(painting.width, painting.height) * 0.12;
-  await page.mouse.move(x(circleCenterX + circleRadius / painting.width), y(circleCenterY));
-  await page.mouse.down();
-  for (let step = 1; step <= 48; step++) {
-    const angle = (Math.PI * 2 * step) / 48;
-    const wobble = 1 + 0.45 * Math.sin(3 * angle);
-    await page.mouse.move(
-      x(circleCenterX + (Math.cos(angle) * circleRadius * wobble) / painting.width),
-      y(circleCenterY + (Math.sin(angle) * circleRadius * wobble) / painting.height),
-    );
-  }
-  await page.mouse.up();
+  const desktopLetterE = makeLetterEPath(painting,.82,.46,.65);
+  await drawMousePath(page,desktopLetterE,painting);
   await page.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
   assert.equal(await page.evaluate(() => window.glassInk.musicHintVisible), false,
     'The waltz must switch while the optional hint has never been shown');
-  const circleInk = await page.evaluate(inspectInk);
-  assert(circleInk['glass-ink'].count > 1000, 'The selection circle must also leave a glass-ink mark');
-  assert.equal(circleInk['glass-ink'].outside, 0, 'The selection circle must remain clipped to the glass');
+  const letterEInk = await page.evaluate(inspectInk);
+  assert(letterEInk['glass-ink'].count > 1000, 'The selection letter must leave a glass-ink mark');
+  assert.equal(letterEInk['glass-ink'].outside, 0, 'The selection letter must remain clipped to the glass');
   await page.locator('#painting').screenshot({
-    path: path.join(out, 'desktop-music-circle-without-hint.png'),
+    path: path.join(out, 'desktop-music-letter-e-without-hint.png'),
   });
 
-  // The house double-click only reveals a visual hint; it does not unlock music.
+  // The house double-click only reveals a visual letter; it does not unlock music.
   const hintPage = await browser.newPage({
     viewport: { width: 1200, height: 820 },
     deviceScaleFactor: 1,
@@ -292,10 +320,10 @@ try{
   assert(hintStats.color[0] > hintStats.color[1] && hintStats.color[1] > hintStats.color[2],
     'The hint must use a pale warm-yellow color');
   await hintPage.locator('#painting').screenshot({
-    path: path.join(out, 'desktop-music-hint.png'),
+    path: path.join(out, 'desktop-music-letter-e-hint.png'),
   });
 
-  // An open stroke is not a circle and leaves the optional hint visible.
+  // An open stroke is not a letter e and leaves the optional hint visible.
   await hintPage.mouse.move(hx(0.75), hy(0.46));
   await hintPage.mouse.down();
   for (let step = 1; step <= 18; step++) {
@@ -307,22 +335,14 @@ try{
   assert.equal(await hintPage.evaluate(() => window.glassInk.musicHintVisible), true,
     'An unsuccessful stroke must leave the hint visible');
 
-  await hintPage.mouse.move(hx(circleCenterX + circleRadius / hintPainting.width), hy(circleCenterY));
-  await hintPage.mouse.down();
-  for (let step = 1; step <= 48; step++) {
-    const angle = (Math.PI * 2 * step) / 48;
-    await hintPage.mouse.move(
-      hx(circleCenterX + (Math.cos(angle) * circleRadius) / hintPainting.width),
-      hy(circleCenterY + (Math.sin(angle) * circleRadius) / hintPainting.height),
-    );
-  }
-  await hintPage.mouse.up();
+  const hintedLetterE = makeLetterEPath(hintPainting,.82,.46,.55);
+  await drawMousePath(hintPage,hintedLetterE,hintPainting);
   await hintPage.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
   assert.equal(await hintPage.evaluate(() => window.glassInk.musicHintVisible), false,
-    'A successful circle must dismiss the hint');
-  const hintedCircleInk = await hintPage.evaluate(inspectInk);
-  assert(hintedCircleInk['glass-ink'].count > 1000,
-    'A hinted selection circle must also leave a glass-ink mark');
+    'A successful letter e must dismiss the optional hint');
+  const hintedLetterEInk = await hintPage.evaluate(inspectInk);
+  assert(hintedLetterEInk['glass-ink'].count > 1000,
+    'A hinted letter e must also leave a glass-ink mark');
   await hintPage.close();
 
   // Mobile touch: tap and drag must both work, and the drag must move the camera.
@@ -370,38 +390,30 @@ try{
   assert.equal(mobileInk['glass-ink'].outside,0,'Mobile ink escaped the glass');
   await mobilePage.locator('#painting').screenshot({path:path.join(out,'mobile-drawn.png')});
 
-  // A finger-drawn circle on the rain glass selects the waltz on mobile as well.
-  const mobileRadius = Math.min(mobileBox.width, mobileBox.height) * 0.12;
-  const mobileCircleStart = {
-    x: mx(0.82 + mobileRadius / mobileBox.width),
-    y: my(0.46),
-  };
+  // A finger-drawn lowercase e on the rain glass selects the waltz on mobile too.
+  const mobileLetterE = makeLetterEPath(mobileBox,.82,.46,.7);
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchStart',
-    touchPoints: [mobileCircleStart],
+    touchPoints: [{x:mx(mobileLetterE[0].x),y:my(mobileLetterE[0].y)}],
   });
-  for (let step = 1; step <= 48; step++) {
-    const angle = (Math.PI * 2 * step) / 48;
+  for(const point of mobileLetterE.slice(1)){
     await cdp.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
-      touchPoints: [{
-        x: mx(0.82 + (Math.cos(angle) * mobileRadius * (1 + 0.45 * Math.sin(3 * angle))) / mobileBox.width),
-        y: my(0.46 + (Math.sin(angle) * mobileRadius * (1 + 0.45 * Math.sin(3 * angle))) / mobileBox.height),
-      }],
+      touchPoints: [{x:mx(point.x),y:my(point.y)}],
     });
     await mobilePage.waitForTimeout(8);
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await mobilePage.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
   assert.equal(await mobilePage.evaluate(() => window.musicPlayback.theme), 'waltz',
-    'A moderately uneven mobile circle must select the piano waltz');
+    'A loosely drawn mobile letter e must select the piano waltz');
   assert.equal(await mobilePage.evaluate(() => window.glassInk.musicHintVisible), false,
     'Mobile music selection must not require the optional hint');
-  const mobileCircleInk = await mobilePage.evaluate(inspectInk);
-  assert(mobileCircleInk['glass-ink'].count > 1000,
-    'A mobile selection circle must also leave a glass-ink mark');
+  const mobileLetterEInk = await mobilePage.evaluate(inspectInk);
+  assert(mobileLetterEInk['glass-ink'].count > 1000,
+    'A mobile selection letter must also leave a glass-ink mark');
   await mobilePage.locator('#painting').screenshot({
-    path: path.join(out, 'mobile-music-circle.png'),
+    path: path.join(out, 'mobile-music-letter-e.png'),
   });
   await mobileContext.close();
 
