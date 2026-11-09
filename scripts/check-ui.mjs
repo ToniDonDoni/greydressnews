@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { PIANO_KEYS, SAMPLE_BASE_URL } from '../dist/piano-samples.mjs';
+const SAMPLE_BASE_URL = 'https://tonejs.github.io/audio/salamander/';
 
 // The sampler fetches recordings but never creates an AudioContext before a gesture.
 const sources = [];
@@ -17,6 +17,7 @@ globalThis.fetch = async (url) => {
   networkRequests++;
   return { ok: true, arrayBuffer: async () => new ArrayBuffer(16) };
 };
+const { PIANO_KEYS } = await import('../dist/piano-samples.mjs');
 globalThis.document = {
   getElementById() {
     throw Error('Audio must not depend on visible controls');
