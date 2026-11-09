@@ -120,9 +120,7 @@ function makePianoNote(note, velocityLayer) {
   for (let harmonic = 1; harmonic <= partials; harmonic++) {
     const frequencyOfPartial =
       frequency * harmonic * Math.sqrt(1 + inharmonicity * harmonic * harmonic);
-    const amplitude =
-      (1 / harmonic ** 1.38) *
-      (1 + (brightness - 1) * (harmonic - 1) / partials);
+    const amplitude = (1 / harmonic ** 1.38) * (1 + (brightness - 1) * (harmonic - 1) / partials);
     const damping = 0.86 + Math.max(0, note - 60) * 0.012 + harmonic * harmonic * 0.052;
     partialData.push({
       amplitude,
@@ -146,14 +144,10 @@ function makePianoNote(note, velocityLayer) {
       sample += stringSignal * envelope;
     }
 
-    const hammerNoise =
-      (random() * 2 - 1) * Math.exp(-time * 235) * hammerLevel;
+    const hammerNoise = (random() * 2 - 1) * Math.exp(-time * 235) * hammerLevel;
     const hammerTone =
       Math.sin(TAU * frequency * 7.6 * time) * Math.exp(-time * 105) * hammerLevel * 0.55;
-    const soundboard =
-      Math.sin(TAU * frequency * 0.997 * time) *
-      Math.exp(-time * 1.7) *
-      0.018;
+    const soundboard = Math.sin(TAU * frequency * 0.997 * time) * Math.exp(-time * 1.7) * 0.018;
 
     output[index] = (sample * 0.29 + hammerNoise + hammerTone + soundboard) * attack;
   }
@@ -174,10 +168,7 @@ function addRoom(left, right) {
     Math.round(value * SAMPLE_RATE),
   );
 
-  for (const [channel, delays] of [
-    [left, leftDelays],
-    [right, rightDelays],
-  ]) {
+  for (const [channel, delays] of [[left, leftDelays], [right, rightDelays]]) {
     const dry = channel.slice();
     const wet = new Float32Array(length);
     for (let line = 0; line < delays.length; line++) {
