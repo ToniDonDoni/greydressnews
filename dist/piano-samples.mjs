@@ -84,7 +84,7 @@ export class PianoSampler {
 
     const envelope = this.context.createGain();
     const level = event.gain * (event.role === 'melody' ? 0.85 : 0.75);
-    const hold = at + Math.max(0.14, (event.durationBeats * 60) / bpm * 0.9);
+    const hold = at + Math.max(0.14, ((event.durationBeats * 60) / bpm) * 0.9);
     const release = event.role === 'melody' ? 0.22 : 0.17;
     const end = Math.min(at + buffer.duration / playbackRate, hold + release * 7);
     envelope.gain.setValueAtTime(0, at);

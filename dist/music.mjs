@@ -130,9 +130,12 @@ function onGesture(event) {
   if (!playing) {
     start();
   } else if (context?.state !== 'running') {
-    void context.resume().then(schedule).catch((error) => {
-      console.error('Waltz could not resume:', error);
-    });
+    void context
+      .resume()
+      .then(schedule)
+      .catch((error) => {
+        console.error('Waltz could not resume:', error);
+      });
   }
 }
 
