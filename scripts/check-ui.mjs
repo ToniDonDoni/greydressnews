@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 const SAMPLE_BASE_URL = 'https://tonejs.github.io/audio/salamander/';
 
-// The sampler fetches recordings but never creates an AudioContext before a gesture.
+// Sample downloads do not create an AudioContext or start audio before a gesture.
 const sources = [];
 const buffers = [];
 const contexts = [];
@@ -112,58 +112,83 @@ class MockAudioContext {
 globalThis.window = { AudioContext: MockAudioContext };
 const realSetInterval = globalThis.setInterval;
 globalThis.setInterval = () => 1;
+
+async function settle() {
+  await flush();
+  await flush();
+  await flush();
+}
+
 try {
   await import('../dist/music.mjs');
   assert.equal(networkRequests, PIANO_KEYS.length, 'Sample downloading must begin during page load');
   assert.equal(contexts.length, 0, 'AudioContext must wait for a trusted gesture');
   assert.equal(sources.length, 0, 'Loading recordings must not start sound');
 
-  for (const name of ['pointerdown', 'touchstart', 'touchend', 'click']) {
-    assert.equal(typeof documentHandlers[name], 'function', name + ' must support playback');
+  for (const name of ['pointerdown', 'touchstart', 'touchend', 'click', 'music-theme-change']) {
+    assert.equal(typeof documentHandlers[name], 'function', name + ' must be registered');
   }
 
   documentHandlers.click({ isTrusted: false });
-  await flush();
+  await settle();
   assert.equal(sources.length, 0, 'Synthetic gestures must not start sound');
 
   documentHandlers.pointerdown({ isTrusted: true });
   assert.deepEqual(calls.slice(0, 2), ['resume', 'source.start'],
-    'Resume and the silent mobile-unlock source must start inside the gesture');
-  await flush();
-  await flush();
+    'Resume and the original groove must start inside the gesture');
+  await settle();
   assert.equal(contexts[0].state, 'running');
-  assert(sources.length > 10, 'The first click must start many sampled piano notes');
-  assert(sources.slice(1).every((source) => source.buffer.sampleRate === 44100),
-    'Every audible note must use an actual decoded piano recording');
-  assert(sources.slice(1).some((source) => source.playbackRate.value !== 1),
-    'Unrecorded notes must be repitched from the nearest piano sample');
+  assert.equal(window.musicPlayback.theme, 'legacy', 'The original groove must be the default');
+  assert.equal(window.musicPlayback.playing, true, 'The first trusted gesture must start playback');
+  assert(sources.length >= 2, 'The original groove must schedule its next bars');
+  assert.equal(sources[0].buffer.sampleRate, 24000, 'The default must use the original synthesized groove');
+  assert.equal(sources[0].buffer.length, Math.ceil((240 / 74 + 3) * 24000));
+  assert(!sources.some((source) => source.buffer?.sampleRate === 44100),
+    'The piano theme must not replace the default before a circle gesture');
   assert(gainTargets.includes(0.8), 'The default master gain must remain 80 percent');
-  assert.equal(buffers[0]?.length, 1, 'The mobile unlock must use one silent frame');
 
-  const initial = sources.length;
+  const legacySourceCount = sources.length;
+  documentHandlers['music-theme-change']({ detail: { theme: 'waltz' } });
+  await settle();
+  assert.equal(window.musicPlayback.theme, 'waltz', 'The circle gesture event must select the waltz');
+  const pianoSources = sources.slice(legacySourceCount).filter(
+    (source) => source.buffer?.sampleRate === 44100,
+  );
+  assert(pianoSources.length > 10, 'Selecting the waltz must schedule recorded piano notes');
+  assert(pianoSources.some((source) => source.playbackRate.value !== 1),
+    'The score notes must be repitched from the nearest piano sample');
+
+  const afterSwitch = sources.length;
   documentHandlers.touchstart({ isTrusted: true });
   documentHandlers.click({ isTrusted: true });
-  await flush();
-  assert.equal(sources.length, initial, 'Later gestures must not restart the music');
+  await settle();
+  assert.equal(sources.length, afterSwitch, 'Later gestures must not restart or duplicate playback');
   assert.equal(contexts.length, 1, 'Only one AudioContext should exist');
   assert.equal(networkRequests, PIANO_KEYS.length, 'Samples must be fetched only once');
 
-  sources.length = 0; contexts.length = 0; gainTargets.length = 0; calls.length = 0;
+  sources.length = 0;
+  contexts.length = 0;
+  gainTargets.length = 0;
+  calls.length = 0;
   await import('../dist/music.mjs?touch-only');
   documentHandlers.touchstart({ isTrusted: true });
   assert.deepEqual(calls.slice(0, 2), ['resume', 'source.start']);
-  await flush();
-  await flush();
-  assert(sources.length > 10, 'Touch-only playback must schedule piano samples');
+  await settle();
+  assert(sources.length >= 2, 'Touch-only activation must start the original groove');
+  assert.equal(sources[0].buffer.sampleRate, 24000);
+  assert.equal(window.musicPlayback.theme, 'legacy');
   assert(gainTargets.includes(0.8), 'Touch-only playback must keep 80 percent master gain');
 
-  sources.length = 0; contexts.length = 0; gainTargets.length = 0; calls.length = 0;
+  sources.length = 0;
+  contexts.length = 0;
+  gainTargets.length = 0;
+  calls.length = 0;
   await import('../dist/music.mjs?touchend-only');
   documentHandlers.touchend({ isTrusted: true });
   assert.deepEqual(calls.slice(0, 2), ['resume', 'source.start']);
-  await flush();
-  await flush();
-  assert(sources.length > 10, 'Touchend-only playback must schedule piano samples');
+  await settle();
+  assert(sources.length >= 2, 'Touchend-only activation must start the original groove');
+  assert.equal(sources[0].buffer.sampleRate, 24000);
 
   class RetryAudioContext extends MockAudioContext {
     resume() {
@@ -175,19 +200,22 @@ try {
     }
   }
   globalThis.window = { AudioContext: RetryAudioContext };
-  sources.length = 0; contexts.length = 0; gainTargets.length = 0; calls.length = 0;
+  sources.length = 0;
+  contexts.length = 0;
+  gainTargets.length = 0;
+  calls.length = 0;
   await import('../dist/music.mjs?retry-after-block');
   documentHandlers.pointerdown({ isTrusted: true });
   await flush();
   assert.equal(retries, 1, 'The first attempt must request audio activation');
   documentHandlers.touchend({ isTrusted: true });
-  await flush();
-  await flush();
+  await settle();
   assert.equal(retries, 2, 'Another trusted gesture must retry a blocked resume');
-  assert(sources.length > 10, 'Retry must schedule real piano samples');
+  assert(sources.length >= 2, 'Retry must start the original groove');
+  assert.equal(sources[0].buffer.sampleRate, 24000);
   assert(gainTargets.includes(0.8), 'Retry playback must keep the fixed master gain');
 
-  console.log('Sample loading, real piano buffer playback, repitching, gesture activation, mobile retry, and no repeated network downloads passed.');
+  console.log('Default groove, circle-selected piano waltz, sample playback, gesture activation, mobile retry, and single-context scheduling passed.');
 } finally {
   globalThis.setInterval = realSetInterval;
 }

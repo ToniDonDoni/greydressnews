@@ -43,6 +43,7 @@ jobs:
           node --check dist/glass-ink.js
           node --check dist/music.mjs
           node --check dist/groove-core.mjs
+          node --check dist/legacy-groove.mjs
       - name: Verify committed depth and static build (no model download)
         run: python3 scripts/build.py --check
       - name: Test depth build failures and model cache behavior

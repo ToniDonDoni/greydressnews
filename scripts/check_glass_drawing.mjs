@@ -175,6 +175,51 @@ try{
   assert.equal(outsideInk['glass-ink'].count,0,'A gesture outside the glass must not draw');
   assert(Math.abs(outsideAfter-outsideBefore)>.1,'A gesture outside the glass must still pan the view');
 
+  // Circle recognition is constrained to the left third and rejects open or irregular paths.
+  const recognition = await page.evaluate(() => {
+    const box = document.querySelector('#painting').getBoundingClientRect();
+    const radius = Math.min(box.width, box.height) * 0.12;
+    const circle = Array.from({ length: 49 }, (_, index) => {
+      const angle = (Math.PI * 2 * index) / 48;
+      return {
+        x: 0.18 + (Math.cos(angle) * radius) / box.width,
+        y: 0.5 + (Math.sin(angle) * radius) / box.height,
+      };
+    });
+    const middleCircle = circle.map((point) => ({ ...point, x: point.x + 0.34 }));
+    const openLine = Array.from({ length: 24 }, (_, index) => ({
+      x: 0.12 + index * 0.004,
+      y: 0.5 + (index % 2) * 0.003,
+    }));
+    return {
+      leftCircle: window.glassInk.recognizeMusicCircle(circle),
+      middleCircle: window.glassInk.recognizeMusicCircle(middleCircle),
+      openLine: window.glassInk.recognizeMusicCircle(openLine),
+    };
+  });
+  assert.equal(recognition.leftCircle, true, 'A closed circle in the left third must be recognized');
+  assert.equal(recognition.middleCircle, false, 'A circle outside the left third must be ignored');
+  assert.equal(recognition.openLine, false, 'An open scribble must not change the music');
+
+  assert.equal(await page.evaluate(() => window.musicPlayback.theme), 'legacy',
+    'The original groove must remain the default theme');
+  const circleCenterX = 0.18;
+  const circleCenterY = 0.5;
+  const circleRadius = Math.min(painting.width, painting.height) * 0.12;
+  await page.mouse.move(x(circleCenterX + circleRadius / painting.width), y(circleCenterY));
+  await page.mouse.down();
+  for (let step = 1; step <= 48; step++) {
+    const angle = (Math.PI * 2 * step) / 48;
+    await page.mouse.move(
+      x(circleCenterX + (Math.cos(angle) * circleRadius) / painting.width),
+      y(circleCenterY + (Math.sin(angle) * circleRadius) / painting.height),
+    );
+  }
+  await page.mouse.up();
+  await page.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
+  const circleInk = await page.evaluate(inspectInk);
+  assert.equal(circleInk['glass-ink'].count, 0, 'A music-selection circle must not draw glass ink');
+
   // Mobile touch: tap and drag must both work, and the drag must move the camera.
   const mobileContext=await browser.newContext({
     viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true,
@@ -219,6 +264,32 @@ try{
   assert(mobileInk['glass-ink'].count>1000,'A mobile drag did not leave a continuous stroke');
   assert.equal(mobileInk['glass-ink'].outside,0,'Mobile ink escaped the glass');
   await mobilePage.locator('#painting').screenshot({path:path.join(out,'mobile-drawn.png')});
+
+  // A finger-drawn circle in the left third selects the waltz on mobile as well.
+  const mobileRadius = Math.min(mobileBox.width, mobileBox.height) * 0.12;
+  const mobileCircleStart = {
+    x: mx(0.18 + mobileRadius / mobileBox.width),
+    y: my(0.5),
+  };
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [mobileCircleStart],
+  });
+  for (let step = 1; step <= 48; step++) {
+    const angle = (Math.PI * 2 * step) / 48;
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{
+        x: mx(0.18 + (Math.cos(angle) * mobileRadius) / mobileBox.width),
+        y: my(0.5 + (Math.sin(angle) * mobileRadius) / mobileBox.height),
+      }],
+    });
+    await mobilePage.waitForTimeout(8);
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await mobilePage.waitForFunction(() => window.musicPlayback?.theme === 'waltz');
+  assert.equal(await mobilePage.evaluate(() => window.musicPlayback.theme), 'waltz',
+    'A mobile circle must select the piano waltz');
   await mobileContext.close();
 
   // A lost WebGL context must be reported below the artwork, not silently

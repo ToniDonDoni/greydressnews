@@ -45,6 +45,137 @@
     return Number.isFinite(value) ? value : FALLBACK_NEAR_SHIFT_UV;
   }
 
+  let circlePointer = null;
+  let circlePoints = [];
+
+  function normalizedPoint(clientX, clientY) {
+    const box = painting.getBoundingClientRect();
+    if (!box.width || !box.height) return null;
+    return {
+      x: (clientX - box.left) / box.width,
+      y: (clientY - box.top) / box.height,
+    };
+  }
+
+  function recognizeMusicCircle(points, width, height) {
+    if (!Array.isArray(points) || points.length < 14 || width <= 0 || height <= 0) return false;
+
+    const samples = [];
+    for (const point of points) {
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return false;
+      const x = point.x * width;
+      const y = point.y * height;
+      if (x < -8 || x > width + 8 || y < -8 || y > height + 8) return false;
+      const previous = samples[samples.length - 1];
+      if (!previous || (x - previous.x) ** 2 + (y - previous.y) ** 2 >= 4) {
+        samples.push({ x, y });
+      }
+    }
+    if (samples.length < 14) return false;
+
+    const xs = samples.map((point) => point.x);
+    const ys = samples.map((point) => point.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const diameterX = maxX - minX;
+    const diameterY = maxY - minY;
+    const centerX = (minX + maxX) * 0.5;
+    const centerY = (minY + maxY) * 0.5;
+    const radius = (diameterX + diameterY) * 0.25;
+
+    if (radius < 22 || radius > Math.min(width, height) * 0.24) return false;
+    const aspect = diameterX / Math.max(1, diameterY);
+    if (aspect < 0.68 || aspect > 1.47) return false;
+    if (centerX > width / 3) return false;
+
+    const leftSamples = samples.filter((point) => point.x <= width / 3 + 8).length;
+    if (leftSamples / samples.length < 0.78) return false;
+
+    const radii = samples.map((point) => Math.hypot(point.x - centerX, point.y - centerY));
+    const meanRadius = radii.reduce((sum, value) => sum + value, 0) / radii.length;
+    const radialError = Math.sqrt(
+      radii.reduce((sum, value) => sum + (value - meanRadius) ** 2, 0) / radii.length,
+    ) / meanRadius;
+    if (radialError > 0.3) return false;
+
+    let pathLength = 0;
+    let totalTurn = 0;
+    for (let index = 1; index < samples.length; index++) {
+      const previous = samples[index - 1];
+      const current = samples[index];
+      pathLength += Math.hypot(current.x - previous.x, current.y - previous.y);
+      const previousAngle = Math.atan2(previous.y - centerY, previous.x - centerX);
+      const currentAngle = Math.atan2(current.y - centerY, current.x - centerX);
+      let delta = currentAngle - previousAngle;
+      while (delta > Math.PI) delta -= TAU;
+      while (delta < -Math.PI) delta += TAU;
+      totalTurn += delta;
+    }
+
+    const closure = Math.hypot(
+      samples[0].x - samples[samples.length - 1].x,
+      samples[0].y - samples[samples.length - 1].y,
+    );
+    if (closure > Math.max(16, meanRadius * 0.38)) return false;
+    if (pathLength < meanRadius * 4.2 || pathLength > meanRadius * 8.5) return false;
+    if (Math.abs(totalTurn) < Math.PI * 1.6 || Math.abs(totalTurn) > Math.PI * 2.5) return false;
+    return true;
+  }
+
+  function startMusicGesture(event) {
+    if (circlePointer !== null || event.isPrimary === false) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const point = normalizedPoint(event.clientX, event.clientY);
+    if (!point || point.x < 0 || point.x > 1 / 3 || point.y < 0 || point.y > 1) return;
+    circlePointer = event.pointerId;
+    circlePoints = [point];
+    try {
+      painting.setPointerCapture(event.pointerId);
+    } catch (error) {
+      // Synthetic pointer events have no active pointer to capture.
+    }
+  }
+
+  function moveMusicGesture(event) {
+    if (event.pointerId !== circlePointer) return;
+    const coalesced =
+      typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
+    const samples = coalesced.length ? coalesced : [event];
+    const box = painting.getBoundingClientRect();
+    let last = circlePoints[circlePoints.length - 1];
+    for (const sample of samples) {
+      const point = normalizedPoint(sample.clientX, sample.clientY);
+      if (!point) continue;
+      const dx = (point.x - last.x) * box.width;
+      const dy = (point.y - last.y) * box.height;
+      if (dx * dx + dy * dy >= 4) {
+        circlePoints.push(point);
+        last = point;
+      }
+    }
+  }
+
+  function finishMusicGesture(event) {
+    if (event.pointerId !== circlePointer) return;
+    const point = normalizedPoint(event.clientX, event.clientY);
+    if (point) circlePoints.push(point);
+    const box = painting.getBoundingClientRect();
+    const recognized = recognizeMusicCircle(circlePoints, box.width, box.height);
+    circlePointer = null;
+    circlePoints = [];
+    if (recognized) {
+      document.dispatchEvent(new CustomEvent('music-theme-change', { detail: { theme: 'waltz' } }));
+    }
+  }
+
+  function cancelMusicGesture(event) {
+    if (event && event.pointerId !== circlePointer) return;
+    circlePointer = null;
+    circlePoints = [];
+  }
+
   function imagePoint(clientX, clientY) {
     const box = painting.getBoundingClientRect();
     if (!box.width || !box.height) return null;
@@ -197,14 +328,25 @@
   }
 
   painting.addEventListener('pointerdown', start, { passive: true });
+  painting.addEventListener('pointerdown', startMusicGesture, { passive: true });
+  painting.addEventListener('pointermove', moveMusicGesture, { passive: true });
+  painting.addEventListener('pointerup', finishMusicGesture);
+  painting.addEventListener('pointercancel', cancelMusicGesture);
+  painting.addEventListener('lostpointercapture', cancelMusicGesture);
   painting.addEventListener('pointermove', move, { passive: false });
   painting.addEventListener('pointerup', (event) => finish(event, true));
   painting.addEventListener('pointercancel', (event) => finish(event, true));
   painting.addEventListener('lostpointercapture', (event) => finish(event, true));
   painting.addEventListener('dragstart', (event) => event.preventDefault());
-  window.addEventListener('blur', cancel);
+  window.addEventListener('blur', () => {
+    cancel();
+    cancelMusicGesture();
+  });
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) cancel();
+    if (document.hidden) {
+      cancel();
+      cancelMusicGesture();
+    }
   });
 
   window.glassInk = {
@@ -214,6 +356,10 @@
     },
     imagePoint,
     screenPoint,
+    recognizeMusicCircle(points) {
+      const box = painting.getBoundingClientRect();
+      return recognizeMusicCircle(points, box.width, box.height);
+    },
     clear,
   };
 })();

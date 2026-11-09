@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import { GrooveSynth as LegacyGrooveSynth, BPM as LEGACY_BPM } from '../dist/legacy-groove.mjs';
 import { SCORE_LEFT_HAND, SCORE_METADATA, SCORE_RIGHT_HAND } from '../dist/waltz-score.mjs';
 import {
   WaltzSynth,
@@ -43,6 +44,9 @@ for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue'])
   assert(!html.includes(`id="${id}"`),`Unexpected audio control: ${id}`);
 assert(!/<(?:button|input)\b/i.test(html),'The artwork must not display music controls');
 assert(html.includes('<script type="module" src="music.mjs"></script>'),'The procedural waltz must load as a module');
+const musicSource = fs.readFileSync(path.join(dist,'music.mjs'),'utf8');
+assert(musicSource.includes('legacy-groove.mjs'),'The original groove must remain available');
+assert(musicSource.includes('music-theme-change'),'The alternate theme must be gesture-selectable');
 assert(!html.includes('id="bpm"'),'The depth-study page must not show tempo controls');
 assert(!html.includes('scene.js'),'The page must not load the unrelated procedural scene');
 assert(!html.includes('<header>')&&!html.includes('the cafe is open'),'Removed top labels must stay hidden');
@@ -53,9 +57,21 @@ for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){
   if(/^(?:https?:|data:)/.test(match[1]))continue;
   assert(fs.existsSync(path.join(dist,match[1])),`Missing local resource: ${match[1]}`);
 }
-for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs','waltz-score.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
+for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs','waltz-score.mjs','legacy-groove.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
 const windows=JSON.parse(fs.readFileSync(path.join(dist,'assets/windows.json'),'utf8'));
 assert(windows.length>0&&windows.every(w=>w.x>=0&&w.x<1024&&w.y>=0&&w.y<1024&&/^#[0-9a-f]{6}$/i.test(w.color)),'Invalid window data');
+
+assert.equal(LEGACY_BPM, 74, 'The original groove tempo must be preserved');
+const legacySynth = new LegacyGrooveSynth(112026, LEGACY_BPM);
+assert.equal(legacySynth.barSeconds, 240 / 74, 'The original groove must retain its 4/4 bar length');
+const legacyPlan = legacySynth.planBar(0);
+assert(legacyPlan.events.some((event) => event.kind === 'kick'));
+assert(legacyPlan.events.some((event) => event.kind === 'snare'));
+assert(legacyPlan.events.some((event) => event.kind === 'bass'));
+const legacyBar = legacySynth.renderBar(0);
+assert.equal(legacyBar.left.length, legacyBar.right.length);
+assert(legacyBar.left.some((sample) => Math.abs(sample) > 0.001),
+  'The restored original groove must render audible audio');
 
 const first=new WaltzSynth(112026),same=new WaltzSynth(112026),different=new WaltzSynth(112027);
 const a=first.renderBar(0),b=same.renderBar(0),c=different.renderBar(0);

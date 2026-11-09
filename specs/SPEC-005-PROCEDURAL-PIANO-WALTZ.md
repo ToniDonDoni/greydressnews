@@ -1,70 +1,70 @@
-# SPEC-005: Procedural Piano Waltz
+# SPEC-005: Dual Music Themes and Circle Selection
 
 ## 1. Problem and Current State
 
-- The page starts a procedural instrumental hip-hop groove on the first trusted user gesture.
-- The groove uses drum voices, a 4/4 bar model, and a 74 BPM tempo.
-- The supplied score, *Valzer d'Inverno*, is a piano solo in D-flat major / B-flat minor, 3/4, at quarter note = 165.
-- The page must retain its unobtrusive first-gesture playback and leave the artwork and parallax behavior unchanged.
+- The original teaser played a procedural instrumental hip-hop groove at 74 BPM in 4/4 on the first trusted user gesture.
+- The piano-waltz change replaced that original groove instead of retaining it as the default.
+- The score-aligned piano theme transcribes the first 33 measures of Valzer d'Inverno in D-flat major / B-flat minor, 3/4, at quarter note = 165.
+- The page already supports finger drawing on the rain-streaked glass and touch-driven parallax. Music selection must not interfere with either interaction.
 
 ## 2. Required State
 
-- Replace the hip-hop arrangement with a procedural piano-only waltz.
-- Use a 3/4 meter at 165 BPM.
-- Alternate an opening theme lasting approximately 20 seconds with a second, higher-register theme lasting approximately 16 seconds.
-- Use a real, recorded grand-piano timbre in the browser, repitched from a small sample set without physical modeling.
-- Use a note-for-note transcription of the first 33 measures of the supplied score for both hands, including the written right-hand 8va shift from measure 19 onward. Loop these 33 measures; no music beyond measure 33 is represented.
-- Keep first trusted pointer/touch activation, the fixed 80 percent master gain, and the existing mobile retry behavior.
-- Preserve the artwork, depth map, glass drawing, parallax renderer, and absence of visible audio controls.
+- Keep the original procedural groove as the default theme. It must start on the first trusted pointer/touch gesture, as it did before the waltz change.
+- Keep the score-aligned piano waltz as a second theme. Preserve its 33-measure, both-hands transcription, Salamander piano samples, and procedural fallback.
+- A closed circle drawn in the left third of the artwork selects the piano waltz. The gesture must be recognized from its path geometry, not from a click, tap, or fixed coordinate alone.
+- Ignore open strokes, irregular scribbles, circles outside the left third, and gestures that are cancelled.
+- Switch immediately after the circle is completed, using a short crossfade. Start the waltz at measure 1 without recreating the AudioContext.
+- Keep the original 80 percent master gain, first-gesture activation, mobile resume retry, and no-visible-audio-controls behavior.
+- Preserve the artwork, depth map, glass drawing, parallax renderer, and mobile interaction.
 
 ## 3. Acceptance Criteria
 
-- [x] AC-01: The audio engine uses 165 BPM and three quarter-note beats per bar.
-- [x] AC-02: The 33-measure loop reproduces all 124 right-hand and 157 left-hand note events, including MIDI pitch, beat offset, duration, and notated velocity.
-- [x] AC-03: The playback engine uses the Salamander Grand Piano recordings with nearest-key resampling and note envelopes.
-- [x] AC-04: The arrangement contains no hip-hop drum voices.
-- [x] AC-05: No audio starts before a trusted gesture; the first gesture starts audio synchronously.
-- [x] AC-06: Later page gestures do not restart playback, and master gain remains 0.8.
-- [x] AC-07: Existing visual and parallax behavior remains unchanged (browser regression passed).
-- [x] AC-08: Full source, audio, mobile gesture, browser, and CI regressions pass.
+- [x] **AC-01 - Default theme.** The original 74 BPM, 4/4 procedural groove remains the first theme and starts on the first trusted gesture.
+- [x] **AC-02 - Alternate theme.** The piano waltz retains the 165 BPM, 3/4 score transcription of measures 1-33 for both hands.
+- [x] **AC-03 - Circle recognition.** A closed, near-circular pointer path whose center is in the left third selects the waltz.
+- [x] **AC-04 - False-positive rejection.** Open scribbles and circles outside the left third do not select the waltz.
+- [x] **AC-05 - Immediate transition.** The completed circle crossfades to the waltz, starting at measure 1, without creating another AudioContext.
+- [x] **AC-06 - Sample readiness.** The waltz uses recorded Salamander piano notes when decoded and its procedural piano remains available while samples load or if loading fails.
+- [x] **AC-07 - Mobile behavior.** Touch circles select the waltz; the original touch activation and blocked-resume retry still work.
+- [x] **AC-08 - Visual regression.** Glass drawing, clipping, parallax, and the artwork remain unchanged.
+- [x] **AC-09 - Automated verification.** Source, audio, UI, desktop gesture, mobile gesture, and browser regressions pass.
 
 ## 4. Analysis
 
-- At 165 quarter-note BPM, a 3/4 bar lasts approximately 1.091 seconds.
-- Eighteen bars last approximately 19.64 seconds; fifteen bars last approximately 16.36 seconds.
-- These phrase lengths map the first 18 measures to approximately 19.64 seconds and the next 15 measures to approximately 16.36 seconds.
-- The transcription applies the written right-hand octave shift beginning at measure 19 and preserves the left-hand bass, dyads, and sustained opening of the second section.
-- The browser uses recorded Salamander piano samples; the approved preview used a General MIDI SoundFont, so timbre is not identical.
-- The sample bank is fetched from Tone.js audio hosting, so first-time playback requires connectivity. Download begins before the first gesture; audio activation itself remains gesture-gated.
-- If downloads fail, the existing math-generated piano is retained as an audible fallback.
+- The original groove and the waltz have different meters and tempos, so they use independent synthesizers and bar clocks.
+- Each theme has its own gain bus. A short crossfade silences already scheduled bars from the previous theme without restarting the shared master chain or AudioContext.
+- The circle recognizer measures closure, angular travel, path length, radial deviation, aspect ratio, and center position. This rejects taps, open strokes, elongated loops, and ordinary scribbles.
+- The recognizer uses coordinates relative to the artwork's visible bounds, so the left-third selection region scales with desktop and mobile layouts.
+- While the piano samples decode, only one procedural fallback bar is queued ahead. Once samples are ready, the fallback bus fades out and recorded piano takes over on the next scheduled bar.
 
 ## 5. Proposed Solution
 
-1. Replace the drum-and-bass groove with a three-beat piano arrangement.
-2. Encode the first 33 measures as explicit right-hand and left-hand MIDI note events, preserving pitch, beat, duration, and notated velocity.
-3. Load 14 Salamander Grand Piano key recordings, repitch nearby notes, and apply gentle attack/release envelopes.
-4. Keep the existing first-gesture Web Audio lifecycle and fixed master gain.
-5. Extend source checks to compare every scheduled note against the 33-measure transcription, while retaining the browser gesture and visual regressions.
+1. Preserve the original teaser synthesizer in dist/legacy-groove.mjs; keep the score-aligned engine in dist/groove-core.mjs.
+2. Make the legacy groove the default in dist/music.mjs. Route the legacy groove, sampled waltz, and temporary waltz fallback through separate gain buses.
+3. Listen for a music-theme-change event from the drawing controller. Reset the selected theme's bar index and schedule it from the current audio time.
+4. Add a geometry-based circle recognizer to dist/glass-ink.js. Track one primary pointer beginning in the left third and dispatch the theme event only after a completed circle passes the shape checks.
+5. Keep the existing glass-only ink hit-testing separate. The music-selection circle must not paint ink.
+6. Extend scripts/check-ui.mjs to verify the original groove starts by default, the waltz starts after selection, and mobile activation/retry remain intact.
+7. Extend scripts/check_glass_drawing.mjs to test circle recognition and actual mouse/touch selection, including rejection cases.
+8. Run the complete Pages workflow, including formatting, audio, Playwright drawing, and parallax regressions.
 
 ## 6. ToDo
 
-- [x] Create a feature branch from the latest teaser branch.
-- [x] Implement the procedural piano voice.
-- [x] Replace the audible timbre with 14 recorded piano notes, retaining the original synthesizer as a network fallback.
-- [x] Attribute the CC BY 3.0 sample recordings.
-- [x] Implement the alternating waltz themes and 3/4 accompaniment.
-- [x] Replace the score-inspired first theme and simplified second-theme accompaniment with the complete first-33-measure, both-hands transcription.
-- [x] Update source and gesture tests.
-- [x] Run the full CI workflow and review its browser evidence.
+- [x] Restore the original 74 BPM groove as a separate synthesizer module.
+- [x] Keep the score-aligned piano waltz as the alternate theme.
+- [x] Add independent theme buses and a short crossfade.
+- [x] Recognize a closed circle in the left third of the artwork.
+- [x] Keep music selection separate from visible glass ink.
+- [x] Test valid circles, invalid gestures, and circles outside the selection region.
+- [x] Test default playback, waltz selection, sample scheduling, and mobile retry.
+- [x] Test the circle gesture with both mouse and touch.
+- [x] Run the full CI workflow and review browser regressions.
 
-## 7. Attribution and Verification
+### Piano sample attribution
 
-- Piano recordings: Salamander Grand Piano V3 by Alexander Holm, CC BY 3.0.
+- Salamander Grand Piano V3 by Alexander Holm, CC BY 3.0.
 - Sample hosting: https://tonejs.github.io/audio/salamander/
 - Original: https://github.com/sfzinstruments/SalamanderGrandPiano
 - License: https://creativecommons.org/licenses/by/3.0/
-- Changes: selected 14 recorded notes, repitched adjacent notes, used Web Audio gain envelopes and effects.
-- Source and browser tests should verify samples are decoded before audible notes start, while mobile Web Audio activation remains synchronous with a trusted gesture.
-- The complete first-33-measure transcription is stored in `dist/waltz-score.mjs`; `scripts/check.mjs` compares every scheduled right- and left-hand note against that data.
-- The transcription ends at measure 33. The browser loops those 33 measures and does not claim to reproduce the rest of the score.
-- Real piano sample timbre can differ from the preview's General MIDI SoundFont.
+- The browser uses 14 recorded notes, repitches nearby keys, and applies Web Audio envelopes and effects.
+- If sample loading fails, the score-aligned procedural piano remains audible as a fallback.
