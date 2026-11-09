@@ -37,7 +37,7 @@
 
 - The original groove and the waltz have different meters and tempos, so they use independent synthesizers and bar clocks.
 - Each theme has its own gain bus. A short crossfade silences already scheduled bars from the previous theme without restarting the shared master chain or AudioContext.
-- The circle recognizer measures closure, angular travel, path length, radial deviation, aspect ratio, and center position. It allows moderate hand-drawn variation while rejecting taps, open strokes, and severely irregular scribbles. Current tolerances are radial error <= 0.36, aspect ratio 0.62-1.62, endpoint gap <= max(18 px, 0.45r), path length 3.8r-9.5r, and angular travel 1.45π-2.65π.
+- The circle recognizer measures closure, angular travel, path length, radial deviation, aspect ratio, and center position. It allows moderate hand-drawn variation while rejecting taps, open strokes, and severely irregular scribbles. Current tolerances are radial error <= 0.36, aspect ratio 0.62-1.62, endpoint gap <= max(18 px, 0.45r), path length 3.8r-9.5r, and angular travel 1.45*pi-2.65*pi.
 - Hint visibility is never read by the gesture recognizer. The yellow circle is a visual-only target and can be toggled independently.
 - The recognizer validates every sampled point against the source-image glass rectangle, so a circle must remain on the drawable pane at desktop and mobile sizes.
 - The hint is drawn in source-image space on a separate transparent canvas inside the same transformed ink layer. Its soft screen-blended halo and pale ring therefore move with the near glass plane.
