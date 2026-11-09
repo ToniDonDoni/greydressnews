@@ -32,6 +32,10 @@ jobs:
           npm install --no-save --no-package-lock prettier playwright
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
+      - name: Inspect Prettier output for dual music files
+        run: |
+          npx prettier --write dist/music.mjs dist/glass-ink.js
+          git diff -- dist/music.mjs dist/glass-ink.js
       - name: Check formatter
         run: npm run format:check
       - name: Validate committed semantic-region reference depth map
