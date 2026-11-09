@@ -1,18 +1,22 @@
 import { WaltzSynth, SAMPLE_RATE, BPM } from './groove-core.mjs';
+import { PianoSampler } from './piano-samples.mjs';
 
 const DEFAULT_VOLUME = 0.8;
 let context,
   master,
   synth,
+  piano,
   nextBar = 0,
   nextTime = 0,
   timer = null;
-let starting = false,
-  playing = false,
-  primed = false;
+let playing = false,
+  primed = false,
+  loading = null,
+  pianoReady = false,
+  fallback = false;
 
-function queueBar() {
-  const { left, right } = synth.renderBar(nextBar++);
+function queueFallbackBar() {
+  const { left, right } = synth.renderBar(nextBar);
   const buffer = context.createBuffer(2, left.length, SAMPLE_RATE);
   buffer.copyToChannel(left, 0);
   buffer.copyToChannel(right, 1);
@@ -24,6 +28,15 @@ function queueBar() {
     source.buffer = null;
   };
   source.start(nextTime);
+}
+
+function queueBar() {
+  if (fallback) {
+    queueFallbackBar();
+  } else {
+    piano.scheduleBar(synth.planBar(nextBar), nextTime, synth.bpm);
+  }
+  nextBar++;
   nextTime += synth.barSeconds;
 }
 
@@ -57,64 +70,57 @@ function initialize() {
   const seed = new Uint32Array(1);
   crypto.getRandomValues(seed);
   synth = new WaltzSynth(seed[0], BPM);
+  piano = new PianoSampler(context, master);
+}
+
+function maybePlay() {
+  if (playing || context?.state !== 'running' || (!pianoReady && !fallback)) return;
+  playing = true;
   nextTime = context.currentTime + 0.06;
+  schedule();
+  if (timer === null) timer = setInterval(schedule, 150);
+}
+
+function primeMobileAudio() {
+  if (primed) return;
+  // A one-frame silent source starts within the gesture, even while MP3s decode.
+  const buffer = context.createBuffer(1, 1, context.sampleRate);
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  source.connect(master);
+  source.start(context.currentTime);
+  primed = true;
 }
 
 function start() {
-  if (playing) return;
-  if (starting) {
-    // A later trusted gesture may succeed when the first resume was blocked
-    // by Android's audio focus policy. Retry from this gesture.
-    if (!context) {
-      starting = false;
-      return start();
+  try {
+    initialize();
+    // Autoplay permission must be requested during the trusted gesture.
+    const resumed = context.resume();
+    primeMobileAudio();
+    master.gain.cancelScheduledValues(context.currentTime);
+    master.gain.setTargetAtTime(DEFAULT_VOLUME, context.currentTime, 0.09);
+
+    if (!loading) {
+      loading = piano
+        .load()
+        .then(() => {
+          pianoReady = true;
+          maybePlay();
+        })
+        .catch((error) => {
+          console.warn('Piano samples unavailable; using procedural fallback:', error);
+          fallback = true;
+          maybePlay();
+        });
     }
-    if (context.state === 'running') {
-      playing = true;
-      schedule();
-      if (timer === null) timer = setInterval(schedule, 150);
-      return;
-    }
-    void context
-      .resume()
-      .then(() => {
-        if (playing || context.state !== 'running') return;
-        playing = true;
-        schedule();
-        if (timer === null) timer = setInterval(schedule, 150);
-      })
+
+    void Promise.resolve(resumed)
+      .then(maybePlay)
       .catch((error) => {
         console.error('Waltz could not resume:', error);
       });
-    return;
-  }
-  starting = true;
-  try {
-    initialize();
-    // Resume inside the user gesture, not after the first await.
-    const resume = context.resume();
-    // Prime a real source inside the same gesture for mobile Safari autoplay.
-    if (!primed) {
-      queueBar();
-      primed = true;
-    }
-    master.gain.cancelScheduledValues(context.currentTime);
-    master.gain.setTargetAtTime(DEFAULT_VOLUME, context.currentTime, 0.09);
-    Promise.resolve(resume)
-      .then(() => {
-        if (context.state !== 'running') throw Error('Audio blocked');
-        playing = true;
-        schedule();
-        if (timer === null) timer = setInterval(schedule, 150);
-      })
-      .catch((error) => {
-        console.error('Waltz could not start:', error);
-      })
-      .finally(() => {
-        starting = false;
-      });
   } catch (error) {
-    starting = false;
     console.error('Waltz could not start:', error);
   }
 }
@@ -123,23 +129,16 @@ function onGesture(event) {
   if (!event.isTrusted) return;
   if (!playing) {
     start();
-  } else if (playing && context?.state !== 'running') {
-    // Audio may be interrupted when a mobile device locks or changes output.
-    void context
-      .resume()
-      .then(schedule)
-      .catch((error) => {
-        console.error('Waltz could not resume:', error);
-      });
+  } else if (context?.state !== 'running') {
+    void context.resume().then(schedule).catch((error) => {
+      console.error('Waltz could not resume:', error);
+    });
   }
 }
 
-// Taps on a non-clickable image do not always produce a delegated click on iOS.
-// Listen at the start of the gesture, while browser audio activation is available.
 document.addEventListener('pointerdown', onGesture, { capture: true });
 document.addEventListener('pointerup', onGesture, { capture: true });
 document.addEventListener('touchstart', onGesture, { capture: true });
-// Some Android WebViews only expose the end of the touch as an activation.
 document.addEventListener('touchend', onGesture, { capture: true });
 document.addEventListener('click', onGesture, { capture: true });
 document.addEventListener('keydown', onGesture, { capture: true });
