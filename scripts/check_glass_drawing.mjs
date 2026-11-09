@@ -221,6 +221,28 @@ try{
   await mobilePage.locator('#painting').screenshot({path:path.join(out,'mobile-drawn.png')});
   await mobileContext.close();
 
+  // A lost WebGL context must be reported below the artwork, not silently
+  // replaced by the static image.
+  const lost=await page.evaluate(()=>{
+    const view=document.querySelector('#depth-view');
+    const status=document.querySelector('#status');
+    const gl=view.getContext('webgl');
+    const extension=gl.getExtension('WEBGL_lose_context');
+    if(!extension)return {supported:false};
+    extension.loseContext();
+    return new Promise(resolve=>setTimeout(()=>resolve({
+      supported:true,
+      display:view.style.display,
+      hidden:status.hidden,
+      text:status.textContent,
+    }),200));
+  });
+  if(lost.supported){
+    assert.equal(lost.display,'none','A lost depth canvas must be hidden');
+    assert.equal(lost.hidden,false,'A lost WebGL context must show a status message');
+    assert(lost.text.includes('WebGL context lost'),'The status message must name the WebGL failure');
+  }
+
   assert.deepEqual(errors,[],'The page emitted errors');
   const report={
     passed:true,

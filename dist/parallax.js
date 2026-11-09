@@ -6,6 +6,7 @@
   const photo=document.getElementById('poster');
   const view=document.getElementById('depth-view');
   const loading=document.getElementById('loading');
+  const status=document.getElementById('status');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const state={ready:false,x:0,y:0,targetX:0,targetY:0,error:null};
   // The shader's near-glass displacement after seven 0.6 mixes. Exposed to
@@ -13,15 +14,20 @@
   const NEAR_GLASS_SHIFT_UV=0.045*(236/255-0.38)*(1-Math.pow(0.4,7));
   window.parallaxView={get x(){return state.x},nearShiftUv:NEAR_GLASS_SHIFT_UV};
   let gl=null,program=null,uniforms=null;
-  // Android may reclaim the WebGL context under memory pressure. Hide the
-  // black canvas and keep the static photograph/ink usable instead of leaving
-  // the whole artwork as a black rectangle.
-  view.addEventListener('webglcontextlost',event=>{
-    event.preventDefault();
+  function reportError(message){
+    state.error=message;
+    if(status){
+      status.textContent=message;
+      status.hidden=false;
+    }
+  }
+  // Do not swallow a lost context: hide the unusable WebGL canvas so the
+  // photograph remains visible, and report the failure below the artwork.
+  view.addEventListener('webglcontextlost',()=>{
     state.ready=false;
     view.style.display='none';
-    loading.textContent='Depth view paused; showing the original image.';
-    loading.classList.add('visible');
+    loading.classList.add('hidden');
+    reportError('WebGL context lost: the depth effect is unavailable. Reload the page to restore it.');
   });
   let photoTexture=null,depthTexture=null,dragPointer=null;
   let previous=performance.now();
@@ -65,8 +71,9 @@
     requestAnimationFrame(frame);
   }
   function fail(error){
-    state.error=String(error.message||error);view.style.display='none';loading.textContent='Depth view unavailable; showing the original image.';
-    loading.classList.add('visible');
+    view.style.display='none';
+    loading.classList.add('hidden');
+    reportError('Depth view unavailable: '+String(error.message||error));
   }
   function initialize(){
     try{
