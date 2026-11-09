@@ -48,7 +48,7 @@
 1. Preserve the original teaser synthesizer in `dist/legacy-groove.mjs`; keep the score-aligned engine in `dist/groove-core.mjs`.
 2. Make the legacy groove the default in `dist/music.mjs`. Route the legacy groove, sampled waltz, and temporary waltz fallback through separate gain buses.
 3. Listen for a `music-theme-change` event from the drawing controller. Reset the selected theme's bar index and schedule it from the current audio time.
-4. Replace circle recognition with a tolerant handwritten-letter recognizer in `dist/glass-ink.js). Track one primary pointer beginning on the rain glass and dispatch the theme event only after the crossbar-and-loop shape checks pass.
+4. Replace circle recognition with a tolerant handwritten-letter recognizer in `dist/glass-ink.js`. Track one primary pointer beginning on the rain glass and dispatch the theme event only after the crossbar-and-loop shape checks pass.
 5. Draw the optional pale-yellow lowercase `e` on the separate parallax-registered hint canvas. A trusted double-click inside the left building hit area toggles the hint.
 6. Keep the existing glass-only ink hit-testing. The music-selection letter is drawn as an ordinary translucent glass-ink stroke and does not bypass clipping.
 7. Extend `scripts/check_glass_drawing.mjs` to test letter recognition with the hint never shown, the optional house hint, rejection cases, and actual mouse/touch gestures.

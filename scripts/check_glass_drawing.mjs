@@ -317,6 +317,10 @@ try{
   assert(hintStats.bounds[0] >= 1240 && hintStats.bounds[2] <= 1920,
     'The sunlit hint must stay inside the glass horizontally');
   assert(hintStats.bounds[3] <= 970, 'The sunlit hint must stay above the ticker');
+  assert(hintStats.bounds[2] - hintStats.bounds[0] > 180,
+    'The letter hint must have a readable horizontal crossbar');
+  assert(hintStats.bounds[3] - hintStats.bounds[1] > 120,
+    'The letter hint must include its looped bowl');
   assert(hintStats.color[0] > hintStats.color[1] && hintStats.color[1] > hintStats.color[2],
     'The hint must use a pale warm-yellow color');
   await hintPage.locator('#painting').screenshot({

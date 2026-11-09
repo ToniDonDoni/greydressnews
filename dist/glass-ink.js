@@ -285,9 +285,9 @@
   }
 
   function finishMusicGesture(event) {
-    if (event.pointerId !== circlePointer) return;
+    if (event.pointerId !== musicPointer) return;
     const point = normalizedPoint(event.clientX, event.clientY);
-    if (point) circlePoints.push(point);
+    if (point) musicPoints.push(point);
     const box = painting.getBoundingClientRect();
     const recognized = recognizeMusicLetterE(musicPoints, box.width, box.height);
     musicPointer = null;
