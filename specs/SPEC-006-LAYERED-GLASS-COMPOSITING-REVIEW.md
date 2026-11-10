@@ -2,7 +2,7 @@
 
 Review date: 2026-11-10
 Implementation branch: `feat/layered-glass`
-Review status: implementation is present, visual and interaction acceptance remain open.
+Review status: the three findings below have been addressed in the local candidate; full visual and interaction acceptance remains open.
 
 This review records the implementation state and the three issues identified during local review. It does not change the implementation requirements in `SPEC-006-LAYERED-GLASS-COMPOSITING.md`.
 
@@ -23,19 +23,19 @@ These items describe work present in the current worktree. They do not mean that
 
 `dist/parallax.js` creates `photo` with `new Image()` for the WebGL texture, then `pointerTarget()` calls `photo.getBoundingClientRect()`. This image is not the displayed page element, so its rectangle has no useful on-page dimensions. Dividing pointer coordinates by that zero-width rectangle can produce invalid target coordinates; `setTarget()` does not reject `NaN`. In the local page, pointer movement can therefore fail to move the artwork.
 
-The coordinate calculation must use the displayed artwork element and reject invalid or zero-size bounds. Verify both mouse movement and touch dragging in the complete page after correction.
+Resolved in the local candidate: coordinate calculation uses the displayed artwork element and rejects invalid or zero-size bounds. The complete page loaded and pointer movement shifted the rendered artwork in the browser. Touch-drag regression remains part of full-page acceptance.
 
 ### 2. The reflected city is masked only across the middle of the pane
 
-`test/glass_layers.json` defines `glass_alpha.reflection_polygon` with vertical coordinates from approximately 195 to 520 in a 941-pixel-high image. The supplied donor, `references/no_logo_leiter_glass.png`, shows the reflected city across the full height of the right pane. The generated alpha consequently clips that reflection to the middle, regardless of the page opacity slider value.
+`test/glass_layers.json` previously defined `glass_alpha.reflection_polygon` only across the middle of the image, clipping the reflected city.
 
-Revise the reflection mask to follow the full-height reflected architecture in the donor. Inspect the alpha-only output and composite against the base before accepting the mask; keep the pane boundary and droplet/detail alpha independent from the city mask.
+Resolved in the local candidate: the reflected-architecture region now spans the full pane height with partial opacity. The alpha diagnostic reports partial coverage, and the composite shows the reflection from top to bottom. Visual acceptance remains open.
 
 ### 3. Laptop depth needs tuning to level 45
 
-The current authoring level for the laptop in `test/glass_layers.json` is 32. The bake conversion maps this to grayscale value 192, while the glass near plane is 236. The user requested laptop level 45. With the current conversion, level 45 maps to grayscale value 174. This is a depth-tuning request, not an implementation bug.
+The review originally recorded laptop level 45. The latest user direction sets the laptop to level 21, matching the ticker's depth.
 
-Update the laptop authoring level to 45, rebake the static scene-depth asset and its metadata, then inspect laptop motion relative to the glass and ticker at the reference camera extremes. The base photograph and glass donor remain unchanged.
+Resolved in the local candidate: the laptop is authored at level 21 and the static depth map was rebaked from the base photo's saved raw neural depth. At the configured scale, level 21 maps to grayscale 208. The base photograph and glass donor remain unchanged.
 
 ## Acceptance still required
 

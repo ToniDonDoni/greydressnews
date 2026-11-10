@@ -24,10 +24,14 @@ class DepthRegionTest(unittest.TestCase):
         self.assertEqual(regions["front_glass"]["depth"], 1)
         self.assertEqual(regions["city"]["depth"], 100)
         self.assertTrue(regions["front_glass"]["depth"] < regions["ticker"]["depth"] < regions["presenter"]["depth"] < regions["studio_wall"]["depth"])
-        lights = [regions[f"light_{letter}"]["depth"] for letter in "abcde"]
-        self.assertEqual(len(set(lights)), 5)
+        self.assertEqual(regions["laptop"]["depth"], 21)
+        self.assertEqual(regions["ticker"]["depth"], 21)
+        self.assertFalse(any(region_id.startswith("light_") for region_id in regions))
         self.assertNotIn("red_trail", regions)
-        self.assertTrue(all(regions["front_glass"]["depth"] < depth < regions["city"]["depth"] for depth in lights))
+        self.assertLess(regions["front_glass"]["depth"], regions["laptop"]["depth"])
+        self.assertLess(regions["laptop"]["depth"], regions["presenter"]["depth"])
+        self.assertLess(regions["presenter"]["depth"], regions["studio_wall"]["depth"])
+        self.assertLess(regions["studio_wall"]["depth"], regions["city"]["depth"])
 
     def test_reference_preview_is_repeatable(self):
         """Compare two temporary overlays of the reference photo byte for byte."""

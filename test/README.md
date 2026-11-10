@@ -4,18 +4,17 @@ For the complete generation, validation, preview, and publication workflow, star
 
 `depth_regions.json` is the editable, project-local draft of the scene's semantic depth regions. The colors and labels let us compare a regenerated photograph with the agreed regions. `scripts/apply_depth_regions.py` then applies the same configuration to an uncorrected neural depth PNG. Both outputs are review artifacts until explicitly promoted to the website.
 
-The map stores every polygon and light ellipse in pixel coordinates of the 1920 x 1077 reference image. It also stores each region's proposed depth, tint color, opacity, and label position. **Depth 1 is nearest; depth 100 is farthest.** Current values are provisional:
+The map stores each polygon in pixel coordinates of the 1920 x 1077 reference image, along with its proposed depth, tint color, opacity, and label position. **Depth 1 is nearest; depth 100 is farthest.** Current values are provisional:
 
 | Region | Depth |
 | --- | ---: |
 | City building | 100 |
-| Five lights behind the glass, A-E | 93, 90, 87, 84, 81 |
 | Studio wall behind the presenter | 48 |
 | Presenter | 26 |
-| News ticker, in front of the presenter and behind the glass | 21 |
+| Laptop and news ticker behind the glass | 21 |
 | Foreground glass with droplets and the broad red streak | 1 |
 
-Only the five right-side lights have separate depth regions within the glass area. The broad red streak shares the foreground glass depth and has no independent parallax. This draft does not yet extract the lights into transparent image layers. The presenter mask reaches the ticker top at y=978; the ticker is a distinct depth-21 region across the lower-third graphic. A single-channel depth PNG can hold only one value per pixel, so the `depth_bake.write_order` in the JSON resolves overlaps, with the ticker written last. This is a deliberate approximation until image layers are separated. Boundaries are intentionally rough and need review against every new photograph.
+The right-side lights do not have separate depth regions. The laptop has its own traced region at the same depth as the ticker; the ticker is written last where they overlap. The broad red streak shares the foreground glass depth and has no independent parallax. The presenter mask reaches the ticker top at y=978. A single-channel depth PNG can hold only one value per pixel, so `depth_bake.write_order` resolves overlaps. Boundaries are provisional and should be reviewed against each new photograph.
 
 ## Render a comparison
 
