@@ -14,9 +14,9 @@
         <img id="poster" draggable="false" src="assets/glass-composite.png" alt="Presenter and city behind a rain-covered glass pane." />
         <canvas id="depth-view" aria-hidden="true"></canvas>
         <div class="ink-layer" id="ink-layer" aria-hidden="true">
-          <canvas id="music-hint" class="music-hint" width="1672" height="941"></canvas>
-          <canvas id="glass-ink" width="1672" height="941"></canvas>
-          <canvas id="glass-ink-live" width="1672" height="941"></canvas>
+          <canvas id="music-hint" class="music-hint"></canvas>
+          <canvas id="glass-ink"></canvas>
+          <canvas id="glass-ink-live"></canvas>
         </div>
         <div class="loading" id="loading">Preparing the depth view...</div>
       </figure>
@@ -29,6 +29,7 @@
       <footer><span>WINDOW / DEPTH STUDY</span><span>move to explore / draw on the glass</span></footer>
       <p class="build-line">BUILD <a id="build-commit" href="#">local preview</a></p>
     </main>
+    <script src="glass-geometry.js"></script>
     <script src="glass-ink.js"></script>
     <script src="parallax.js"></script>
     <script type="module" src="music.mjs"></script>

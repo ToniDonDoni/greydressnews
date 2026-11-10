@@ -9,6 +9,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from glass_geometry import load_geometry, pixel_rect
+
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "test/glass_layers.json"
 OUTPUT = ROOT / "output/glass_review"
@@ -43,19 +45,20 @@ def linear_premultiplied(rgb: np.ndarray, alpha: np.ndarray) -> np.ndarray:
 
 def main() -> None:
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
-    width, height = config["canvas"]
     base_path = ROOT / config["sources"]["base"]
     donor_path = ROOT / config["sources"]["glass"]
     with Image.open(base_path) as source:
         base = np.asarray(source.convert("RGB"), dtype=np.float32) / 255
     with Image.open(donor_path) as source:
         donor = np.asarray(source.convert("RGB"), dtype=np.float32) / 255
-    if base.shape[:2] != (height, width) or donor.shape[:2] != (height, width):
-        raise ValueError("Base and glass donor must match the configured full-frame canvas")
+    if base.shape[:2] != donor.shape[:2]:
+        raise ValueError("Base and glass donor must have matching image dimensions")
+    height, width = base.shape[:2]
 
-    pane = config["pane"]
-    left, right = int(pane["left"]), int(pane["right"])
-    top, bottom = int(pane["top"]), int(pane["bottom"])
+    geometry = load_geometry()
+    pane = pixel_rect(geometry["pane"], width, height)
+    left, right = pane["left"], pane["right"]
+    top, bottom = pane["top"], pane["bottom"]
     alpha = pane_alpha((width, height), pane)
     inside = alpha > 0
     straight_rgb = np.zeros_like(donor, dtype=np.uint8)
@@ -87,6 +90,7 @@ def main() -> None:
         "method": "single_full_pane_alpha",
         "canvas": [width, height],
         "pane": {"left": left, "right": right, "top": top, "bottom": bottom},
+        "normalized_pane": geometry["pane"],
         "glass_depth": config["glass"]["authoring_depth"],
         "default_opacity": opacity,
         "source_sha256": {

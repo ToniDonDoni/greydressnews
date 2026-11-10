@@ -39,10 +39,12 @@ inspect(root);
 const dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
 assert(html.includes('lang="en"'),'The document must declare English');
 assert(html.includes('id="poster"')&&html.includes('id="depth-view"'),'The static image and depth canvas must exist');
+assert(html.indexOf('src="glass-geometry.js"')<html.indexOf('src="glass-ink.js"'),
+  'Normalized geometry must load before the drawing module');
 assert(html.includes('id="music-hint"'),'The sunlit circle hint canvas must exist');
 assert(html.includes('assets/glass-composite.png'),'The layered-scene fallback poster must be used');
 assert(html.includes('id="glass-alpha"')&&html.includes('value="0.68"'),'The glass-alpha slider must start at 0.68');
-for(const asset of ['assets/no_logo.png','assets/scene-depth.png','assets/glass-runtime.png','assets/glass-layer.png','assets/glass-alpha.png','assets/glass-composite.png'])
+for(const asset of ['glass-geometry.js','assets/no_logo.png','assets/scene-depth.png','assets/glass-runtime.png','assets/glass-layer.png','assets/glass-alpha.png','assets/glass-composite.png'])
   assert(fs.existsSync(path.join(dist,asset)),`Missing layered-glass asset: ${asset}`);
 for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue'])
   assert(!html.includes(`id="${id}"`),`Unexpected audio control: ${id}`);

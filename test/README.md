@@ -2,7 +2,7 @@
 
 For the complete generation, validation, preview, and publication workflow, start with [scripts/README.md](../scripts/README.md).
 
-`depth_regions.json` is the editable, project-local map of the base studio scene. Its colors and labels let us compare the reviewed regions with `references/no_logo.png`. `scripts/apply_depth_regions.py` applies these regions to a raw neural depth PNG generated from that same base. The separate glass layer is configured in `test/glass_layers.json` and is not part of this depth map.
+`depth_regions.json` is the editable, project-local map of the base studio scene. Its colors and labels let us compare the reviewed regions with `references/no_logo.png`. `scripts/apply_depth_regions.py` applies these regions to a raw neural depth PNG generated from that same base. The separate glass layer is configured in `test/glass_layers.json` and is not part of this depth map. Pane, house hit area, and hint bounds in that file use normalized coordinates and are scaled from the actual loaded image dimensions by the drawing module and glass generator.
 
 The map stores each polygon in pixel coordinates of the 1920 x 1077 reference image, along with its proposed depth, tint color, opacity, and label position. **Depth 1 is nearest; depth 100 is farthest.** Current values are provisional:
 

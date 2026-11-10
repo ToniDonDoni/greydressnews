@@ -6,6 +6,8 @@ import json
 import shutil
 from pathlib import Path
 
+from glass_geometry import write_runtime_module
+
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 SOURCE = ROOT / "scripts/layered_preview"
@@ -28,19 +30,9 @@ def main() -> None:
     for name in ("index.html", "style.css", "parallax.js"):
         shutil.copy2(SOURCE / name, OUTPUT / name)
 
-    # The existing drawing and music implementation is retained, with its
-    # canvas and pane bounds registered to the new 1672 x 941 composition.
-    ink = (DIST / "glass-ink.js").read_text(encoding="utf-8")
-    replacements = {
-        "const IMAGE = { width: 1920, height: 1077 };": "const IMAGE = { width: 1672, height: 941 };",
-        "const GLASS = { left: 1240, top: 0, right: 1920, bottom: 970 };": "const GLASS = { left: 1095, top: 0, right: 1672, bottom: 941 };",
-        "const HOUSE = { left: 0, top: 0, right: 720, bottom: 970 };": "const HOUSE = { left: 0, top: 0, right: 605, bottom: 941 };",
-    }
-    for old, new in replacements.items():
-        if old not in ink:
-            raise ValueError(f"Cannot register drawing geometry; expected source text missing: {old}")
-        ink = ink.replace(old, new)
-    (OUTPUT / "glass-ink.js").write_text(ink, encoding="utf-8")
+    # Geometry is exported from the same normalized configuration used by
+    # alpha generation. The drawing module consumes this data at runtime.
+    write_runtime_module(OUTPUT / "glass-geometry.js")
 
     assets = {
         "no_logo.png": ROOT / "references/no_logo.png",

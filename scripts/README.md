@@ -1,6 +1,6 @@
 # Project scripts and workflows
 
-Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the base photograph, its static scene-depth PNG, the separate RGBA glass layer, the WebGL parallax script, the glass-ink layer, and the procedural music module directly.
+Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the base photograph, its static scene-depth PNG, the separate RGBA glass layer, the WebGL parallax script, normalized glass geometry, the glass-ink layer, and the procedural music module directly.
 
 This guide is the entry point for working on the current reference-photo page. The depth-region schema and editable coordinates are described in [test/README.md](../test/README.md); project conventions are in [CONTRIBUTING.md](../CONTRIBUTING.md). Photo-taking commands below use the committed `references/ElGrayPimenovLeiterWindow2.png` image and can be pasted as written. For a new photo, replace that path in each command with the path to your actual image; quote paths containing spaces.
 
@@ -153,7 +153,7 @@ This is a single-pane alpha overlay, not a recovered physical transmission/refra
 
 ## Build the layered glass preview
 
-The layered preview uses `references/no_logo.png` as the base scene and `references/no_logo_leiter_glass.png` as the glass RGB donor. The flattened comparison image is for appearance reference only. `test/depth_regions.json` is the single editable base-depth map; it has no glass region. `test/glass_layers.json` contains only the separate full-height pane boundary, near depth, and default opacity.
+The layered preview uses `references/no_logo.png` as the base scene and `references/no_logo_leiter_glass.png` as the glass RGB donor. The flattened comparison image is for appearance reference only. `test/depth_regions.json` is the single editable base-depth map; it has no glass region. `test/glass_layers.json` is the canonical normalized source for the glass pane, house hit area, hint position and size, plus near depth and default opacity. The drawing module receives its browser geometry from the generated `glass-geometry.js`; the preview builder exports that data from the JSON without rewriting drawing source. Alpha generation scales the normalized pane bounds against the actual base/donor dimensions.
 
 Generate a raw base depth map on Apple Silicon if the verified saved candidate is unavailable. Then bake the reviewed base regions and the single-pane glass layer:
 
@@ -173,7 +173,7 @@ Run the preview and its pixel-level alpha check:
 python3 -m http.server 8767 --bind 127.0.0.1 --directory output/site_preview_layered_glass
 ```
 
-In another terminal, run `LAYERED_PREVIEW_URL=http://127.0.0.1:8767/ node scripts/check_layered_preview.mjs`. It verifies sampler units 0/1/2, checks for WebGL errors, and reads the same rendered pane pixel at alpha 0 and 1. At alpha 0 that pixel must match the depth-warped base; at alpha 1 it must include the donor glass. `TEASER_URL=http://127.0.0.1:8767/ node scripts/check_reference_parallax.mjs` then measures the rendered layer motion and checks audio behavior on the complete page.
+In another terminal, run `LAYERED_PREVIEW_URL=http://127.0.0.1:8767/ node scripts/check_layered_preview.mjs`. It verifies sampler units 0/1/2, checks for WebGL errors, and reads the same rendered pane pixel at alpha 0 and 1. At alpha 0 that pixel must match the depth-warped base; at alpha 1 it must include the donor glass. `TEASER_URL=http://127.0.0.1:8767/ node scripts/check_reference_parallax.mjs` then measures the rendered layer motion and checks audio behavior on the complete page. `scripts/check_glass_drawing.mjs` also resizes the artwork to half resolution and verifies that pane interaction, hint placement, and ink canvases follow the new dimensions.
 
 After the preview is reviewed, promote the complete page and the assets it references into `dist/`:
 
@@ -182,10 +182,11 @@ cp output/site_preview_layered_glass/index.html dist/index.html
 cp output/site_preview_layered_glass/style.css dist/style.css
 cp output/site_preview_layered_glass/parallax.js dist/parallax.js
 cp output/site_preview_layered_glass/glass-ink.js dist/glass-ink.js
+cp output/site_preview_layered_glass/glass-geometry.js dist/glass-geometry.js
 cp output/site_preview_layered_glass/assets/{no_logo.png,scene-depth.png,glass-runtime.png,glass-layer.png,glass-alpha.png,glass-composite.png} dist/assets/
 ```
 
-The page retains the existing music and drawing modules. Their pane and hint coordinates are registered in `dist/glass-ink.js` for the 1672 x 941 base. Serve `dist/` over HTTP and run `node scripts/check_layered_preview.mjs` against that URL before committing the promoted page.
+The page retains the existing music and drawing modules. Pane, house, and hint geometry stays normalized in the canonical configuration; the drawing module derives pixel bounds from the loaded poster dimensions. Serve `dist/` over HTTP and run `node scripts/check_layered_preview.mjs` and `node scripts/check_glass_drawing.mjs` against that URL before committing the promoted page.
 
 ## Run and check the current page
 
