@@ -123,7 +123,8 @@ function addRoom(left, right) {
 
 export class WaltzSynth {
   constructor(seed = 12573, bpm = BPM) {
-    this.rng = randomGenerator(seed);
+    // Keep the constructor argument for compatibility with existing callers.
+    void seed;
     this.cache = new Map();
     this.setBpm(bpm);
   }
@@ -159,14 +160,13 @@ export class WaltzSynth {
     const events = [];
 
     const add = (note, beat, durationBeats, velocity, role, pan) => {
-      const humanize = beat === 0 ? 0 : (this.rng() - 0.5) * 0.006;
       events.push({
         kind: 'piano',
         role,
         note,
         beat,
         durationBeats,
-        time: Math.max(0, beat * step + humanize),
+        time: beat * step,
         gain: gainFor(role, velocity),
         pan,
         velocity,

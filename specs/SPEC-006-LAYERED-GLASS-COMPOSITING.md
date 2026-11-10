@@ -27,13 +27,13 @@ Project workflow: [scripts/README.md](../scripts/README.md).
 - The pane spans the full image height on the right, including the area covering the ticker and laptop. Its left edge follows the donor's actual pane boundary, approximately x = 1095 in the 1672 x 941 source; this estimate requires an overlay review before use as geometry.
 - Reflected architecture and droplets share the near overlay in the first version. This is an intentional 2D approximation, not a claim that real reflections have the same apparent depth as the glass surface.
 - The neutral view preserves the supplied composition and the character of the glass. Transparency and visibility of the base take priority over exact pixel matching to the opaque donor.
-- A page control below the artwork adjusts the whole glass pane opacity from 0 to 1 in real time. Its default value is 0.68. The prepared overlay uses one pane alpha: 1 across the approved right pane and 0 outside it.
+- A page control below the artwork adjusts the whole glass pane opacity from 0 to 1 in real time. Its default value is 0.88. The prepared overlay uses one pane alpha: 1 across the approved right pane and 0 outside it.
 - This specification supersedes the interpretation of right-side house lights as far physical objects in SPEC-001 for this new composition only. It does not rewrite the historical implementation or its evidence.
 - Layered sampling requires coordinated renderer and page changes; replacing only the photograph and one depth PNG cannot provide this effect. Those changes are part of this implementation.
 
 ## 3. Acceptance Criteria
 
-- [ ] **AC-02 - Usable transparency.** The exported glass is a full-frame RGBA PNG made from the right pane of the glass donor. Alpha is exactly 1 inside the approved pane and 0 outside it; the page opacity control scales this alpha from 0 to 1, defaulting to 0.68. The base scene remains a separate moving layer beneath the pane.
+- [ ] **AC-02 - Usable transparency.** The exported glass is a full-frame RGBA PNG made from the right pane of the glass donor. Alpha is exactly 1 inside the approved pane and 0 outside it; the page opacity control scales this alpha from 0 to 1, defaulting to 0.88. The base scene remains a separate moving layer beneath the pane.
 - [ ] **AC-03 - Clean overlay.** Checkerboard, black, white, and base-background inspections show no second presenter, laptop outline, laptop logo, ticker letters, or rectangular remnants in the glass texture. Reflected architecture, including its dark parts, is preserved deliberately.
 - [ ] **AC-04 - Independent motion.** Captures at settled camera positions -1, 0, and +1 show a laptop landmark and a right ticker landmark moving relative to a nearby droplet. At a reference viewport rendering the artwork at 1672 pixels wide, each relative displacement between the two extremes exceeds 3 pixels and matches the configured transforms within 1 pixel. No bright window in the reflection moves independently of the glass in this version.
 - [ ] **AC-05 - Scene depth.** The base has an aligned static depth asset with explicit presenter, studio, left building/background, laptop, and ticker regions. Laptop and ticker are both level 21 in the base and remain behind the separate glass plane at level 1. Numeric levels and contours are reviewed in an overlay before baking.
@@ -97,7 +97,7 @@ Prepare a single overlay directly from `references/no_logo_leiter_glass.png`:
 
 1. Create a full-frame RGBA image at the donor's native 1672 x 941 dimensions. Preserve donor RGB at its original pixel coordinates inside the approved right pane; do not shift, crop, recolor, or derive RGB from the flattened comparison.
 2. Set alpha to 1 throughout the approved right pane and 0 everywhere outside it. Use only the reviewed pane boundary. Do not create separate masks for the reflected house/windows, red streak, tint, droplets, highlights, rims, or frame.
-3. At runtime multiply this pane alpha by the overall opacity slider. The slider range is 0-1 and its default is 0.68. It changes only glass visibility, never the pane depth or base depth map.
+3. At runtime multiply this pane alpha by the overall opacity slider. The slider range is 0-1 and its default is 0.88. It changes only glass visibility, never the pane depth or base depth map.
 4. Generate the runtime filtering texture from the editable RGBA source by converting RGB to linear light and premultiplying it by alpha. Set premultiplied RGB to zero where alpha is zero. Filter premultiplied color and alpha consistently; do not apply a second premultiplication at upload.
 5. Composite the sampled glass over the independently warped base in linear light, then encode the result to sRGB once. Keep the near-plane transform at authoring depth 1, independent of the slider value.
 6. Emit the straight-alpha source, runtime texture, alpha diagnostic, neutral composite, and a report with source/settings/output hashes and exact inside/outside alpha coverage.
@@ -151,7 +151,7 @@ Normal-map generation, refractive distortion, physically moving reflected scener
 - [ ] Author and review base-only semantic depth, including laptop and ticker.
 - [x] Implement reproducible glass-alpha generation and separate layered sampling.
 - [x] Register drawing/hint geometry for the new canvas dimensions.
-- [x] Add an overall glass-opacity slider with default 0.68.
+- [x] Add an overall glass-opacity slider with default 0.88.
 - [ ] Review the complete local page at camera extremes and on mobile.
 - [ ] Collect acceptance evidence and complete regression checks.
 

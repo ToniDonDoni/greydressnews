@@ -151,8 +151,8 @@ try{
     'The image must not display music buttons');
   assert.equal(await page.locator('input[type="range"]').count(),1,
     'The glass-opacity slider must be the only range input');
-  assert.equal(await page.locator('#glass-alpha').getAttribute('value'),'0.68',
-    'The glass-opacity slider must start at 0.68');
+  assert.equal(await page.locator('#glass-alpha').getAttribute('value'),'0.88',
+    'The glass-opacity slider must start at 0.88');
   await page.locator('#glass-alpha').evaluate(element=>{
     element.value='0.68';
     element.dispatchEvent(new Event('input',{bubbles:true}));

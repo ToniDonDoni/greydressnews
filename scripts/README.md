@@ -147,7 +147,7 @@ The page keeps the studio and the glass donor as separate image inputs:
 
 The pointer position sets a horizontal camera value from -1 to +1. The fragment shader starts from shared 5% overscan coordinates. For each base pixel it samples the static depth, then performs seven iterations that move the sample coordinate toward `baseUV - camera * (0.045, 0) * (depth - 0.38)`, mixing 60% toward the target on every iteration. Darker/farther base regions therefore move less than brighter/nearer regions. The glass uses the same camera and iteration count, but its depth is fixed at 236/255; it does not read or write the base depth map. Pointer smoothing changes how quickly the camera reaches its target, not the depth assignment.
 
-The glass alpha is one throughout the reviewed full-height right pane and zero outside. The UI slider multiplies this matte: effective alpha is `glassAlpha * slider`, where the slider defaults to 0.68. The runtime RGB is already linear and premultiplied, so the shader blends `glassPremultiplied * slider + linear(base) * (1 - effectiveAlpha)`, then encodes the result to sRGB once. At slider 0 the frame is the depth-warped base; at 1 the donor is fully visible over that still-moving base. Slider input changes neither image nor depth asset.
+The glass alpha is one throughout the reviewed full-height right pane and zero outside. The UI slider multiplies this matte: effective alpha is `glassAlpha * slider`, where the slider defaults to 0.88. The runtime RGB is already linear and premultiplied, so the shader blends `glassPremultiplied * slider + linear(base) * (1 - effectiveAlpha)`, then encodes the result to sRGB once. At slider 0 the frame is the depth-warped base; at 1 the donor is fully visible over that still-moving base. Slider input changes neither image nor depth asset.
 
 This is a single-pane alpha overlay, not a recovered physical transmission/refraction model. The reflected city and glass surface details are one donor image and therefore move as one near layer. The implementation and review constraints are specified in [SPEC-006](../specs/SPEC-006-LAYERED-GLASS-COMPOSITING.md).
 
@@ -165,7 +165,7 @@ output/depth_venv/bin/python scripts/make_layered_glass.py
 python3 scripts/build_layered_preview.py
 ```
 
-The overlay copies the donor RGB from the reviewed right pane and assigns alpha 1 inside, 0 outside. The slider multiplies this alpha, starting at 0.68; it does not alter depth. Inspect `output/glass_review/glass-alpha.png`, `glass-layer.png`, and `glass-composite.png`. The full page is assembled under ignored `output/site_preview_layered_glass/` by copying the committed `dist/` site and replacing its layered-glass assets with the generated review assets. The local preview uses the same committed HTML, CSS, and JavaScript that CI checks and the manual Pages publish deploys.
+The overlay copies the donor RGB from the reviewed right pane and assigns alpha 1 inside, 0 outside. The slider multiplies this alpha, starting at 0.88; it does not alter depth. Inspect `output/glass_review/glass-alpha.png`, `glass-layer.png`, and `glass-composite.png`. The full page is assembled under ignored `output/site_preview_layered_glass/` by copying the committed `dist/` site and replacing its layered-glass assets with the generated review assets. The local preview uses the same committed HTML, CSS, and JavaScript that CI checks and the manual Pages publish deploys.
 
 Run the preview and its pixel-level alpha check:
 

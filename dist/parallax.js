@@ -9,7 +9,7 @@
   const slider = document.getElementById('glass-alpha');
   const value = document.getElementById('glass-alpha-value');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const state = { ready: false, x: 0, targetX: 0, opacity: 0.68 };
+  const state = { ready: false, x: 0, targetX: 0, opacity: 0.88 };
   const parallax = { strength: 0.045, iterations: 7, mix: 0.6, pivot: 0.38 };
   const nearGray = 236 / 255;
   const nearShiftUv =
