@@ -36,6 +36,14 @@ function inspect(directory){
   }
 }
 inspect(root);
+const pagesWorkflow=fs.readFileSync(path.join(root,'.github/workflows/pages.yml'),'utf8');
+assert(pagesWorkflow.startsWith('name: Publish to GitHub Pages'),'The manual publish workflow must remain discoverable');
+assert(/\n  push:\n    branches: \['\*\*'\]/.test(pagesWorkflow),'Site checks must run on pushes to every branch');
+assert(/\n  pull_request:\n/.test(pagesWorkflow),'Site checks must run on every pull request');
+assert((pagesWorkflow.match(/if: github\.event_name == 'workflow_dispatch'/g)||[]).length===3,
+  'Only manual workflow dispatch may stamp, upload, or deploy the Pages site');
+assert(pagesWorkflow.includes('uses: actions/upload-pages-artifact@v4')&&pagesWorkflow.includes('uses: actions/deploy-pages@v4'),
+  'Manual publish must upload the site and deploy it to GitHub Pages');
 const dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
 assert(html.includes('lang="en"'),'The document must declare English');
 assert(html.includes('id="poster"')&&html.includes('id="depth-view"'),'The static image and depth canvas must exist');

@@ -1,4 +1,4 @@
-name: Site checks
+name: Publish to GitHub Pages
 
 on:
   push:
@@ -74,6 +74,14 @@ jobs:
         env:
           TEASER_URL: http://127.0.0.1:8000/
         run: node scripts/check_reference_parallax.mjs
+      - name: Stamp build commit
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 scripts/write_build_info.py "${{ github.sha }}"
+      - name: Upload static website
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
       - name: Upload glass drawing evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,3 +96,20 @@ jobs:
           name: reference-depth-parallax-evidence
           path: output/reference_parallax_check/
           if-no-files-found: warn
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
