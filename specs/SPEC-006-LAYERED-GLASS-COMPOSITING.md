@@ -1,12 +1,13 @@
 # SPEC-006: Layered Glass Compositing
 
-Status: implementation in progress on `feat/layered-glass`. The local page now uses separate base, depth, and RGBA glass assets; manual mask review and full acceptance checks remain in progress.
+Status: acceptance pending. Implementation findings are recorded in [SPEC-006-LAYERED-GLASS-COMPOSITING-REVIEW.md](SPEC-006-LAYERED-GLASS-COMPOSITING-REVIEW.md).
+
+Project workflow: [scripts/README.md](../scripts/README.md).
 
 ## 1. Problem and Current State
 
 - `dist/parallax.js` samples one flattened color image and one static grayscale depth texture. Its seven-step lookup changes horizontal sampling coordinates before returning an opaque color. One pixel has one depth, even when it depicts both glass and a visible object behind glass.
 - Assigning the right pane to near depth moves its baked-in droplets, reflected building, laptop, and ticker together. Changing depth values cannot recover the concealed studio or independently move two contributions at the same pixel.
-- The committed site and the disposable preview are distinct. At specification preparation, the new-photo experiment is in ignored `output/site_preview_new_photo/`; its candidate depth is in ignored `output/depth_review/`. These are not canonical source assets and are not committed by this specification.
 - `references/no_logo.png` supplies the base scene: presenter, studio, left building, laptop, ticker, and the diffuse painted right background. That painted background remains as supplied; it is not treated as an extracted house reflection.
 - `references/no_logo_laiter_spec_gpt.png` is the flattened appearance reference with rain glass, reflected architecture, laptop, and ticker on the right.
 - `references/no_logo_leiter_glass.png` is the new glass donor. The right laptop and ticker have been removed and replaced with continued rain glass and reflection. The left scene is still present in this file and must not enter the overlay. The donor is RGB, not an existing transparent asset.
@@ -38,8 +39,8 @@ Status: implementation in progress on `feat/layered-glass`. The local page now u
 - [ ] **AC-05 - Scene depth.** The base has an aligned static depth asset with explicit presenter, studio, left building/background, laptop, and ticker regions. Laptop and ticker use different declared depths, both behind glass. Numeric levels and masks are reviewed in an overlay before baking.
 - [ ] **AC-06 - Boundaries.** Both camera extremes and intermediate views show no exposed image edge, stretched border stripe, doubled pane frame, gap at the pane seam, or transparent halo. The ticker remains behind the glass down to the image bottom. Off-pane artwork is unchanged apart from its intended parallax.
 - [ ] **AC-07 - Drawing and music.** Original gray strokes and the optional yellow hint retain their appearance and remain aligned to the glass within 1 rendered pixel. First-gesture groove playback, handwritten-letter selection of the waltz, touch behavior, and reduced-motion behavior pass regression checks.
-- [ ] **AC-08 - Reproducibility.** Committed manual masks, settings, source hashes, tool versions, and deterministic generation steps reproduce the promoted alpha/depth assets. Reports record alpha coverage, settings, clipping, dimensions, and output hashes.
-- [ ] **AC-09 - Full-page review.** The local review uses the complete site copied under `output/`, including music and drawing. Evidence covers desktop and mobile interaction, not only a static composite. Missing-texture and WebGL failure paths retain a usable poster.
+- [ ] **AC-08 - Reproducibility.** Manual masks, settings, source hashes, tool versions, and deterministic generation steps reproduce the alpha/depth assets. Reports record alpha coverage, settings, clipping, dimensions, and output hashes.
+- [ ] **AC-09 - Full-page review.** The complete page, including music and drawing, passes desktop and mobile interaction checks. Missing-texture and WebGL failure paths retain a usable poster.
 
 Acceptance criteria are checked only after the corresponding runtime behavior and review evidence pass.
 
@@ -88,7 +89,7 @@ The existing `references/ElGrayPimenovLeiterWindow2.png` remains intact.
 - A manually reviewed pane mask excludes the left scene and includes the complete right strip. A narrow inward feather, initially 1-3 source pixels, is restricted to a genuine soft seam; the visible frame is handled explicitly rather than blurred into the presenter.
 - The reflective frame, if retained from the donor, exists only in the overlay and follows its transform. Inspection must reject an accidental second frame.
 - Separate editable grayscale masks identify clear/tinted pane, reflected building and red streaks, droplet highlights, droplet dark rims, and frame. A cleanup mask excludes any remaining generated studio/ticker/laptop artifacts. The bottom of the donor is inspected specifically for horizontal remnants.
-- Geometry/settings belong in proposed `test/glass_layers.json`; manual raster masks belong in proposed `test/glass_masks/`. These are future files. Base semantic depth coordinates remain in `test/depth_regions.json`, following its schema; existing light-hole masks do not carry into this new glass model.
+- Geometry/settings are defined in `test/glass_layers.json`; manual raster masks use `test/glass_masks/`. Base semantic depth coordinates follow the schema in `test/depth_regions.json`; existing light-hole masks do not carry into this new glass model.
 
 ### 5.3 Alpha construction
 
@@ -120,9 +121,9 @@ This procedure does not infer missing physical transparency. If no opacity/corre
 - The supplied base's right background is preserved. Depth boundaries follow visible objects, with narrow edge treatment rather than a blur across the whole pane.
 - The base is still a single-image depth warp. Newly exposed pixels at scene-object boundaries are not magically recovered. Small motion, overscan, and visual checks bound this limitation; a full multilayer studio reconstruction is outside scope.
 
-### 5.5 Future renderer integration
+### 5.5 Renderer integration
 
-The future renderer reuses horizontal camera input, smoothing, and base depth sampling. It computes base coordinates from scene depth and glass coordinates from one near-plane transform, then combines the samples:
+The renderer reuses horizontal camera input, smoothing, and base depth sampling. It computes base coordinates from scene depth and glass coordinates from one near-plane transform, then combines the samples:
 
 ```text
 B = sample_base_at_scene_depth(base_uv, camera)
@@ -136,23 +137,19 @@ C_linear = P + (1 - a) * B_linear
 - Full-frame texture coordinates avoid an independently fitted crop. Outside the pane texture alpha is zero. Shared overscan is calculated from the maximum base and glass displacement; clamping must not create a visible stretched glass strip.
 - Canvas fitting, pane hit-testing, and the optional left-house hint trigger are registered to the new source dimensions. Existing 1920 x 1077 drawing constants cannot be assumed to align with this composition merely by changing the photo. Geometry changes required for registration do not authorize brush-color, opacity, music, or gesture changes.
 - The loading/failure poster is an offline neutral composite of the selected base and overlay. The existing flattened photo is an appearance reference, not a second live color layer.
-- Asset versions change with promoted content so local review does not reuse stale scripts or textures. The implementation review verifies the served content, not just Git status.
 
-### 5.6 Artifacts, review, and scope boundaries
+### 5.6 Validation and scope
 
-Future generated candidates, reports, and contact sheets belong under `output/glass_review/`. A complete future page preview belongs under `output/site_preview_layered_glass/`, copied from `dist/` with the candidate runtime integration. It is served over HTTP using the workflow in `scripts/README.md`. Neither folder is a substitute for committing canonical inputs and reproducible generation sources.
+The feature requires base color, scene depth, editable glass RGBA, a premultiplied glass runtime texture, and a fallback poster.
 
-After visual acceptance, runtime assets and their metadata can be promoted into `dist/assets/`, with coordinated renderer/geometry changes and updated validation. Exact proposed output roles are base color, scene depth, editable glass RGBA, premultiplied glass runtime texture, and fallback poster. Final filenames are declared together in the implementation's asset manifest rather than overwriting the historical photograph as an undocumented shortcut.
-
-The future review includes:
+Validation includes:
 
 - Mask overlay, alpha-only view, checkerboard composite, and neutral full-scene composite.
 - Side-by-side camera extremes and a short pointer-motion recording of the complete page, with identified laptop, ticker, reflection, and droplet landmarks.
 - Source/alpha checks, gamma and premultiplication fixture, scene-depth ordering, and landmark displacement measurements.
-- Existing build, formatting, audio, UI, drawing, and parallax checks, updated only where new geometry makes old reference-specific assertions obsolete.
 - Desktop and mobile checks of original stroke appearance, groove start, waltz selection, clipping, missing overlay, WebGL failure, and reduced motion.
 
-Normal-map generation, refractive distortion, physically moving reflected scenery, live relighting, recoloring the pencil, music changes, publication, and unrelated refactoring are outside this first implementation. New runtime assets and renderer changes live in `dist/`; generated diagnostics remain under ignored `output/`. Existing artwork and music code outside the registration points stay intact.
+Normal-map generation, refractive distortion, physically moving reflected scenery, live relighting, recoloring the pencil, music changes, and unrelated refactoring are outside this feature.
 
 ## 6. ToDo
 
@@ -166,6 +163,6 @@ Normal-map generation, refractive distortion, physically moving reflected scener
 - [x] Register drawing/hint geometry for the new canvas dimensions.
 - [x] Add an overall glass-opacity slider with default 0.68.
 - [ ] Review the complete local page at camera extremes and on mobile.
-- [ ] Collect acceptance evidence, run regressions, and promote accepted assets.
+- [ ] Collect acceptance evidence and complete regression checks.
 
-Depth generation and base scene integration are implemented. Visual review and the remaining acceptance criteria stay pending until independently verified.
+Acceptance remains pending until the required visual and interaction checks pass.
