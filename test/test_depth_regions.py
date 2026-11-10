@@ -12,7 +12,7 @@ from render_depth_regions import load_map, render
 
 ROOT = Path(__file__).resolve().parents[1]
 MAP = Path(__file__).with_name("depth_regions.json")
-REFERENCE = ROOT / "references/ElGrayPimenovLeiterWindow2.png"
+REFERENCE = ROOT / "references/no_logo.png"
 
 
 class DepthRegionTest(unittest.TestCase):
@@ -21,13 +21,17 @@ class DepthRegionTest(unittest.TestCase):
         data = load_map(MAP)
         regions = {region["id"]: region for region in data["regions"]}
         self.assertEqual(data["reference_size"], [1920, 1077])
-        self.assertEqual(regions["front_glass"]["depth"], 1)
+        self.assertEqual(regions["right_background"]["depth"], 48)
+        self.assertNotIn("front_glass", regions)
+        self.assertFalse(any(region["depth"] == 1 for region in regions.values()))
         self.assertEqual(regions["city"]["depth"], 100)
-        self.assertTrue(regions["front_glass"]["depth"] < regions["ticker"]["depth"] < regions["presenter"]["depth"] < regions["studio_wall"]["depth"])
-        lights = [regions[f"light_{letter}"]["depth"] for letter in "abcde"]
-        self.assertEqual(len(set(lights)), 5)
+        self.assertEqual(regions["laptop"]["depth"], 21)
+        self.assertEqual(regions["ticker"]["depth"], 21)
+        self.assertFalse(any(region_id.startswith("light_") for region_id in regions))
         self.assertNotIn("red_trail", regions)
-        self.assertTrue(all(regions["front_glass"]["depth"] < depth < regions["city"]["depth"] for depth in lights))
+        self.assertLess(regions["laptop"]["depth"], regions["presenter"]["depth"])
+        self.assertLess(regions["presenter"]["depth"], regions["studio_wall"]["depth"])
+        self.assertLess(regions["studio_wall"]["depth"], regions["city"]["depth"])
 
     def test_reference_preview_is_repeatable(self):
         """Compare two temporary overlays of the reference photo byte for byte."""

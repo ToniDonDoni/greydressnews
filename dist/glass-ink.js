@@ -5,19 +5,17 @@
 (() => {
   const painting = document.getElementById('painting');
   const layer = document.getElementById('ink-layer');
+  const poster = document.getElementById('poster');
   const canvas = document.getElementById('glass-ink');
   const liveCanvas = document.getElementById('glass-ink-live');
   const hintCanvas = document.getElementById('music-hint');
-  if (!painting || !layer || !canvas || !liveCanvas) return;
+  const geometry = window.glassGeometry;
+  if (!painting || !layer || !poster || !canvas || !liveCanvas || !geometry) return;
   const context = canvas.getContext('2d', { alpha: true, desynchronized: false });
   const liveContext = liveCanvas.getContext('2d', { alpha: true, desynchronized: false });
   const hintContext = hintCanvas?.getContext('2d', { alpha: true, desynchronized: false });
   if (!context || !liveContext) return;
 
-  const IMAGE = { width: 1920, height: 1077 };
-  const GLASS = { left: 1240, top: 0, right: 1920, bottom: 970 };
-  const HOUSE = { left: 0, top: 0, right: 720, bottom: 970 };
-  const MUSIC_HINT = { x: 1580, y: 470, width: 280, height: 230 };
   const SHADER = { zoom: 0.95, offset: 0.025 };
   const TAU = Math.PI * 2;
   const FALLBACK_NEAR_SHIFT_UV = 0.045 * (236 / 255 - 0.38) * (1 - Math.pow(0.4, 7));
@@ -26,12 +24,49 @@
   let strokeMoved = false;
   let strokeWidth = 0;
 
+  function imageSize() {
+    return {
+      width: poster.naturalWidth || canvas.width,
+      height: poster.naturalHeight || canvas.height,
+    };
+  }
+
+  function pixelRect(normalized) {
+    const size = imageSize();
+    return {
+      left: Math.round(normalized.left * size.width),
+      right: Math.round(normalized.right * size.width),
+      top: Math.round(normalized.top * size.height),
+      bottom: Math.round(normalized.bottom * size.height),
+    };
+  }
+
+  function syncCanvasResolution() {
+    const size = imageSize();
+    if (!size.width || !size.height) return;
+    let resized = false;
+    for (const drawingCanvas of [canvas, liveCanvas, hintCanvas]) {
+      if (!drawingCanvas) continue;
+      if (drawingCanvas.width !== size.width) {
+        drawingCanvas.width = size.width;
+        resized = true;
+      }
+      if (drawingCanvas.height !== size.height) {
+        drawingCanvas.height = size.height;
+        resized = true;
+      }
+    }
+    if (resized && musicHintVisible) drawMusicHint();
+  }
+
+  poster.addEventListener('load', syncCanvasResolution);
+
   // Keep the finger mark the same physical size on a phone and on a desktop:
   // about 4.2-8 CSS pixels, converted back into source-image pixels.
   function brushWidth() {
     const box = painting.getBoundingClientRect();
     const target = clamp(box.width * 0.0065, 4.2, 8);
-    const scale = (box.width / IMAGE.width) * 1.0526316;
+    const scale = (box.width / imageSize().width) * 1.0526316;
     return target / Math.max(0.0001, scale);
   }
 
@@ -52,16 +87,31 @@
   let musicPointer = null;
   let musicPoints = [];
   let musicHintVisible = false;
+  if (poster.complete) syncCanvasResolution();
 
   function drawMusicHint() {
     if (!hintContext || !hintCanvas) return;
     hintContext.clearRect(0, 0, hintCanvas.width, hintCanvas.height);
-    const { x, y, width, height } = MUSIC_HINT;
-    const haloRadius = Math.max(width, height) * 0.9;
+    const size = imageSize();
+    const hint = geometry.hint;
+    const style = hint.style;
+    const x = hint.center_x * size.width;
+    const y = hint.center_y * size.height;
+    const width = hint.width * size.width;
+    const height = hint.height * size.height;
+    const maxHaloRadius = size.width * (1 - hint.right_margin - hint.shadow_reserve) - x - 1;
+    const haloRadius = Math.min(Math.max(width, height) * style.halo_radius_factor, maxHaloRadius);
     hintContext.save();
     hintContext.globalCompositeOperation = 'screen';
 
-    const halo = hintContext.createRadialGradient(x, y, 12, x, y, haloRadius);
+    const halo = hintContext.createRadialGradient(
+      x,
+      y,
+      width * style.halo_inner_radius_factor,
+      x,
+      y,
+      haloRadius,
+    );
     halo.addColorStop(0, 'rgba(255,229,171,0.025)');
     halo.addColorStop(0.68, 'rgba(255,224,157,0.08)');
     halo.addColorStop(1, 'rgba(255,224,157,0)');
@@ -78,21 +128,21 @@
     hintContext.ellipse(
       x,
       y,
-      width * 0.42,
-      height * 0.42,
+      width * style.ellipse_radius_factor,
+      height * style.ellipse_radius_factor,
       0,
       Math.PI,
       Math.PI * 2 + Math.PI / 3,
       false,
     );
     hintContext.shadowColor = 'rgba(255,226,160,0.9)';
-    hintContext.shadowBlur = 38;
-    hintContext.lineWidth = 10;
+    hintContext.shadowBlur = width * style.primary_shadow_blur_factor;
+    hintContext.lineWidth = width * style.primary_line_width_factor;
     hintContext.strokeStyle = 'rgba(255,223,153,0.24)';
     hintContext.stroke();
 
-    hintContext.shadowBlur = 12;
-    hintContext.lineWidth = 2.2;
+    hintContext.shadowBlur = width * style.secondary_shadow_blur_factor;
+    hintContext.lineWidth = width * style.secondary_line_width_factor;
     hintContext.strokeStyle = 'rgba(255,241,203,0.62)';
     hintContext.stroke();
     hintContext.restore();
@@ -110,12 +160,13 @@
   }
 
   function isHousePoint(point) {
+    const house = pixelRect(geometry.house);
     return (
       point !== null &&
-      point.x >= HOUSE.left &&
-      point.x <= HOUSE.right &&
-      point.y >= HOUSE.top &&
-      point.y <= HOUSE.bottom
+      point.x >= house.left &&
+      point.x <= house.right &&
+      point.y >= house.top &&
+      point.y <= house.bottom
     );
   }
 
@@ -311,12 +362,13 @@
   function imagePoint(clientX, clientY) {
     const box = painting.getBoundingClientRect();
     if (!box.width || !box.height) return null;
+    const size = imageSize();
     const u = clamp((clientX - box.left) / box.width, 0, 1);
     const v = clamp((clientY - box.top) / box.height, 0, 1);
     const shift = nearShiftUv() * cameraX();
     return {
-      x: clamp((SHADER.zoom * u + SHADER.offset - shift) * IMAGE.width, 0, IMAGE.width),
-      y: clamp((SHADER.zoom * v + SHADER.offset) * IMAGE.height, 0, IMAGE.height),
+      x: clamp((SHADER.zoom * u + SHADER.offset - shift) * size.width, 0, size.width),
+      y: clamp((SHADER.zoom * v + SHADER.offset) * size.height, 0, size.height),
       u,
       v,
     };
@@ -324,31 +376,35 @@
 
   function screenPoint(imageX, imageY) {
     const box = painting.getBoundingClientRect();
+    const size = imageSize();
     const shift = nearShiftUv() * cameraX();
-    const u = (imageX / IMAGE.width + shift - SHADER.offset) / SHADER.zoom;
-    const v = (imageY / IMAGE.height - SHADER.offset) / SHADER.zoom;
+    const u = (imageX / size.width + shift - SHADER.offset) / SHADER.zoom;
+    const v = (imageY / size.height - SHADER.offset) / SHADER.zoom;
     return { x: box.left + u * box.width, y: box.top + v * box.height };
   }
 
   function inGlass(point) {
+    const glass = pixelRect(geometry.pane);
     return (
       point !== null &&
-      point.x >= GLASS.left &&
-      point.x <= GLASS.right &&
-      point.y >= GLASS.top &&
-      point.y <= GLASS.bottom
+      point.x >= glass.left &&
+      point.x <= glass.right &&
+      point.y >= glass.top &&
+      point.y <= glass.bottom
     );
   }
 
   function clipGlass(target) {
+    const glass = pixelRect(geometry.pane);
     target.beginPath();
-    target.rect(GLASS.left, GLASS.top, GLASS.right - GLASS.left, GLASS.bottom - GLASS.top);
+    target.rect(glass.left, glass.top, glass.right - glass.left, glass.bottom - glass.top);
     target.clip();
   }
 
   function paintDot(target, point) {
     target.save();
-    target.setTransform(canvas.width / IMAGE.width, 0, 0, canvas.height / IMAGE.height, 0, 0);
+    const size = imageSize();
+    target.setTransform(canvas.width / size.width, 0, 0, canvas.height / size.height, 0, 0);
     clipGlass(target);
     target.beginPath();
     target.arc(point.x, point.y, strokeWidth * 1.3, 0, TAU);
@@ -367,7 +423,8 @@
       return;
     }
     target.save();
-    target.setTransform(canvas.width / IMAGE.width, 0, 0, canvas.height / IMAGE.height, 0, 0);
+    const size = imageSize();
+    target.setTransform(canvas.width / size.width, 0, 0, canvas.height / size.height, 0, 0);
     clipGlass(target);
     target.lineCap = 'round';
     target.lineJoin = 'round';
@@ -483,7 +540,9 @@
   });
 
   window.glassInk = {
-    glass: GLASS,
+    get glass() {
+      return pixelRect(geometry.pane);
+    },
     get active() {
       return activePointer !== null;
     },

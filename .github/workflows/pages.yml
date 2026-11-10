@@ -2,16 +2,15 @@ name: Publish to GitHub Pages
 
 on:
   push:
-    branches: [teaser, fix/flat-front-glass-depth, feat/music-letter-e-gesture, fix/mirror-music-letter-hint]
+    branches: ['**']
   pull_request:
-    branches: [teaser, feat/procedural-waltz-piano, feat/music-letter-e-gesture]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: github-pages-${{ github.ref }}
+  group: site-checks-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -67,12 +66,22 @@ jobs:
         env:
           TEASER_URL: http://127.0.0.1:8000/
         run: node scripts/check_glass_drawing.mjs
+      - name: Test layered glass pixel compositing at alpha 0 and 1
+        env:
+          LAYERED_PREVIEW_URL: http://127.0.0.1:8000/
+        run: node scripts/check_layered_preview.mjs
       - name: Measure rendered far, midground, and near parallax
         env:
           TEASER_URL: http://127.0.0.1:8000/
         run: node scripts/check_reference_parallax.mjs
       - name: Stamp build commit
+        if: github.event_name == 'workflow_dispatch'
         run: python3 scripts/write_build_info.py "${{ github.sha }}"
+      - name: Upload static website
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
       - name: Upload glass drawing evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -87,13 +96,9 @@ jobs:
           name: reference-depth-parallax-evidence
           path: output/reference_parallax_check/
           if-no-files-found: warn
-      - name: Upload static website
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: dist
 
   deploy:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/teaser')
+    if: github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     permissions:

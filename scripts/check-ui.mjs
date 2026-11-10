@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-const SAMPLE_BASE_URL = 'https://tonejs.github.io/audio/salamander/';
+const SAMPLE_BASE_URL = './assets/piano-';
 
 // Sample downloads do not create an AudioContext or start audio before a gesture.
 const sources = [];
@@ -13,7 +13,7 @@ let retries = 0;
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
 globalThis.fetch = async (url) => {
-  assert(url.startsWith(SAMPLE_BASE_URL), 'Samples must use the approved piano library');
+  assert(url.startsWith(SAMPLE_BASE_URL), 'Samples must load from the local site assets');
   networkRequests++;
   return { ok: true, arrayBuffer: async () => new ArrayBuffer(16) };
 };

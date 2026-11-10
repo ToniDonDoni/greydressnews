@@ -18,8 +18,8 @@ import {
 } from '../dist/groove-core.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const ignored=new Set(['.git','.venv','__pycache__','node_modules','output']);
-const binary=new Set(['.png','.jpg','.bmp','.wav','.pyc']);
+const ignored=new Set(['.git','.venv','__pycache__','node_modules','output','draft']);
+const binary=new Set(['.png','.jpg','.bmp','.wav','.mp3','.pyc']);
 let checked=0;
 function inspect(directory){
   for(const entry of fs.readdirSync(directory,{withFileTypes:true})){
@@ -36,14 +36,29 @@ function inspect(directory){
   }
 }
 inspect(root);
+const pagesWorkflow=fs.readFileSync(path.join(root,'.github/workflows/pages.yml'),'utf8');
+assert(pagesWorkflow.startsWith('name: Publish to GitHub Pages'),'The manual publish workflow must remain discoverable');
+assert(/\n  push:\n    branches: \['\*\*'\]/.test(pagesWorkflow),'Site checks must run on pushes to every branch');
+assert(/\n  pull_request:\n/.test(pagesWorkflow),'Site checks must run on every pull request');
+assert((pagesWorkflow.match(/if: github\.event_name == 'workflow_dispatch'/g)||[]).length===3,
+  'Only manual workflow dispatch may stamp, upload, or deploy the Pages site');
+assert(pagesWorkflow.includes('uses: actions/upload-pages-artifact@v4')&&pagesWorkflow.includes('uses: actions/deploy-pages@v4'),
+  'Manual publish must upload the site and deploy it to GitHub Pages');
 const dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
 assert(html.includes('lang="en"'),'The document must declare English');
 assert(html.includes('id="poster"')&&html.includes('id="depth-view"'),'The static image and depth canvas must exist');
+assert(html.indexOf('src="glass-geometry.js"')<html.indexOf('src="glass-ink.js"'),
+  'Normalized geometry must load before the drawing module');
 assert(html.includes('id="music-hint"'),'The sunlit circle hint canvas must exist');
-assert(html.includes('assets/ElGrayPimenovLeiterWindow2.png'),'The reference image must be used');
+assert(html.includes('assets/glass-composite.png'),'The layered-scene fallback poster must be used');
+assert(html.includes('id="glass-alpha"')&&html.includes('value="0.88"'),'The glass-alpha slider must start at 0.88');
+for(const asset of ['glass-geometry.js','assets/no_logo.png','assets/scene-depth.png','assets/glass-runtime.png','assets/glass-layer.png','assets/glass-alpha.png','assets/glass-composite.png'])
+  assert(fs.existsSync(path.join(dist,asset)),`Missing layered-glass asset: ${asset}`);
 for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue'])
   assert(!html.includes(`id="${id}"`),`Unexpected audio control: ${id}`);
-assert(!/<(?:button|input)\b/i.test(html),'The artwork must not display music controls');
+assert(!/<button\b/i.test(html),'The artwork must not display music buttons');
+assert([...html.matchAll(/<input\b[^>]*>/gi)].every(([tag]) => /\btype="range"/i.test(tag)),
+  'Only the glass-alpha slider may be an input');
 assert(html.includes('<script type="module" src="music.mjs"></script>'),'The procedural waltz must load as a module');
 const musicSource = fs.readFileSync(path.join(dist,'music.mjs'),'utf8');
 assert(musicSource.includes('legacy-groove.mjs'),'The original groove must remain available');
@@ -60,6 +75,8 @@ for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){
   assert(fs.existsSync(path.join(dist,match[1])),`Missing local resource: ${match[1]}`);
 }
 for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs','waltz-score.mjs','legacy-groove.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
+for(const name of ['Fs1','A1','C2','Fs2','C3','Fs3','C4','Ds4','Fs4','A4','C5','Fs5','C6','Fs6'])
+  assert(fs.existsSync(path.join(dist,'assets',`piano-${name}.mp3`)),`Missing local piano sample: ${name}`);
 const windows=JSON.parse(fs.readFileSync(path.join(dist,'assets/windows.json'),'utf8'));
 assert(windows.length>0&&windows.every(w=>w.x>=0&&w.x<1024&&w.y>=0&&w.y<1024&&/^#[0-9a-f]{6}$/i.test(w.color)),'Invalid window data');
 
@@ -78,7 +95,9 @@ assert(legacyBar.left.some((sample) => Math.abs(sample) > 0.001),
 const first=new WaltzSynth(112026),same=new WaltzSynth(112026),different=new WaltzSynth(112027);
 const a=first.renderBar(0),b=same.renderBar(0),c=different.renderBar(0);
 assert.deepEqual(a.left,b.left,'A fixed seed must reproduce the waveform');
-assert.notDeepEqual(a.left,c.left,'Different seeds must create expressive timing variation');
+assert.deepEqual(a.left,c.left,'Piano timing and waveform must not depend on the seed');
+assert.deepEqual(first.planBar(0).events.map((event)=>event.time),different.planBar(0).events.map((event)=>event.time),
+  'Piano note timing must be fixed across seeds');
 assert.equal(a.left.length,a.right.length,'Stereo lengths must match');
 assert(a.left.length>BAR_SECONDS*SAMPLE_RATE,'Bars must include overlapping piano and room tails');
 

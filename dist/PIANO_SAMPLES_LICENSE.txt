@@ -1,18 +1,18 @@
-SALAMANDER GRAND PIANO V3 AUDIO ATTRIBUTION
+        SALAMANDER GRAND PIANO V3 AUDIO ATTRIBUTION
 
-The browser fetches 14 MP3 piano recordings from:
-https://tonejs.github.io/audio/salamander/
+        The browser fetches 14 MP3 piano recordings from:
+        https://tonejs.github.io/audio/salamander/
 
-Original instrument recording: Salamander Grand Piano V3
-Artist/recordist: Alexander Holm
-Instrument: Yamaha C5 Grand Piano
-Original source: https://github.com/sfzinstruments/SalamanderGrandPiano
-License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-License URL: https://creativecommons.org/licenses/by/3.0/
+        Original instrument recording: Salamander Grand Piano V3
+        Artist/recordist: Alexander Holm
+        Instrument: Yamaha C5 Grand Piano
+        Original source: https://github.com/sfzinstruments/SalamanderGrandPiano
+        License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+        License URL: https://creativecommons.org/licenses/by/3.0/
 
-The files are hosted by the Tone.js examples project. They are not
-committed into this repository. Playback changes the pitch of neighboring
-notes and applies note gain envelopes and light output filtering.
+        The downloaded MP3 files are stored in `dist/assets/piano-*.mp3` and served
+        from this site. The website repitches neighboring notes and applies note gain
+        envelopes and light output filtering.
 
-The software uses a selected single sample per anchor note; it does not
-include the complete original 16-layer velocity sample bank.
+        The software uses a selected single sample per anchor note; it does not
+        include the complete original 16-layer velocity sample bank.

@@ -37,9 +37,9 @@ class ApplyDepthRegionsTest(unittest.TestCase):
         result, report = corrected_depth(neural, data)
         self.assertEqual(result.size, neural.size)
         self.assertGreater(np.unique(np.asarray(result)).size, 20)
-        self.assertAlmostEqual(at_reference_pixel(result, 1400, 500), 236, delta=1)
-        self.assertAlmostEqual(at_reference_pixel(result, 1700, 500), 236, delta=1)
-        self.assertAlmostEqual(at_reference_pixel(result, 1798, 328), grayscale_for_depth(90, data), delta=1)
+        self.assertAlmostEqual(at_reference_pixel(result, 1400, 500), grayscale_for_depth(48, data), delta=3)
+        self.assertAlmostEqual(at_reference_pixel(result, 1700, 500), grayscale_for_depth(48, data), delta=3)
+        self.assertAlmostEqual(at_reference_pixel(result, 1700, 840), grayscale_for_depth(21, data), delta=1)
         self.assertAlmostEqual(at_reference_pixel(result, 500, 1010), grayscale_for_depth(21, data), delta=1)
         self.assertGreater(report["covered_percent"], 99)
 

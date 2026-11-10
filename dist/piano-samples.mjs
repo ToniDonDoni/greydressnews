@@ -3,7 +3,7 @@
 // Recording and license: https://github.com/sfzinstruments/SalamanderGrandPiano
 // We load a small set of natural recordings and repitch the nearest key.
 
-export const SAMPLE_BASE_URL = 'https://tonejs.github.io/audio/salamander/';
+export const SAMPLE_BASE_URL = './assets/piano-';
 
 export const PIANO_KEYS = [
   ['Fs1', 30],

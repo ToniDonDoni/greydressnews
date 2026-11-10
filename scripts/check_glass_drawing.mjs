@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url);
 const {chromium}=require('playwright');
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const geometry=JSON.parse(fs.readFileSync(path.join(root,'test/glass_layers.json'),'utf8')).geometry;
 const out=path.join(root,'output/glass_drawing_check');
 fs.mkdirSync(out,{recursive:true});
 const url=process.env.TEASER_URL||'http://127.0.0.1:8000/';
@@ -17,7 +18,7 @@ function inspectInk(){
   for(const id of ['glass-ink','glass-ink-live']){
     const canvas=document.getElementById(id);
     const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
-    const glassLeft=1240/1920*canvas.width, glassBottom=970/1077*canvas.height;
+    const glass=window.glassInk.glass;
     let count=0,outside=0,maxAlpha=0,r=0,g=0,b=0,minX=canvas.width,maxX=-1,minY=canvas.height,maxY=-1;
     for(let y=0;y<canvas.height;y++){
       for(let x=0;x<canvas.width;x++){
@@ -25,7 +26,7 @@ function inspectInk(){
         const alpha=data[offset+3];
         if(!alpha)continue;
         count++;
-        if(x<glassLeft||y>glassBottom)outside++;
+        if(x<glass.left||x>=glass.right||y<glass.top||y>=glass.bottom)outside++;
         if(x<minX)minX=x;
         if(x>maxX)maxX=x;
         if(y<minY)minY=y;
@@ -111,11 +112,20 @@ try{
   page.on('pageerror',error=>errors.push(String(error)));
   await page.goto(url);
   await waitForReady(page);
+  const originalSize=await page.locator('#poster').evaluate(image=>({
+    width:image.naturalWidth,
+    height:image.naturalHeight,
+  }));
 
   assert.equal(await page.locator('#glass-ink').count(),1,'The ink canvas must exist');
   assert.equal(await page.locator('#glass-ink-live').count(),1,'The live ink canvas must exist');
   const glass=await page.evaluate(()=>window.glassInk.glass);
-  assert.deepEqual(glass,{left:1240,top:0,right:1920,bottom:970},'Unexpected glass rectangle');
+  assert.deepEqual(glass,{
+    left:Math.round(geometry.pane.left*originalSize.width),
+    top:Math.round(geometry.pane.top*originalSize.height),
+    right:Math.round(geometry.pane.right*originalSize.width),
+    bottom:Math.round(geometry.pane.bottom*originalSize.height),
+  },'Unexpected glass rectangle');
 
   const painting=await page.locator('#painting').boundingBox();
   assert(painting,'The painting container is not visible');
@@ -137,7 +147,10 @@ try{
   const during=await page.evaluate(()=>({
     camera:window.parallaxView.x,
     active:window.glassInk.active,
-    live:document.querySelector('#glass-ink-live').getContext('2d').getImageData(0,0,1920,1077).data.some(value=>value),
+    live:(()=>{
+      const canvas=document.querySelector('#glass-ink-live');
+      return canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data.some(value=>value);
+    })(),
   }));
   assert(during.active,'The stroke must stay active while the pointer is down');
   assert(during.live,'The live stroke canvas must contain ink during the gesture');
@@ -179,15 +192,15 @@ try{
   const tapCenterAlpha=await page.evaluate(({imageX,imageY})=>{
     const canvas=document.querySelector('#glass-ink');
     return canvas.getContext('2d').getImageData(
-      Math.round(imageX/1920*canvas.width),
-      Math.round(imageY/1077*canvas.height),
+      Math.round(imageX),
+      Math.round(imageY),
       1,1).data[3];
   },{imageX:tapImage.x,imageY:tapImage.y});
   assert(tapInk['glass-ink'].count>20,'A tap on the glass must leave a dot');
   assert(tapInk['glass-ink'].bounds[2]-tapInk['glass-ink'].bounds[0]<60,'A tap must not draw a line');
   assert(tapCenterAlpha>0,'The tap ink is not registered under the pointer');
 
-  // A vertical stroke crossing the ticker must be clipped at y=970.
+  // A vertical stroke crossing the ticker must be clipped at the image edge.
   await page.evaluate(()=>window.glassInk.clear());
   await page.mouse.move(x(.82),y(.84));
   await page.mouse.down();
@@ -298,6 +311,8 @@ try{
     let minY = canvas.height;
     let maxX = -1;
     let maxY = -1;
+    let strongMinX = canvas.width;
+    let strongMaxX = -1;
     let color = [0, 0, 0];
     for (let y = 0; y < canvas.height; y++) {
       for (let x = 0; x < canvas.width; x++) {
@@ -308,7 +323,11 @@ try{
         maxX = Math.max(maxX, x);
         minY = Math.min(minY, y);
         maxY = Math.max(maxY, y);
-        if (data[offset + 3] > 100) color = data.slice(offset, offset + 3);
+        if (data[offset + 3] > 100) {
+          color = data.slice(offset, offset + 3);
+          strongMinX = Math.min(strongMinX, x);
+          strongMaxX = Math.max(strongMaxX, x);
+        }
       }
     }
     const maxAlphaNear = (centerX, centerY) => {
@@ -320,26 +339,36 @@ try{
       }
       return maxAlpha;
     };
-    const arcXOffset = 280 * 0.42 * Math.sqrt(3) / 2;
-    const arcYOffset = 230 * 0.42 * 0.5;
-    const lowerLeftArcAlpha = maxAlphaNear(1580 - arcXOffset, 470 + arcYOffset);
-    const lowerRightArcAlpha = maxAlphaNear(1580 + arcXOffset, 470 + arcYOffset);
+    const hint=window.glassGeometry.hint;
+    const hintCenterX=hint.center_x*canvas.width;
+    const hintCenterY=hint.center_y*canvas.height;
+    const arcXOffset=hint.width*canvas.width*hint.style.ellipse_radius_factor*Math.sqrt(3)/2;
+    const arcYOffset=hint.height*canvas.height*hint.style.ellipse_radius_factor*0.5;
+    const lowerLeftArcAlpha=maxAlphaNear(hintCenterX-arcXOffset,hintCenterY+arcYOffset);
+    const lowerRightArcAlpha=maxAlphaNear(hintCenterX+arcXOffset,hintCenterY+arcYOffset);
 
     return {
       count,
       bounds: [minX, minY, maxX, maxY],
+      rightGap: canvas.width - 1 - maxX,
+      strongCenterX: (strongMinX + strongMaxX) / 2,
       color,
       lowerLeftArcAlpha,
       lowerRightArcAlpha,
     };
   });
   assert(hintStats.count > 1000, 'The sunlit hint must draw visible pixels');
-  assert(hintStats.bounds[0] >= 1240 && hintStats.bounds[2] <= 1920,
+  const expectedHintCenterX = geometry.hint.center_x * originalSize.width;
+  assert(Math.abs(hintStats.strongCenterX - expectedHintCenterX) < 15,
+    `The hint must match its canonical normalized center (center ${hintStats.strongCenterX})`);
+  assert(hintStats.rightGap >= geometry.hint.right_margin * originalSize.width,
+    `The hint must leave at least 1/20 of the artwork width at the right edge (gap ${hintStats.rightGap}px)`);
+  assert(hintStats.bounds[0] >= geometry.pane.left*originalSize.width && hintStats.bounds[2] <= geometry.pane.right*originalSize.width,
     'The sunlit hint must stay inside the glass horizontally');
-  assert(hintStats.bounds[3] <= 970, 'The sunlit hint must stay above the ticker');
-  assert(hintStats.bounds[2] - hintStats.bounds[0] > 180,
+  assert(hintStats.bounds[3] <= originalSize.height, 'The sunlit hint must stay above the ticker');
+  assert(hintStats.bounds[2] - hintStats.bounds[0] > geometry.hint.width*originalSize.width*.6,
     'The letter hint must have a readable horizontal crossbar');
-  assert(hintStats.bounds[3] - hintStats.bounds[1] > 120,
+  assert(hintStats.bounds[3] - hintStats.bounds[1] > geometry.hint.height*originalSize.height*.5,
     'The letter hint must include its looped bowl');
   assert(hintStats.color[0] > hintStats.color[1] && hintStats.color[1] > hintStats.color[2],
     'The hint must use a pale warm-yellow color');
@@ -348,6 +377,16 @@ try{
   await hintPage.locator('#painting').screenshot({
     path: path.join(out, 'desktop-music-letter-e-hint.png'),
   });
+
+  await hintPage.mouse.dblclick(hx(0.22), hy(0.45), { delay: 90 });
+  await hintPage.waitForFunction(() => window.glassInk?.musicHintVisible === false
+    && !document.querySelector('#music-hint').classList.contains('is-visible'));
+  await hintPage.waitForFunction(() => Number.parseFloat(
+    getComputedStyle(document.querySelector('#music-hint')).opacity,
+  ) <= 0.01);
+  await hintPage.mouse.dblclick(hx(0.22), hy(0.45), { delay: 90 });
+  await hintPage.waitForFunction(() => window.glassInk?.musicHintVisible === true
+    && document.querySelector('#music-hint').classList.contains('is-visible'));
 
   // An open stroke is not a letter e and leaves the optional hint visible.
   await hintPage.mouse.move(hx(0.75), hy(0.46));
@@ -443,6 +482,74 @@ try{
   });
   await mobileContext.close();
 
+  // Resize the supplied artwork while preserving its composition. The logical
+  // pane, house hit area, hint, and drawing canvases must follow the new pixels.
+  const resizedPage=await browser.newPage({viewport:{width:1200,height:820},deviceScaleFactor:1});
+  resizedPage.on('pageerror',error=>errors.push(String(error)));
+  await resizedPage.goto(url);
+  await waitForReady(resizedPage);
+  const resized=await resizedPage.evaluate(async({width,height})=>{
+    const poster=document.querySelector('#poster');
+    const replacement=document.createElement('canvas');
+    replacement.width=width;
+    replacement.height=height;
+    replacement.getContext('2d').drawImage(poster,0,0,replacement.width,replacement.height);
+    poster.src=replacement.toDataURL('image/png');
+    await poster.decode();
+    return {width:poster.naturalWidth,height:poster.naturalHeight};
+  },{width:Math.round(originalSize.width*.5),height:Math.round(originalSize.height*.5)});
+  await resizedPage.waitForFunction(({width,height})=>{
+    const hint=document.querySelector('#music-hint');
+    return hint?.width===width&&hint?.height===height
+      &&window.glassInk?.glass.right===width&&window.glassInk.glass.bottom===height;
+  },resized);
+  assert.deepEqual(resized,{
+    width:Math.round(originalSize.width*.5),
+    height:Math.round(originalSize.height*.5),
+  },'The test image must use the lower-resolution dimensions');
+  const resizedMetrics=await resizedPage.evaluate(()=>({
+    image:[document.querySelector('#poster').naturalWidth,document.querySelector('#poster').naturalHeight],
+    glass:window.glassInk.glass,
+    hint:[document.querySelector('#music-hint').width,document.querySelector('#music-hint').height],
+  }));
+  assert.deepEqual(resizedMetrics.image,[resized.width,resized.height],'The alternate-resolution image did not load');
+  assert.deepEqual(resizedMetrics.glass,{
+    left:Math.round(geometry.pane.left*resized.width),
+    top:Math.round(geometry.pane.top*resized.height),
+    right:resized.width,
+    bottom:resized.height,
+  },'The pane bounds must scale from normalized geometry');
+  assert.deepEqual(resizedMetrics.hint,[resized.width,resized.height],'Drawing canvases must match the loaded image size');
+  const resizedPainting=await resizedPage.locator('#painting').boundingBox();
+  assert(resizedPainting,'The resized artwork is not visible');
+  const rx=normalized=>resizedPainting.x+resizedPainting.width*normalized;
+  const ry=normalized=>resizedPainting.y+resizedPainting.height*normalized;
+  await resizedPage.mouse.move(rx(.80),ry(.45));
+  await resizedPage.mouse.down();
+  await resizedPage.mouse.move(rx(.84),ry(.46));
+  await resizedPage.mouse.up();
+  const resizedInk=await resizedPage.evaluate(()=>{
+    const ink=document.querySelector('#glass-ink');
+    return ink.getContext('2d').getImageData(0,0,ink.width,ink.height).data.some(Boolean);
+  });
+  assert(resizedInk,'Drawing must work after the image resolution changes');
+  await resizedPage.mouse.dblclick(rx(.22),ry(.45),{delay:90});
+  const resizedHint=await resizedPage.evaluate(({centerX,centerY})=>{
+    const canvas=document.querySelector('#music-hint');
+    return {
+      visible:window.glassInk.musicHintVisible,
+      centerAlpha:canvas.getContext('2d').getImageData(centerX,centerY,1,1).data[3],
+    };
+  },{
+    centerX:Math.round(geometry.hint.center_x*resized.width),
+    centerY:Math.round(geometry.hint.center_y*resized.height),
+  });
+  assert.equal(resizedHint.visible,true,
+    'The normalized house hit area must remain interactive after resizing');
+  assert(resizedHint.centerAlpha>0,
+    'The hint must redraw at its normalized center after resizing');
+  await resizedPage.close();
+
   // A lost WebGL context must be reported below the artwork, not silently
   // replaced by the static image.
   const lost=await page.evaluate(()=>{
@@ -482,6 +589,12 @@ try{
       tap_image_point:tapPoint,
       drag_pixels:mobileInk['glass-ink'].count,
       camera_during:mobileDuring.camera,
+    },
+    responsive:{
+      image_size:[resized.width,resized.height],
+      glass:resizedMetrics.glass,
+      ink_visible:resizedInk,
+      hint_center_alpha:resizedHint.centerAlpha,
     },
     page_errors:errors,
   };
