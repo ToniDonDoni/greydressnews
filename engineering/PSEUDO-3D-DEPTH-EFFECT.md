@@ -28,6 +28,6 @@ Drawing strokes and the optional visual hint use the same near-plane coordinate 
 
 ## Scope
 
-The repository also retains an earlier procedural café artwork experiment. That path paints the illustration, separates selected elements into raster sprites (including lamps and windows), and animates those layers. It is a distinct layered-animation technique, not part of the current Grey Dress depth-map renderer.
+The repository also retains an earlier procedural café artwork experiment. That path generates the painting, extracts selected elements into raster sprites (including lamps and windows), bakes a separate relative depth map with the Core ML depth model, and uses its own browser parallax page. Sprite animation and depth-driven camera motion are related but distinct techniques. They document the evolution of the project; they are not loaded by the current Grey Dress page.
 
 The current effect is therefore a controlled 2.5D image-space illusion: neural depth estimation plus semantic correction, depth-dependent texture warping, overscan and eased camera motion, independent alpha glass, linear-light compositing, and registered interaction layers. It does not claim full 3D geometry or physically accurate refraction.
