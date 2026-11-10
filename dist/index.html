@@ -11,7 +11,12 @@
   <body>
     <main>
       <figure class="painting" id="painting">
-        <img id="poster" draggable="false" src="assets/glass-composite.png" alt="Presenter and city behind a rain-covered glass pane." />
+        <img
+          id="poster"
+          draggable="false"
+          src="assets/glass-composite.png"
+          alt="Presenter and city behind a rain-covered glass pane."
+        />
         <canvas id="depth-view" aria-hidden="true"></canvas>
         <div class="ink-layer" id="ink-layer" aria-hidden="true">
           <canvas id="music-hint" width="1672" height="941"></canvas>
@@ -26,7 +31,9 @@
         <output id="glass-alpha-value" for="glass-alpha">0.68</output>
       </label>
       <p class="status" id="status" role="status" aria-live="polite" hidden></p>
-      <footer><span>WINDOW / DEPTH STUDY</span><span>move to explore / draw on the glass</span></footer>
+      <footer>
+        <span>WINDOW / DEPTH STUDY</span><span>move to explore / draw on the glass</span>
+      </footer>
       <p class="build-line">BUILD <a id="build-commit" href="#">local preview</a></p>
     </main>
     <script src="glass-ink.js"></script>

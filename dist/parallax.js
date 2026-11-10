@@ -12,14 +12,22 @@
   const state = { ready: false, x: 0, targetX: 0, opacity: 0.68 };
   const parallax = { strength: 0.045, iterations: 7, mix: 0.6, pivot: 0.38 };
   const nearGray = 236 / 255;
-  const nearShiftUv = parallax.strength * (nearGray - parallax.pivot) * (1 - (1 - parallax.mix) ** parallax.iterations);
+  const nearShiftUv =
+    parallax.strength *
+    (nearGray - parallax.pivot) *
+    (1 - (1 - parallax.mix) ** parallax.iterations);
   let gl = null;
   let program = null;
   let uniforms = null;
   let dragPointer = null;
   let lastFrame = performance.now();
 
-  window.parallaxView = { get x() { return state.x; }, nearShiftUv };
+  window.parallaxView = {
+    get x() {
+      return state.x;
+    },
+    nearShiftUv,
+  };
 
   function reportError(message) {
     state.ready = false;
@@ -66,9 +74,18 @@
       gl = canvas.getContext('webgl', { alpha: false, antialias: true });
       if (!gl) throw Error('WebGL is unavailable');
       program = gl.createProgram();
-      gl.attachShader(program, compile(gl.VERTEX_SHADER,
-        'attribute vec2 a; varying vec2 uv; void main(){ uv=(a+1.0)*0.5; gl_Position=vec4(a,0.0,1.0); }'));
-      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, `
+      gl.attachShader(
+        program,
+        compile(
+          gl.VERTEX_SHADER,
+          'attribute vec2 a; varying vec2 uv; void main(){ uv=(a+1.0)*0.5; gl_Position=vec4(a,0.0,1.0); }',
+        ),
+      );
+      gl.attachShader(
+        program,
+        compile(
+          gl.FRAGMENT_SHADER,
+          `
         precision highp float;
         varying vec2 uv;
         uniform sampler2D baseTex;
@@ -99,14 +116,21 @@
           vec3 colorLinear = glass.rgb * opacity + linearize(baseColor) * (1.0 - alpha);
           gl_FragColor = vec4(encodeSrgb(colorLinear), 1.0);
         }
-      `));
+      `,
+        ),
+      );
       gl.linkProgram(program);
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(program));
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+        throw Error(gl.getProgramInfoLog(program));
 
       gl.useProgram(program);
       const buffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+        gl.STATIC_DRAW,
+      );
       const attribute = gl.getAttribLocation(program, 'a');
       gl.enableVertexAttribArray(attribute);
       gl.vertexAttribPointer(attribute, 2, gl.FLOAT, false, 0, 0);
@@ -124,7 +148,9 @@
       gl.uniform1i(uniforms.baseTex, 0);
       gl.uniform1i(uniforms.depthTex, 1);
       gl.uniform1i(uniforms.glassTex, 2);
-      const samplerValues = [uniforms.baseTex, uniforms.depthTex, uniforms.glassTex].map((uniform) => gl.getUniform(program, uniform));
+      const samplerValues = [uniforms.baseTex, uniforms.depthTex, uniforms.glassTex].map(
+        (uniform) => gl.getUniform(program, uniform),
+      );
       const error = gl.getError();
       window.layeredGlassDiagnostics = {
         samplers: samplerValues,
@@ -139,7 +165,8 @@
           return Array.from(pixel);
         },
       };
-      if (samplerValues.join(',') !== '0,1,2' || error !== gl.NO_ERROR) throw Error('Texture sampler setup failed');
+      if (samplerValues.join(',') !== '0,1,2' || error !== gl.NO_ERROR)
+        throw Error('Texture sampler setup failed');
 
       canvas.width = base.naturalWidth;
       canvas.height = base.naturalHeight;
@@ -158,7 +185,10 @@
     gl.uniform2f(uniforms.camera, state.x, 0);
     gl.uniform1f(uniforms.opacity, state.opacity);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    painting.style.setProperty('--ink-shift-x', (((state.x * nearShiftUv) / 0.95) * 100).toFixed(5) + '%');
+    painting.style.setProperty(
+      '--ink-shift-x',
+      (((state.x * nearShiftUv) / 0.95) * 100).toFixed(5) + '%',
+    );
     if (window.layeredGlassDiagnostics) window.layeredGlassDiagnostics.cameraX = state.x;
   }
 
@@ -189,7 +219,8 @@
     if (event.pointerType === 'mouse' || event.pointerId === dragPointer) setTarget(event.clientX);
   });
   painting.addEventListener('pointerdown', (event) => {
-    if (!state.ready || reduced.matches || !event.isPrimary || event.pointerType === 'mouse') return;
+    if (!state.ready || reduced.matches || !event.isPrimary || event.pointerType === 'mouse')
+      return;
     dragPointer = event.pointerId;
     painting.setPointerCapture(dragPointer);
     setTarget(event.clientX);
@@ -200,20 +231,28 @@
     dragPointer = null;
     state.targetX = 0;
   }
-  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) painting.addEventListener(type, release);
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'])
+    painting.addEventListener(type, release);
   painting.addEventListener('pointerleave', (event) => {
-    if (event.pointerType === 'mouse' && dragPointer === null && !window.glassInk?.active) state.targetX = 0;
+    if (event.pointerType === 'mouse' && dragPointer === null && !window.glassInk?.active)
+      state.targetX = 0;
   });
-  reduced.addEventListener('change', (event) => { if (event.matches) state.targetX = 0; });
+  reduced.addEventListener('change', (event) => {
+    if (event.matches) state.targetX = 0;
+  });
   canvas.addEventListener('webglcontextlost', (event) => {
     event.preventDefault();
-    reportError('WebGL context lost. The static glass composite remains visible; reload to restore parallax.');
+    reportError(
+      'WebGL context lost. The static glass composite remains visible; reload to restore parallax.',
+    );
   });
 
   Promise.all([
     loadImage('assets/no_logo.png'),
     loadImage('assets/scene-depth.png'),
     loadImage('assets/glass-runtime.png'),
-  ]).then(([base, depth, glass]) => initialize(base, depth, glass)).catch((error) => reportError(error.message));
+  ])
+    .then(([base, depth, glass]) => initialize(base, depth, glass))
+    .catch((error) => reportError(error.message));
   requestAnimationFrame(frame);
 })();
