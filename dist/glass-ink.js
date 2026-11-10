@@ -17,7 +17,12 @@
   const IMAGE = { width: 1672, height: 941 };
   const GLASS = { left: 1095, top: 0, right: 1672, bottom: 941 };
   const HOUSE = { left: 0, top: 0, right: 605, bottom: 941 };
-  const MUSIC_HINT = { x: 1580, y: 470, width: 280, height: 230 };
+  const MUSIC_HINT = {
+    x: 1580 - (GLASS.right - GLASS.left) / 4,
+    y: 470,
+    width: 280,
+    height: 230,
+  };
   const SHADER = { zoom: 0.95, offset: 0.025 };
   const TAU = Math.PI * 2;
   const FALLBACK_NEAR_SHIFT_UV = 0.045 * (236 / 255 - 0.38) * (1 - Math.pow(0.4, 7));
@@ -57,7 +62,10 @@
     if (!hintContext || !hintCanvas) return;
     hintContext.clearRect(0, 0, hintCanvas.width, hintCanvas.height);
     const { x, y, width, height } = MUSIC_HINT;
-    const haloRadius = Math.max(width, height) * 0.9;
+    const minRightMargin = IMAGE.width / 20;
+    const shadowReserve = 16;
+    const maxHaloRadius = IMAGE.width - minRightMargin - x - 1 - shadowReserve;
+    const haloRadius = Math.min(Math.max(width, height) * 0.9, maxHaloRadius);
     hintContext.save();
     hintContext.globalCompositeOperation = 'screen';
 
@@ -86,7 +94,7 @@
       false,
     );
     hintContext.shadowColor = 'rgba(255,226,160,0.9)';
-    hintContext.shadowBlur = 38;
+    hintContext.shadowBlur = 22;
     hintContext.lineWidth = 10;
     hintContext.strokeStyle = 'rgba(255,223,153,0.24)';
     hintContext.stroke();

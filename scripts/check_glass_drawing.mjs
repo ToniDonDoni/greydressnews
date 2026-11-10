@@ -298,6 +298,8 @@ try{
     let minY = canvas.height;
     let maxX = -1;
     let maxY = -1;
+    let strongMinX = canvas.width;
+    let strongMaxX = -1;
     let color = [0, 0, 0];
     for (let y = 0; y < canvas.height; y++) {
       for (let x = 0; x < canvas.width; x++) {
@@ -308,7 +310,11 @@ try{
         maxX = Math.max(maxX, x);
         minY = Math.min(minY, y);
         maxY = Math.max(maxY, y);
-        if (data[offset + 3] > 100) color = data.slice(offset, offset + 3);
+        if (data[offset + 3] > 100) {
+          color = data.slice(offset, offset + 3);
+          strongMinX = Math.min(strongMinX, x);
+          strongMaxX = Math.max(strongMaxX, x);
+        }
       }
     }
     const maxAlphaNear = (centerX, centerY) => {
@@ -320,20 +326,28 @@ try{
       }
       return maxAlpha;
     };
+    const hintCenterX = 1580 - (1672 - 1095) / 4;
     const arcXOffset = 280 * 0.42 * Math.sqrt(3) / 2;
     const arcYOffset = 230 * 0.42 * 0.5;
-    const lowerLeftArcAlpha = maxAlphaNear(1580 - arcXOffset, 470 + arcYOffset);
-    const lowerRightArcAlpha = maxAlphaNear(1580 + arcXOffset, 470 + arcYOffset);
+    const lowerLeftArcAlpha = maxAlphaNear(hintCenterX - arcXOffset, 470 + arcYOffset);
+    const lowerRightArcAlpha = maxAlphaNear(hintCenterX + arcXOffset, 470 + arcYOffset);
 
     return {
       count,
       bounds: [minX, minY, maxX, maxY],
+      rightGap: canvas.width - 1 - maxX,
+      strongCenterX: (strongMinX + strongMaxX) / 2,
       color,
       lowerLeftArcAlpha,
       lowerRightArcAlpha,
     };
   });
   assert(hintStats.count > 1000, 'The sunlit hint must draw visible pixels');
+  const expectedHintCenterX = 1580 - (1672 - 1095) / 4;
+  assert(Math.abs(hintStats.strongCenterX - expectedHintCenterX) < 15,
+    `The hint must move left by one quarter of the glass width (center ${hintStats.strongCenterX})`);
+  assert(hintStats.rightGap >= 1672 / 20,
+    `The hint must leave at least 1/20 of the artwork width at the right edge (gap ${hintStats.rightGap}px)`);
   assert(hintStats.bounds[0] >= 1095 && hintStats.bounds[2] <= 1672,
     'The sunlit hint must stay inside the glass horizontally');
   assert(hintStats.bounds[3] <= 941, 'The sunlit hint must stay above the ticker');
@@ -348,6 +362,16 @@ try{
   await hintPage.locator('#painting').screenshot({
     path: path.join(out, 'desktop-music-letter-e-hint.png'),
   });
+
+  await hintPage.mouse.dblclick(hx(0.22), hy(0.45), { delay: 90 });
+  await hintPage.waitForFunction(() => window.glassInk?.musicHintVisible === false
+    && !document.querySelector('#music-hint').classList.contains('is-visible'));
+  await hintPage.waitForFunction(() => Number.parseFloat(
+    getComputedStyle(document.querySelector('#music-hint')).opacity,
+  ) <= 0.01);
+  await hintPage.mouse.dblclick(hx(0.22), hy(0.45), { delay: 90 });
+  await hintPage.waitForFunction(() => window.glassInk?.musicHintVisible === true
+    && document.querySelector('#music-hint').classList.contains('is-visible'));
 
   // An open stroke is not a letter e and leaves the optional hint visible.
   await hintPage.mouse.move(hx(0.75), hy(0.46));
