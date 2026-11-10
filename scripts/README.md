@@ -153,7 +153,7 @@ This is a single-pane alpha overlay, not a recovered physical transmission/refra
 
 ## Build the layered glass preview
 
-The layered preview uses `references/no_logo.png` as the base scene and `references/no_logo_leiter_glass.png` as the glass RGB donor. The flattened comparison image is for appearance reference only. `test/depth_regions.json` is the single editable base-depth map; it has no glass region. `test/glass_layers.json` is the canonical normalized source for the glass pane, house hit area, hint position and size, plus near depth and default opacity. The drawing module receives its browser geometry from the generated `glass-geometry.js`; the preview builder exports that data from the JSON without rewriting drawing source. Alpha generation scales the normalized pane bounds against the actual base/donor dimensions.
+The layered preview uses `references/no_logo.png` as the base scene and `references/no_logo_leiter_glass.png` as the glass RGB donor. The flattened comparison image is for appearance reference only. `test/depth_regions.json` is the single editable base-depth map; it has no glass region. `test/glass_layers.json` is the canonical normalized source for the glass pane, house hit area, hint position and size, plus near depth and default opacity. The drawing module receives its browser geometry from `dist/glass-geometry.js`, generated from the JSON by `scripts/glass_geometry.py`. Alpha generation scales the normalized pane bounds against the actual base/donor dimensions.
 
 Generate a raw base depth map on Apple Silicon if the verified saved candidate is unavailable. Then bake the reviewed base regions and the single-pane glass layer:
 
@@ -165,7 +165,7 @@ output/depth_venv/bin/python scripts/make_layered_glass.py
 python3 scripts/build_layered_preview.py
 ```
 
-The overlay copies the donor RGB from the reviewed right pane and assigns alpha 1 inside, 0 outside. The slider multiplies this alpha, starting at 0.68; it does not alter depth. Inspect `output/glass_review/glass-alpha.png`, `glass-layer.png`, and `glass-composite.png`. The full page is assembled under ignored `output/site_preview_layered_glass/`; `dist/` remains unchanged while building and reviewing that preview.
+The overlay copies the donor RGB from the reviewed right pane and assigns alpha 1 inside, 0 outside. The slider multiplies this alpha, starting at 0.68; it does not alter depth. Inspect `output/glass_review/glass-alpha.png`, `glass-layer.png`, and `glass-composite.png`. The full page is assembled under ignored `output/site_preview_layered_glass/` by copying the committed `dist/` site and replacing its layered-glass assets with the generated review assets. The local preview uses the same committed HTML, CSS, and JavaScript that CI checks and the manual Pages publish deploys.
 
 Run the preview and its pixel-level alpha check:
 
@@ -233,7 +233,7 @@ The current reference map is promoted from `test/depth_regions.json`. To rebuild
 | `scripts/apply_depth_regions.py` | Apply `test/depth_regions.json` to a raw neural depth PNG and write a report. |
 | `scripts/bake_glass_scene_depth.py` | Bake the layered scene's base-only depth from the verified raw map and reviewed regions. |
 | `scripts/make_layered_glass.py` | Create the pane-only alpha source, linear-premultiplied runtime texture, and review composite. |
-| `scripts/build_layered_preview.py` | Assemble the complete local layered-glass page under ignored `output/`. |
+| `scripts/build_layered_preview.py` | Assemble a local asset preview from the committed `dist/` site under ignored `output/`. |
 | `scripts/check_layered_preview.mjs` | Browser pixel test for sampler ownership and alpha 0/1 compositing in the local preview. |
 | `test/render_depth_regions.py` | Draw the editable zones over a photograph for alignment review. |
 | `test/test_depth_regions.py` | Check mask values and repeatable overlay rendering. |

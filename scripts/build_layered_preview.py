@@ -1,4 +1,4 @@
-"""Assemble the full layered-glass site under ignored output/ for local review."""
+"""Assemble a local layered-glass preview from the committed site under output/."""
 
 from __future__ import annotations
 
@@ -6,11 +6,8 @@ import json
 import shutil
 from pathlib import Path
 
-from glass_geometry import write_runtime_module
-
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
-SOURCE = ROOT / "scripts/layered_preview"
 OUTPUT = ROOT / "output/site_preview_layered_glass"
 ASSETS = OUTPUT / "assets"
 GLASS_REVIEW = ROOT / "output/glass_review"
@@ -18,7 +15,7 @@ GLASS_REVIEW = ROOT / "output/glass_review"
 
 def require(path: Path) -> None:
     if not path.is_file():
-        raise FileNotFoundError(f"Missing generated preview input: {path.relative_to(ROOT)}")
+        raise FileNotFoundError(f"Missing preview input: {path.relative_to(ROOT)}")
 
 
 def main() -> None:
@@ -27,12 +24,6 @@ def main() -> None:
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     shutil.copytree(DIST, OUTPUT)
-    for name in ("index.html", "style.css", "parallax.js"):
-        shutil.copy2(SOURCE / name, OUTPUT / name)
-
-    # Geometry is exported from the same normalized configuration used by
-    # alpha generation. The drawing module consumes this data at runtime.
-    write_runtime_module(OUTPUT / "glass-geometry.js")
 
     assets = {
         "no_logo.png": ROOT / "references/no_logo.png",
@@ -45,7 +36,7 @@ def main() -> None:
     for name, source in assets.items():
         shutil.copy2(source, ASSETS / name)
     report = {
-        "source": "scripts/build_layered_preview.py",
+        "source": "dist/",
         "preview": "output/site_preview_layered_glass",
         "depth": "output/glass_review/scene-depth.png",
         "glass": "output/glass_review/glass-runtime.png",
