@@ -14,9 +14,9 @@
   const hintContext = hintCanvas?.getContext('2d', { alpha: true, desynchronized: false });
   if (!context || !liveContext) return;
 
-  const IMAGE = { width: 1920, height: 1077 };
-  const GLASS = { left: 1240, top: 0, right: 1920, bottom: 970 };
-  const HOUSE = { left: 0, top: 0, right: 720, bottom: 970 };
+  const IMAGE = { width: 1672, height: 941 };
+  const GLASS = { left: 1095, top: 0, right: 1672, bottom: 941 };
+  const HOUSE = { left: 0, top: 0, right: 605, bottom: 941 };
   const MUSIC_HINT = { x: 1580, y: 470, width: 280, height: 230 };
   const SHADER = { zoom: 0.95, offset: 0.025 };
   const TAU = Math.PI * 2;

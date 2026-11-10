@@ -67,6 +67,10 @@ jobs:
         env:
           TEASER_URL: http://127.0.0.1:8000/
         run: node scripts/check_glass_drawing.mjs
+      - name: Test layered glass pixel compositing at alpha 0 and 1
+        env:
+          LAYERED_PREVIEW_URL: http://127.0.0.1:8000/
+        run: node scripts/check_layered_preview.mjs
       - name: Measure rendered far, midground, and near parallax
         env:
           TEASER_URL: http://127.0.0.1:8000/

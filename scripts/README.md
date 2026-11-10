@@ -1,6 +1,6 @@
 # Project scripts and workflows
 
-Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the reference photograph, its depth PNG, the WebGL parallax script, the glass-ink layer, and the procedural music module directly.
+Run commands from the repository root. The current artwork is a static site in `dist/`: there is no JavaScript bundling step. `dist/index.html` loads the base photograph, its static scene-depth PNG, the separate RGBA glass layer, the WebGL parallax script, the glass-ink layer, and the procedural music module directly.
 
 This guide is the entry point for working on the current reference-photo page. The depth-region schema and editable coordinates are described in [test/README.md](../test/README.md); project conventions are in [CONTRIBUTING.md](../CONTRIBUTING.md). Photo-taking commands below use the committed `references/ElGrayPimenovLeiterWindow2.png` image and can be pasted as written. For a new photo, replace that path in each command with the path to your actual image; quote paths containing spaces.
 
@@ -133,28 +133,59 @@ python3 -m http.server 8001 --directory output/site_preview
 
 Open `http://127.0.0.1:8001/` and move the pointer or drag on a phone. Inspect both camera extremes for cut edges, holes, and whether the city, presenter, studio, laptop, ticker, and glass move in a believable order. The broad red streak should remain attached to the glass. Stop the server with Ctrl-C. `output/` is ignored by Git.
 
-`scripts/check_reference_parallax.mjs` reads `specs/evidence/depth-report-semantic.json` and is the browser acceptance test for the current published semantic-region map.
+`scripts/check_reference_parallax.mjs` checks the layered page's served scene-depth pixels, measures far/mid/near motion in the rendered page, and verifies that first-click audio still works. It makes the donor fully opaque during the near-plane image-match measurement so the base beneath it does not dilute the measured motion; it restores the default slider value before checking audio interaction.
 
-## Build the layered glass scene
+## How the layered parallax and glass alpha work
 
-The layered glass page uses `references/no_logo.png` as its base scene and `references/no_logo_leiter_glass.png` as its RGB glass donor. `test/glass_layers.json` contains the full-frame pane boundary, manually reviewed scene-depth polygons, glass opacity fields, and default UI opacity. The flattened comparison image is retained only as a visual reference.
+The page keeps the studio and the glass donor as separate image inputs:
 
-Generate the raw relative depth map on Apple Silicon, then bake the manual scene regions and translucent glass assets:
+| Input | Runtime role | Motion |
+| --- | --- | --- |
+| `assets/no_logo.png` | Opaque base scene, including presenter, city, ticker, and laptop | Each pixel samples `assets/scene-depth.png` and receives that depth's horizontal parallax. |
+| `assets/scene-depth.png` | Static depth map for the base scene only | Drives the base image warp; it contains no depth-1 glass plane. |
+| `assets/glass-runtime.png` | Full-frame, linear-light, premultiplied RGBA made from the approved right pane of the cleaned glass donor | Sampled independently at the near-plane transform corresponding to authoring depth 1 (grayscale 236/255). The donor's droplets, reflected house, streaks, and tint move together. |
+
+The pointer position sets a horizontal camera value from -1 to +1. The fragment shader starts from shared 5% overscan coordinates. For each base pixel it samples the static depth, then performs seven iterations that move the sample coordinate toward `baseUV - camera * (0.045, 0) * (depth - 0.38)`, mixing 60% toward the target on every iteration. Darker/farther base regions therefore move less than brighter/nearer regions. The glass uses the same camera and iteration count, but its depth is fixed at 236/255; it does not read or write the base depth map. Pointer smoothing changes how quickly the camera reaches its target, not the depth assignment.
+
+The glass alpha is one throughout the reviewed full-height right pane and zero outside. The UI slider multiplies this matte: effective alpha is `glassAlpha * slider`, where the slider defaults to 0.68. The runtime RGB is already linear and premultiplied, so the shader blends `glassPremultiplied * slider + linear(base) * (1 - effectiveAlpha)`, then encodes the result to sRGB once. At slider 0 the frame is the depth-warped base; at 1 the donor is fully visible over that still-moving base. Slider input changes neither image nor depth asset.
+
+This is a single-pane alpha overlay, not a recovered physical transmission/refraction model. The reflected city and glass surface details are one donor image and therefore move as one near layer. The implementation and review constraints are specified in [SPEC-006](../specs/SPEC-006-LAYERED-GLASS-COMPOSITING.md).
+
+## Build the layered glass preview
+
+The layered preview uses `references/no_logo.png` as the base scene and `references/no_logo_leiter_glass.png` as the glass RGB donor. The flattened comparison image is for appearance reference only. `test/depth_regions.json` is the single editable base-depth map; it has no glass region. `test/glass_layers.json` contains only the separate full-height pane boundary, near depth, and default opacity.
+
+Generate a raw base depth map on Apple Silicon if the verified saved candidate is unavailable. Then bake the reviewed base regions and the single-pane glass layer:
 
 ```sh
 mkdir -p output/coreml_tmp output/glass_review
 TMPDIR="$PWD/output/coreml_tmp" output/depth_venv/bin/python scripts/generate_raw_reference_depth.py --source references/no_logo.png --output output/glass_review/base-raw-depth.png
 output/depth_venv/bin/python scripts/bake_glass_scene_depth.py
 output/depth_venv/bin/python scripts/make_layered_glass.py
+python3 scripts/build_layered_preview.py
 ```
 
-Inspect `output/glass_review/glass-alpha.png` and `glass-composite.png`. The matte is a deterministic artist-directed approximation, not a physically recovered transmission map. Once reviewed, promote `scene-depth.png`, `glass-layer.png`, and `glass-composite.png` to their matching `dist/assets/no_logo-*` runtime files. The web page exposes an overall 0-1 opacity control below the artwork, starting at 0.68. Run the full page over HTTP:
+The overlay copies the donor RGB from the reviewed right pane and assigns alpha 1 inside, 0 outside. The slider multiplies this alpha, starting at 0.68; it does not alter depth. Inspect `output/glass_review/glass-alpha.png`, `glass-layer.png`, and `glass-composite.png`. The full page is assembled under ignored `output/site_preview_layered_glass/`; `dist/` remains unchanged while building and reviewing that preview.
+
+Run the preview and its pixel-level alpha check:
 
 ```sh
-python3 -m http.server 8766 --bind 127.0.0.1 --directory dist
+python3 -m http.server 8767 --bind 127.0.0.1 --directory output/site_preview_layered_glass
 ```
 
-The existing drawing and music modules remain part of that page. Their pane and hint coordinates are registered in `dist/glass-ink.js` for the 1672 x 941 base.
+In another terminal, run `LAYERED_PREVIEW_URL=http://127.0.0.1:8767/ node scripts/check_layered_preview.mjs`. It verifies sampler units 0/1/2, checks for WebGL errors, and reads the same rendered pane pixel at alpha 0 and 1. At alpha 0 that pixel must match the depth-warped base; at alpha 1 it must include the donor glass. `TEASER_URL=http://127.0.0.1:8767/ node scripts/check_reference_parallax.mjs` then measures the rendered layer motion and checks audio behavior on the complete page.
+
+After the preview is reviewed, promote the complete page and the assets it references into `dist/`:
+
+```sh
+cp output/site_preview_layered_glass/index.html dist/index.html
+cp output/site_preview_layered_glass/style.css dist/style.css
+cp output/site_preview_layered_glass/parallax.js dist/parallax.js
+cp output/site_preview_layered_glass/glass-ink.js dist/glass-ink.js
+cp output/site_preview_layered_glass/assets/{no_logo.png,scene-depth.png,glass-runtime.png,glass-layer.png,glass-alpha.png,glass-composite.png} dist/assets/
+```
+
+The page retains the existing music and drawing modules. Their pane and hint coordinates are registered in `dist/glass-ink.js` for the 1672 x 941 base. Serve `dist/` over HTTP and run `node scripts/check_layered_preview.mjs` against that URL before committing the promoted page.
 
 ## Run and check the current page
 
@@ -199,6 +230,10 @@ The current reference map is promoted from `test/depth_regions.json`. To rebuild
 | --- | --- |
 | `scripts/generate_raw_reference_depth.py` | Infer an uncorrected 1024-pixel-wide reference depth PNG with Core ML. |
 | `scripts/apply_depth_regions.py` | Apply `test/depth_regions.json` to a raw neural depth PNG and write a report. |
+| `scripts/bake_glass_scene_depth.py` | Bake the layered scene's base-only depth from the verified raw map and reviewed regions. |
+| `scripts/make_layered_glass.py` | Create the pane-only alpha source, linear-premultiplied runtime texture, and review composite. |
+| `scripts/build_layered_preview.py` | Assemble the complete local layered-glass page under ignored `output/`. |
+| `scripts/check_layered_preview.mjs` | Browser pixel test for sampler ownership and alpha 0/1 compositing in the local preview. |
 | `test/render_depth_regions.py` | Draw the editable zones over a photograph for alignment review. |
 | `test/test_depth_regions.py` | Check mask values and repeatable overlay rendering. |
 | `test/test_apply_depth_regions.py` | Check correction order, depth conversion, and input preservation. |

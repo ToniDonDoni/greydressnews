@@ -22,24 +22,24 @@ Project workflow: [scripts/README.md](../scripts/README.md).
 | Near glass | Right pane of `references/no_logo_leiter_glass.png`: droplets, streaks, tint, reflected house and its lights | One independently sampled near plane for the first implementation |
 | Drawing and hint | Existing drawing/hint layers | Registered to the same near-plane transform and pane mask |
 
-- The laptop and right ticker are visible through the glass and move relative to its droplets. They retain distinct authored scene depths where appropriate; neither receives glass depth simply because it is under the pane.
+- The laptop and right ticker are visible through the glass and move relative to its droplets. They have separate base-scene regions at the currently agreed level 21; neither receives glass depth simply because it is under the pane.
 - The complete ticker remains in the base, including the part under the glass. This work does not add an independently scrolling text animation.
 - The pane spans the full image height on the right, including the area covering the ticker and laptop. Its left edge follows the donor's actual pane boundary, approximately x = 1095 in the 1672 x 941 source; this estimate requires an overlay review before use as geometry.
 - Reflected architecture and droplets share the near overlay in the first version. This is an intentional 2D approximation, not a claim that real reflections have the same apparent depth as the glass surface.
 - The neutral view preserves the supplied composition and the character of the glass. Transparency and visibility of the base take priority over exact pixel matching to the opaque donor.
-- A page control below the artwork adjusts the overall glass opacity from 0 to 1 in real time. Its default value is 0.68; generated alpha remains independently spatially varying.
+- A page control below the artwork adjusts the whole glass pane opacity from 0 to 1 in real time. Its default value is 0.68. The prepared overlay uses one pane alpha: 1 across the approved right pane and 0 outside it.
 - This specification supersedes the interpretation of right-side house lights as far physical objects in SPEC-001 for this new composition only. It does not rewrite the historical implementation or its evidence.
 - Layered sampling requires coordinated renderer and page changes; replacing only the photograph and one depth PNG cannot provide this effect. Those changes are part of this implementation.
 
 ## 3. Acceptance Criteria
 
-- [ ] **AC-02 - Usable transparency.** The exported glass is a full-frame RGBA PNG. Alpha is exactly zero outside the approved pane mask. Clear areas inside the pane transmit the base; the entire pane is not an opaque rectangle or a uniform translucent screenshot.
+- [ ] **AC-02 - Usable transparency.** The exported glass is a full-frame RGBA PNG made from the right pane of the glass donor. Alpha is exactly 1 inside the approved pane and 0 outside it; the page opacity control scales this alpha from 0 to 1, defaulting to 0.68. The base scene remains a separate moving layer beneath the pane.
 - [ ] **AC-03 - Clean overlay.** Checkerboard, black, white, and base-background inspections show no second presenter, laptop outline, laptop logo, ticker letters, or rectangular remnants in the glass texture. Reflected architecture, including its dark parts, is preserved deliberately.
 - [ ] **AC-04 - Independent motion.** Captures at settled camera positions -1, 0, and +1 show a laptop landmark and a right ticker landmark moving relative to a nearby droplet. At a reference viewport rendering the artwork at 1672 pixels wide, each relative displacement between the two extremes exceeds 3 pixels and matches the configured transforms within 1 pixel. No bright window in the reflection moves independently of the glass in this version.
-- [ ] **AC-05 - Scene depth.** The base has an aligned static depth asset with explicit presenter, studio, left building/background, laptop, and ticker regions. Laptop and ticker use different declared depths, both behind glass. Numeric levels and masks are reviewed in an overlay before baking.
+- [ ] **AC-05 - Scene depth.** The base has an aligned static depth asset with explicit presenter, studio, left building/background, laptop, and ticker regions. Laptop and ticker are both level 21 in the base and remain behind the separate glass plane at level 1. Numeric levels and contours are reviewed in an overlay before baking.
 - [ ] **AC-06 - Boundaries.** Both camera extremes and intermediate views show no exposed image edge, stretched border stripe, doubled pane frame, gap at the pane seam, or transparent halo. The ticker remains behind the glass down to the image bottom. Off-pane artwork is unchanged apart from its intended parallax.
 - [ ] **AC-07 - Drawing and music.** Original gray strokes and the optional yellow hint retain their appearance and remain aligned to the glass within 1 rendered pixel. First-gesture groove playback, handwritten-letter selection of the waltz, touch behavior, and reduced-motion behavior pass regression checks.
-- [ ] **AC-08 - Reproducibility.** Manual masks, settings, source hashes, tool versions, and deterministic generation steps reproduce the alpha/depth assets. Reports record alpha coverage, settings, clipping, dimensions, and output hashes.
+- [ ] **AC-08 - Reproducibility.** Reviewed pane geometry, settings, source hashes, tool versions, and deterministic generation steps reproduce the alpha/depth assets. Reports record exact pane alpha coverage, settings, clipping, dimensions, and output hashes.
 - [ ] **AC-09 - Full-page review.** The complete page, including music and drawing, passes desktop and mobile interaction checks. Missing-texture and WebGL failure paths retain a usable poster.
 
 Acceptance criteria are checked only after the corresponding runtime behavior and review evidence pass.
@@ -64,7 +64,7 @@ Here B is the base scene, F is the chosen overlay color, and C is the final comp
 
 The donor is also not an exact optical capture of the base through known glass: removal/inpainting changed content, and the base has a different painted right background. Image subtraction therefore does not isolate physical glass. Solving F from a chosen alpha and the actual base could bake compensating laptop/ticker colors into F, producing ghosts when the layers move. That approach is excluded from the recommended pipeline.
 
-The proposed result is an artist-directed translucent overlay. It retains selected donor colors and details with a spatially controlled alpha. It cannot guarantee identical donor contrast while also revealing the base everywhere. Simply lowering the opacity of the entire right rectangle would retain too much uniform blue/gray veil and flatten the effect.
+The first result is an artist-directed translucent overlay with one uniform alpha across the approved right pane. It retains the donor's supplied RGB and lets the separate base show through according to the overall opacity slider. This simple blend is not a physically recovered transmission map and may not reproduce the opaque donor's contrast exactly. Any later change to spatially varying alpha is an appearance decision that requires discussion.
 
 Actual refractive glass needs more than conventional alpha. [Environment Matting and Compositing](https://grail.cs.washington.edu/projects/digital-matting/envmatte/) models reflection and refraction as additional environment interactions. Such reconstruction is outside the first implementation; no claim of measured optical accuracy is made here.
 
@@ -82,42 +82,32 @@ All inputs are 1672 x 941 pixels. The base file is RGBA but its alpha extrema ar
 
 The existing `references/ElGrayPimenovLeiterWindow2.png` remains intact.
 
-### 5.2 Registration and editable masks
+### 5.2 Pane registration
 
 - The reference coordinate system is the full 1672 x 941 frame. Equal image dimensions are not sufficient evidence of alignment: presenter edges, pane seam, and ticker baseline are compared before generating masks.
 - Only donor-derived data is aligned if needed. The base remains unmodified. Any alignment matrix and interpolation setting are recorded.
-- A manually reviewed pane mask excludes the left scene and includes the complete right strip. A narrow inward feather, initially 1-3 source pixels, is restricted to a genuine soft seam; the visible frame is handled explicitly rather than blurred into the presenter.
-- The reflective frame, if retained from the donor, exists only in the overlay and follows its transform. Inspection must reject an accidental second frame.
-- Separate editable grayscale masks identify clear/tinted pane, reflected building and red streaks, droplet highlights, droplet dark rims, and frame. A cleanup mask excludes any remaining generated studio/ticker/laptop artifacts. The bottom of the donor is inspected specifically for horizontal remnants.
-- Geometry/settings are defined in `test/glass_layers.json`; manual raster masks use `test/glass_masks/`. Base semantic depth coordinates follow the schema in `test/depth_regions.json`; existing light-hole masks do not carry into this new glass model.
+- Use one manually reviewed full-frame pane boundary to include the donor's complete right pane and exclude its left presenter/studio. The pane spans the full image height and includes the bottom strip over the ticker.
+- Do not split the pane into reflection, windows, streak, droplets, tint, or frame masks. Those features remain part of the donor RGB and move together as one overlay at depth 1.
+- Keep the alpha edge inside the reviewed pane boundary; alpha must be exactly zero outside the pane. Do not blur alpha outward across the seam. Inspect the donor seam and retained frame in the composite for doubled edges.
+- Store pane geometry and the overall UI opacity in `test/glass_layers.json`. Base semantic-depth coordinates remain in `test/depth_regions.json` and do not contain a glass-depth region.
 
 ### 5.3 Alpha construction
 
-The first candidate uses donor RGB with a manually controlled, nonuniform alpha. This deliberately avoids a background-dependent inversion.
+Prepare a single overlay directly from `references/no_logo_leiter_glass.png`:
 
-1. Decode the donor to a documented sRGB working space and linearize color for analysis. Preserve the untouched reference. Build a low-frequency estimate L with a recorded filter radius, initially 8 source pixels, and a signed luminance residual H = luminance(G) - luminance(L). G is the aligned donor.
-2. Positive and negative residuals provide candidate detail masks through separately recorded thresholds and smooth ramps. They are only suggestions inside the hand-reviewed droplet masks: reflected windows and painterly noise must not be classified automatically as droplets. Keep dark droplet rims as well as bright edges.
-3. Author opacity fields for tint, reflection, highlights, dark rims, and frame. Starting review ranges are 0.03-0.12 in clear tinted areas, 0.20-0.55 for reflected architecture/red streaks, and 0.35-0.80 for selected droplet edges. Frame opacity may reach 1. These are trial settings, not measured transmittance or acceptance targets.
-4. Combine contributions without adding opacity unchecked. For normalized masks m and their opacity weights w, use the union below; keep an explicit cleanup exclusion mask E and pane mask M:
+1. Create a full-frame RGBA image at the donor's native 1672 x 941 dimensions. Preserve donor RGB at its original pixel coordinates inside the approved right pane; do not shift, crop, recolor, or derive RGB from the flattened comparison.
+2. Set alpha to 1 throughout the approved right pane and 0 everywhere outside it. Use only the reviewed pane boundary. Do not create separate masks for the reflected house/windows, red streak, tint, droplets, highlights, rims, or frame.
+3. At runtime multiply this pane alpha by the overall opacity slider. The slider range is 0-1 and its default is 0.68. It changes only glass visibility, never the pane depth or base depth map.
+4. Generate the runtime filtering texture from the editable RGBA source by converting RGB to linear light and premultiplying it by alpha. Set premultiplied RGB to zero where alpha is zero. Filter premultiplied color and alpha consistently; do not apply a second premultiplication at upload.
+5. Composite the sampled glass over the independently warped base in linear light, then encode the result to sRGB once. Keep the near-plane transform at authoring depth 1, independent of the slider value.
+6. Emit the straight-alpha source, runtime texture, alpha diagnostic, neutral composite, and a report with source/settings/output hashes and exact inside/outside alpha coverage.
 
-   ```text
-   alpha = M * (1 - E) * (1 - product_i(1 - w_i * m_i))
-   F = G
-   P = alpha * F
-   ```
-
-   F initially retains the donor color, including reflected house colors. P is the linear premultiplied color used for compositing. Outside the pane both P and alpha are zero.
-5. Review alpha and color independently. Reduce the clear-pane field where a blue/gray sheet obscures the laptop or ticker. Increase selected reflection/detail masks where the building or droplets disappear. Do not use brightness as alpha globally: it would erase dark reflection structure and droplet shadows. Do not increase all opacity to restore a lost highlight.
-6. If source RGB still carries an unwanted flat veil, use a local color correction restricted to the corresponding manual mask, stored as reproducible curves/settings. Any unavoidable pixel retouch is saved as a separate source correction layer under `test/glass_masks/`, with its provenance. Do not change the original reference or repaint the base.
-7. Generate low, medium, and high reflection-opacity candidates using recorded multipliers. Compare on checkerboard, black, white, mid-gray, and the actual moving base. Select by independent-motion readability and preserved glass character, not by an exact match to the opaque donor.
-8. Export a straight-alpha RGBA PNG plus a linear premultiplied runtime texture described below. Export alpha as a separate grayscale diagnostic. Record alpha percentiles and zero/partial/opaque coverage inside the pane, output hashes, parameters, and source hashes.
-
-This procedure does not infer missing physical transparency. If no opacity/correction combination preserves both readable studio motion and the intended glass, the alpha-only candidate fails visual acceptance. A separately scoped fallback may split reflection from droplet detail or introduce RGB transmission and refraction. It is not silently added to this first implementation.
+This is a deliberately simple artist-directed layer, not a physically recovered transmission map. The pane's donor RGB, with the reflected house, droplets, streaks, and tint, moves together. If visual review later calls for spatially varying alpha, that is a separate appearance decision and must be discussed before adding masks or changing the alpha recipe.
 
 ### 5.4 Static scene depth
 
 - Base depth is baked offline and remains a static file at runtime. It describes the studio/base only; it contains no near-glass rectangle and no independent far-depth holes for reflected windows.
-- The laptop silhouette and ticker have explicit masks, separate from the studio wall and presenter. They use different reviewed inverse-depth levels below the glass value. Existing 1-100 authoring semantics and the grayscale conversion are retained unless a later spec explicitly changes them.
+- The laptop silhouette and ticker have explicit regions, separate from the studio wall and presenter. They use the reviewed level 21 in this scene, both behind the separate glass plane at level 1. Existing 1-100 authoring semantics and the grayscale conversion are retained.
 - The supplied base's right background is preserved. Depth boundaries follow visible objects, with narrow edge treatment rather than a blur across the whole pane.
 - The base is still a single-image depth warp. Newly exposed pixels at scene-object boundaries are not magically recovered. Small motion, overscan, and visual checks bound this limitation; a full multilayer studio reconstruction is outside scope.
 
@@ -155,8 +145,8 @@ Normal-map generation, refractive distortion, physically moving reflected scener
 
 - [x] Inspect the base, flattened reference, cleaned glass donor, and current single-image renderer.
 - [x] Record source identities, layer semantics, constraints, and the proposed alpha pipeline.
-- [ ] Prepare and review pane, reflection, droplet, frame, and cleanup masks.
-- [ ] Generate alpha candidates and inspect them on diagnostic backgrounds and the base.
+- [ ] Prepare and review the full-height right-pane boundary.
+- [ ] Generate the single-pane alpha overlay and inspect it on diagnostic backgrounds and the moving base.
 - [ ] Approve the glass appearance and useful transmission before page integration.
 - [ ] Author and review base-only semantic depth, including laptop and ticker.
 - [x] Implement reproducible glass-alpha generation and separate layered sampling.

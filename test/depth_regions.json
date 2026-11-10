@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reference_image": "references/ElGrayPimenovLeiterWindow2.png",
+  "reference_image": "references/no_logo.png",
   "reference_size": [
     1920,
     1077
@@ -10,7 +10,7 @@
     "farthest": 100,
     "status": "provisional"
   },
-  "notes": "Review overlay only. Geometry is in reference-image pixels. The broad red streak stays with the foreground glass and has no separate depth region.",
+  "notes": "Base studio only. Glass is a separately sampled alpha overlay and has no region in this map. Geometry is in reference-image pixels.",
   "regions": [
     {
       "id": "city",
@@ -131,6 +131,40 @@
           [
             681,
             94
+          ]
+        ]
+      },
+      "neural_detail_strength": 0.12
+    },
+    {
+      "id": "right_background",
+      "label": "RIGHT BACKGROUND",
+      "depth": 48,
+      "color": "#9d71e5",
+      "opacity": 42,
+      "outline": "solid",
+      "badge": [
+        1510,
+        45
+      ],
+      "geometry": {
+        "type": "polygon",
+        "points": [
+          [
+            1258,
+            0
+          ],
+          [
+            1919,
+            0
+          ],
+          [
+            1919,
+            978
+          ],
+          [
+            1258,
+            978
           ]
         ]
       },
@@ -365,40 +399,6 @@
         ]
       },
       "neural_detail_strength": 0.0
-    },
-    {
-      "id": "front_glass",
-      "label": "GLASS",
-      "depth": 1,
-      "color": "#30cabe",
-      "opacity": 47,
-      "outline": "solid",
-      "badge": [
-        1280,
-        820
-      ],
-      "geometry": {
-        "type": "polygon",
-        "points": [
-          [
-            1258,
-            0
-          ],
-          [
-            1919,
-            0
-          ],
-          [
-            1919,
-            978
-          ],
-          [
-            1258,
-            978
-          ]
-        ]
-      },
-      "neural_detail_strength": 0.0
     }
   ],
   "legend": [
@@ -415,6 +415,13 @@
         "studio_wall"
       ],
       "note": "Separate from the presenter."
+    },
+    {
+      "title": "RIGHT BACKGROUND",
+      "region_ids": [
+        "right_background"
+      ],
+      "note": "Base scene behind the separate glass overlay; proposed depth 48."
     },
     {
       "title": "PRESENTER",
@@ -436,13 +443,6 @@
         "ticker"
       ],
       "note": "In front of the presenter, behind the glass."
-    },
-    {
-      "title": "GLASS",
-      "region_ids": [
-        "front_glass"
-      ],
-      "note": "Droplets and streaks on the nearest plane."
     }
   ],
   "depth_bake": {
@@ -451,11 +451,11 @@
     "write_order": [
       "city",
       "studio_wall",
+      "right_background",
       "presenter",
-      "front_glass",
       "laptop",
       "ticker"
     ],
-    "notes": "One grayscale value can represent only one visible surface per pixel. Later regions override earlier ones in overlapping areas."
+    "notes": "This map describes only the base studio. Later regions override earlier regions in overlaps; glass is a separate runtime plane at depth 1."
   }
 }

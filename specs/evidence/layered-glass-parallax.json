@@ -1,0 +1,21 @@
+{
+  "sample_points": {
+    "left_house": {
+      "xy": [150, 220],
+      "expected_depth": 96
+    },
+    "presenter": {
+      "xy": [470, 300],
+      "expected_depth": 201
+    },
+    "glass": {
+      "xy": [850, 220],
+      "expected_depth": 170
+    }
+  },
+  "expected_displacement_between_camera_extremes_px": {
+    "far": "qualitative image-match measurement",
+    "midground": "qualitative image-match measurement",
+    "near": "qualitative image-match measurement"
+  }
+}

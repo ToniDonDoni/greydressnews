@@ -17,7 +17,7 @@ function inspectInk(){
   for(const id of ['glass-ink','glass-ink-live']){
     const canvas=document.getElementById(id);
     const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
-    const glassLeft=1240/1920*canvas.width, glassBottom=970/1077*canvas.height;
+    const glassLeft=1095/1672*canvas.width, glassBottom=canvas.height;
     let count=0,outside=0,maxAlpha=0,r=0,g=0,b=0,minX=canvas.width,maxX=-1,minY=canvas.height,maxY=-1;
     for(let y=0;y<canvas.height;y++){
       for(let x=0;x<canvas.width;x++){
@@ -115,7 +115,7 @@ try{
   assert.equal(await page.locator('#glass-ink').count(),1,'The ink canvas must exist');
   assert.equal(await page.locator('#glass-ink-live').count(),1,'The live ink canvas must exist');
   const glass=await page.evaluate(()=>window.glassInk.glass);
-  assert.deepEqual(glass,{left:1240,top:0,right:1920,bottom:970},'Unexpected glass rectangle');
+  assert.deepEqual(glass,{left:1095,top:0,right:1672,bottom:941},'Unexpected glass rectangle');
 
   const painting=await page.locator('#painting').boundingBox();
   assert(painting,'The painting container is not visible');
@@ -137,7 +137,7 @@ try{
   const during=await page.evaluate(()=>({
     camera:window.parallaxView.x,
     active:window.glassInk.active,
-    live:document.querySelector('#glass-ink-live').getContext('2d').getImageData(0,0,1920,1077).data.some(value=>value),
+    live:document.querySelector('#glass-ink-live').getContext('2d').getImageData(0,0,1672,941).data.some(value=>value),
   }));
   assert(during.active,'The stroke must stay active while the pointer is down');
   assert(during.live,'The live stroke canvas must contain ink during the gesture');
@@ -179,15 +179,15 @@ try{
   const tapCenterAlpha=await page.evaluate(({imageX,imageY})=>{
     const canvas=document.querySelector('#glass-ink');
     return canvas.getContext('2d').getImageData(
-      Math.round(imageX/1920*canvas.width),
-      Math.round(imageY/1077*canvas.height),
+      Math.round(imageX/1672*canvas.width),
+      Math.round(imageY/941*canvas.height),
       1,1).data[3];
   },{imageX:tapImage.x,imageY:tapImage.y});
   assert(tapInk['glass-ink'].count>20,'A tap on the glass must leave a dot');
   assert(tapInk['glass-ink'].bounds[2]-tapInk['glass-ink'].bounds[0]<60,'A tap must not draw a line');
   assert(tapCenterAlpha>0,'The tap ink is not registered under the pointer');
 
-  // A vertical stroke crossing the ticker must be clipped at y=970.
+  // A vertical stroke crossing the ticker must be clipped at y=941.
   await page.evaluate(()=>window.glassInk.clear());
   await page.mouse.move(x(.82),y(.84));
   await page.mouse.down();
@@ -334,9 +334,9 @@ try{
     };
   });
   assert(hintStats.count > 1000, 'The sunlit hint must draw visible pixels');
-  assert(hintStats.bounds[0] >= 1240 && hintStats.bounds[2] <= 1920,
+  assert(hintStats.bounds[0] >= 1095 && hintStats.bounds[2] <= 1672,
     'The sunlit hint must stay inside the glass horizontally');
-  assert(hintStats.bounds[3] <= 970, 'The sunlit hint must stay above the ticker');
+  assert(hintStats.bounds[3] <= 941, 'The sunlit hint must stay above the ticker');
   assert(hintStats.bounds[2] - hintStats.bounds[0] > 180,
     'The letter hint must have a readable horizontal crossbar');
   assert(hintStats.bounds[3] - hintStats.bounds[1] > 120,

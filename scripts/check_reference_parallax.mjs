@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url);
 const {chromium}=require('playwright');
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const evidence=JSON.parse(fs.readFileSync(path.join(root,'specs/evidence/depth-report-semantic.json'),'utf8'));
+const evidence=JSON.parse(fs.readFileSync(path.join(root,'specs/evidence/layered-glass-parallax.json'),'utf8'));
 const out=path.join(root,'output/reference_parallax_check');
 fs.mkdirSync(out,{recursive:true});
 const url=process.env.TEASER_URL||'http://127.0.0.1:8000/';
@@ -54,7 +54,7 @@ try{
 
   const browserDepth=await page.evaluate(async samples=>{
     const image=new Image();
-    image.src='assets/ElGrayPimenovLeiterWindow2-depth.png';
+    image.src='assets/scene-depth.png';
     await image.decode();
     const canvas=document.createElement('canvas');
     canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
@@ -67,13 +67,19 @@ try{
     }
     return {size:[canvas.width,canvas.height],values};
   },evidence.sample_points);
-  assert.deepEqual(browserDepth.size,[1024,574],'The browser loaded an unexpected depth-map size');
+  assert.deepEqual(browserDepth.size,[1024,576],'The browser loaded an unexpected depth-map size');
   for(const [name,sample] of Object.entries(browserDepth.values)){
     assert.equal(sample.actual,sample.expected,name+' has an incorrect browser-loaded depth value');
   }
 
   const painting=await page.locator('#painting').boundingBox();
   assert(painting,'The painting container is not visible');
+  // Maximize donor contribution so its near-plane landmark is not diluted by
+  // the base scene during the image-match measurement.
+  await page.locator('#glass-alpha').evaluate(element=>{
+    element.value='1';
+    element.dispatchEvent(new Event('input',{bubbles:true}));
+  });
   async function capture(name,normalizedX){
     await page.mouse.move(painting.x+painting.width*(normalizedX+1)/2,painting.y+painting.height*.5);
     await page.waitForTimeout(900);
@@ -103,7 +109,7 @@ try{
     }
     function score(sample,dx,radius){
       const cx=Math.round(sample.xy[0]*width/1024);
-      const cy=Math.round(sample.xy[1]*height/574);
+        const cy=Math.round(sample.xy[1]*height/576);
       let total=0,count=0;
       for(let oy=-radius;oy<=radius;oy++){
         const y=cy+oy;
@@ -133,16 +139,24 @@ try{
   },evidence.sample_points);
 
   assert(measured.near.absolute_px>measured.midground.absolute_px+10,
-    'Near glass does not move sufficiently more than the midground');
+    'Near glass does not move sufficiently more than the midground: '+JSON.stringify(measured));
   assert(measured.midground.absolute_px>measured.far.absolute_px+8,
-    'Midground does not move sufficiently more than the far plane');
+    'Midground does not move sufficiently more than the far plane: '+JSON.stringify(measured));
 
   // Confirm unobtrusive first-click playback through the actual browser Web Audio engine.
   for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue']){
     assert.equal(await page.locator('#'+id).count(),0,'Audio control must not exist: '+id);
   }
-  assert.equal(await page.locator('button,input[type="range"]').count(),0,
-    'The image must not display any playback or volume control');
+  assert.equal(await page.locator('button').count(),0,
+    'The image must not display music buttons');
+  assert.equal(await page.locator('input[type="range"]').count(),1,
+    'The glass-opacity slider must be the only range input');
+  assert.equal(await page.locator('#glass-alpha').getAttribute('value'),'0.68',
+    'The glass-opacity slider must start at 0.68');
+  await page.locator('#glass-alpha').evaluate(element=>{
+    element.value='0.68';
+    element.dispatchEvent(new Event('input',{bubbles:true}));
+  });
   const initialProbe=await page.evaluate(()=>window.__grooveProbe);
   assert.equal(initialProbe.started,0,'The groove must remain silent until user interaction');
 

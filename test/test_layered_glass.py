@@ -1,7 +1,8 @@
-"""Focused checks for the layered-scene source contract and generated assets."""
+"""Check input ownership and pane-only alpha construction for SPEC-006."""
 
 import hashlib
 import json
+import sys
 import unittest
 from pathlib import Path
 
@@ -9,7 +10,9 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = json.loads((ROOT / "test/glass_layers.json").read_text())
+CONFIG = json.loads((ROOT / "test/glass_layers.json").read_text(encoding="utf-8"))
+sys.path.insert(0, str(ROOT / "scripts"))
+from make_layered_glass import linear_premultiplied, pane_alpha  # noqa: E402
 
 
 def sha256(path):
@@ -28,52 +31,32 @@ class LayeredGlassTests(unittest.TestCase):
             with Image.open(path) as image:
                 self.assertEqual(image.size, tuple(CONFIG["canvas"]))
 
-    def test_generated_alpha_is_transparent_off_pane_and_spatial(self):
-        layer = Image.open(ROOT / "dist/assets/no_logo-glass.png").convert("RGBA")
-        self.assertEqual(layer.size, tuple(CONFIG["canvas"]))
-        alpha = np.asarray(layer.getchannel("A"))
-        left = CONFIG["pane"]["left"]
-        self.assertTrue(np.all(alpha[:, :left - 2] == 0))
-        inside = alpha[:, left + 16:]
-        self.assertTrue(np.any(inside < 30), "Clear glass areas should transmit most of the base")
-        self.assertTrue(np.any((inside > 0) & (inside < 255)))
-        self.assertTrue(np.any(inside > 200), "The reflected house/windows need visible alpha")
+    def test_alpha_is_one_full_pane_mask_only(self):
+        alpha = pane_alpha((12, 8), {"left": 4, "right": 12, "top": 0, "bottom": 8})
+        self.assertTrue(np.all(alpha[:, :4] == 0))
+        self.assertTrue(np.all(alpha[:, 4:] == 255))
+        self.assertEqual(np.count_nonzero((alpha > 0) & (alpha < 255)), 0)
 
-    def test_depth_has_distinct_behind_glass_objects(self):
-        depths = {entry["id"]: entry["depth"] for entry in CONFIG["depths"]["regions"]}
-        self.assertNotEqual(depths["laptop"], depths["ticker"])
-        self.assertGreater(depths["laptop"], 1)
-        self.assertGreater(depths["ticker"], 1)
-        depth = Image.open(ROOT / "dist/assets/no_logo-depth.png").convert("L")
-        self.assertEqual(depth.size, tuple(CONFIG["canvas"]))
+    def test_runtime_rgb_is_linear_premultiplied_and_clear_outside(self):
+        rgb = np.full((2, 4, 3), 0.5, dtype=np.float32)
+        alpha = np.zeros((2, 4), dtype=np.uint8)
+        alpha[:, 2:] = 255
+        result = linear_premultiplied(rgb, alpha)
+        self.assertTrue(np.all(result[:, :2] == 0))
+        expected = ((0.5 + 0.055) / 1.055) ** 2.4
+        self.assertTrue(np.allclose(result[:, 2:], expected))
 
-    def test_scene_objects_move_relative_to_the_near_glass_plane(self):
-        depth_config = CONFIG["depths"]
-        parallax = CONFIG["parallax"]
-        values = {entry["id"]: entry["depth"] for entry in depth_config["regions"]}
-
-        def gray(level):
-            return 236 - (level - 1) * 140 / 99
-
-        def extreme_delta(depth):
-            z = gray(depth) / 255
-            near = depth_config["nearest_gray"] / 255
-            return 2 * parallax["strength"] * (near - z) * (
-                1 - (1 - parallax["mix"]) ** parallax["iterations"]
-            ) * CONFIG["canvas"][0]
-
-        for object_name in ("laptop", "ticker"):
-            relative = extreme_delta(values[object_name])
-            self.assertGreater(relative, 3, f"{object_name} must move relative to glass")
-
-    def test_opacity_control_matches_documented_default(self):
-        self.assertEqual(CONFIG["glass_alpha"]["default_opacity"], 0.68)
-        html = (ROOT / "dist/index.html").read_text()
-        script = (ROOT / "dist/parallax.js").read_text()
-        self.assertIn('id="glass-alpha"', html)
-        self.assertIn('value="0.68"', html)
-        self.assertIn("layer.a*glassAlpha", script)
+    def test_depth_map_has_no_glass_and_uses_latest_object_levels(self):
+        depth = json.loads((ROOT / "test/depth_regions.json").read_text(encoding="utf-8"))
+        regions = {region["id"]: region for region in depth["regions"]}
+        self.assertNotIn("front_glass", regions)
+        self.assertFalse(any(region["depth"] == 1 for region in regions.values()))
+        self.assertEqual(regions["right_background"]["depth"], 48)
+        self.assertEqual(regions["laptop"]["depth"], 21)
+        self.assertEqual(regions["ticker"]["depth"], 21)
+        self.assertEqual(CONFIG["glass"]["authoring_depth"], 1)
+        self.assertEqual(CONFIG["glass"]["default_opacity"], 0.68)
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

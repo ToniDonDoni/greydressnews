@@ -4,47 +4,30 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <meta name="theme-color" content="#101419" />
-    <meta
-      name="description"
-      content="A depth-parallax study exploring a visual dialogue between Yuri Pimenov's painted city and Saul Leiter's rain-streaked color and glass."
-    />
-    <title>Teaser - Depth Parallax</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%8C%83%3C/text%3E%3C/svg%3E"
-    />
+    <meta name="description" content="Layered glass and depth-parallax preview." />
+    <title>Layered Glass - Depth Preview</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main>
-      <div class="art-shell">
-        <figure class="painting" id="painting">
-          <img
-            id="poster"
-            draggable="false"
-            src="assets/ElGrayPimenovLeiterWindow2.png"
-            alt="A television presenter in a gray dress, with a city building on the left and rain-streaked glass and red lights on the right."
-          />
-          <canvas id="depth-view" aria-hidden="true"></canvas>
-          <div class="ink-layer" id="ink-layer" aria-hidden="true">
-            <canvas id="music-hint" class="music-hint" width="1920" height="1077"></canvas>
-            <canvas id="glass-ink" width="1920" height="1077"></canvas>
-            <canvas id="glass-ink-live" width="1920" height="1077"></canvas>
-          </div>
-          <div class="loading" id="loading">Preparing the depth view...</div>
-        </figure>
-      </div>
+      <figure class="painting" id="painting">
+        <img id="poster" draggable="false" src="assets/glass-composite.png" alt="Presenter and city behind a rain-covered glass pane." />
+        <canvas id="depth-view" aria-hidden="true"></canvas>
+        <div class="ink-layer" id="ink-layer" aria-hidden="true">
+          <canvas id="music-hint" width="1672" height="941"></canvas>
+          <canvas id="glass-ink" width="1672" height="941"></canvas>
+          <canvas id="glass-ink-live" width="1672" height="941"></canvas>
+        </div>
+        <div class="loading" id="loading">Preparing the depth view...</div>
+      </figure>
+      <label class="glass-control" for="glass-alpha">
+        <span>Glass alpha</span>
+        <input id="glass-alpha" type="range" min="0" max="1" step="0.01" value="0.68" />
+        <output id="glass-alpha-value" for="glass-alpha">0.68</output>
+      </label>
       <p class="status" id="status" role="status" aria-live="polite" hidden></p>
-      <footer>
-        <span>WINDOW / DEPTH STUDY</span
-        ><span class="hint">move to explore / draw on the glass</span>
-      </footer>
-      <p class="build-line">
-        BUILD
-        <a id="build-commit" href="https://github.com/ToniDonDoni/greydressnews" title="Local build"
-          >local</a
-        >
-      </p>
+      <footer><span>WINDOW / DEPTH STUDY</span><span>move to explore / draw on the glass</span></footer>
+      <p class="build-line">BUILD <a id="build-commit" href="#">local preview</a></p>
     </main>
     <script src="glass-ink.js"></script>
     <script src="parallax.js"></script>
