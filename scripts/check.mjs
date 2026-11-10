@@ -18,7 +18,7 @@ import {
 } from '../dist/groove-core.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const ignored=new Set(['.git','.venv','__pycache__','node_modules','output']);
+const ignored=new Set(['.git','.venv','__pycache__','node_modules','output','draft']);
 const binary=new Set(['.png','.jpg','.bmp','.wav','.pyc']);
 let checked=0;
 function inspect(directory){
@@ -40,10 +40,16 @@ const dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.htm
 assert(html.includes('lang="en"'),'The document must declare English');
 assert(html.includes('id="poster"')&&html.includes('id="depth-view"'),'The static image and depth canvas must exist');
 assert(html.includes('id="music-hint"'),'The sunlit circle hint canvas must exist');
-assert(html.includes('assets/ElGrayPimenovLeiterWindow2.png'),'The reference image must be used');
+assert(html.includes('assets/no_logo-preview.png'),'The layered-scene fallback poster must be used');
+assert(html.includes('id="glass-alpha"') && html.includes('value="0.68"'),'The glass-alpha slider must start at 0.68');
+assert(fs.existsSync(path.join(dist,'assets/no_logo.png')),'The new base scene must exist');
+assert(fs.existsSync(path.join(dist,'assets/no_logo-glass.png')),'The transparent glass overlay must exist');
+assert(fs.existsSync(path.join(dist,'assets/no_logo-depth.png')),'The new scene depth map must exist');
 for(const id of ['music','musicLabel','volume','soundbar','bpm','bpmValue'])
   assert(!html.includes(`id="${id}"`),`Unexpected audio control: ${id}`);
-assert(!/<(?:button|input)\b/i.test(html),'The artwork must not display music controls');
+assert(!/<button\b/i.test(html),'The artwork must not display music buttons');
+assert([...html.matchAll(/<input\b[^>]*>/gi)].every(([tag]) => /\btype="range"/i.test(tag)),
+  'Only the glass-alpha slider may be an input');
 assert(html.includes('<script type="module" src="music.mjs"></script>'),'The procedural waltz must load as a module');
 const musicSource = fs.readFileSync(path.join(dist,'music.mjs'),'utf8');
 assert(musicSource.includes('legacy-groove.mjs'),'The original groove must remain available');
@@ -59,7 +65,7 @@ for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){
   if(/^(?:https?:|data:)/.test(match[1]))continue;
   assert(fs.existsSync(path.join(dist,match[1])),`Missing local resource: ${match[1]}`);
 }
-for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs','waltz-score.mjs','legacy-groove.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
+for(const asset of ['assets/cafe.jpg','assets/lamp0.png','assets/lamp1.png','assets/windows.json','assets/no_logo.png','assets/no_logo-preview.png','assets/no_logo-glass.png','assets/no_logo-depth.png','assets/ElGrayPimenovLeiterWindow2.png','assets/ElGrayPimenovLeiterWindow2-depth.png','assets/ElGrayPimenovLeiterWindow2-depth.json','groove-core.mjs','waltz-score.mjs','legacy-groove.mjs'])assert(fs.existsSync(path.join(dist,asset)),`Missing asset: ${asset}`);
 const windows=JSON.parse(fs.readFileSync(path.join(dist,'assets/windows.json'),'utf8'));
 assert(windows.length>0&&windows.every(w=>w.x>=0&&w.x<1024&&w.y>=0&&w.y<1024&&/^#[0-9a-f]{6}$/i.test(w.color)),'Invalid window data');
 

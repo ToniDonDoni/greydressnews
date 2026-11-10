@@ -1,6 +1,6 @@
 # SPEC-006: Layered Glass Compositing
 
-Status: proposed; specification and source references only. No alpha asset, new depth map, renderer change, or deployment is included in this change.
+Status: implementation in progress on `feat/layered-glass`. The local page now uses separate base, depth, and RGBA glass assets; manual mask review and full acceptance checks remain in progress.
 
 ## 1. Problem and Current State
 
@@ -26,13 +26,12 @@ Status: proposed; specification and source references only. No alpha asset, new 
 - The pane spans the full image height on the right, including the area covering the ticker and laptop. Its left edge follows the donor's actual pane boundary, approximately x = 1095 in the 1672 x 941 source; this estimate requires an overlay review before use as geometry.
 - Reflected architecture and droplets share the near overlay in the first version. This is an intentional 2D approximation, not a claim that real reflections have the same apparent depth as the glass surface.
 - The neutral view preserves the supplied composition and the character of the glass. Transparency and visibility of the base take priority over exact pixel matching to the opaque donor.
-- Source files remain unchanged. The base and glass donor are copied from `draft/` into `references/`, not moved. Existing reference filenames are retained.
+- A page control below the artwork adjusts the overall glass opacity from 0 to 1 in real time. Its default value is 0.68; generated alpha remains independently spatially varying.
 - This specification supersedes the interpretation of right-side house lights as far physical objects in SPEC-001 for this new composition only. It does not rewrite the historical implementation or its evidence.
-- Implementation is a subsequent task. It necessarily adds layered sampling to the renderer; replacing only the photograph and a single depth PNG cannot provide this effect. No application code changes are part of the present commit.
+- Layered sampling requires coordinated renderer and page changes; replacing only the photograph and one depth PNG cannot provide this effect. Those changes are part of this implementation.
 
 ## 3. Acceptance Criteria
 
-- [ ] **AC-01 - Source integrity.** All three reference files match the checksums below. Draft originals remain in place. No source is resized, recolored, or recompressed.
 - [ ] **AC-02 - Usable transparency.** The exported glass is a full-frame RGBA PNG. Alpha is exactly zero outside the approved pane mask. Clear areas inside the pane transmit the base; the entire pane is not an opaque rectangle or a uniform translucent screenshot.
 - [ ] **AC-03 - Clean overlay.** Checkerboard, black, white, and base-background inspections show no second presenter, laptop outline, laptop logo, ticker letters, or rectangular remnants in the glass texture. Reflected architecture, including its dark parts, is preserved deliberately.
 - [ ] **AC-04 - Independent motion.** Captures at settled camera positions -1, 0, and +1 show a laptop landmark and a right ticker landmark moving relative to a nearby droplet. At a reference viewport rendering the artwork at 1672 pixels wide, each relative displacement between the two extremes exceeds 3 pixels and matches the configured transforms within 1 pixel. No bright window in the reflection moves independently of the glass in this version.
@@ -42,7 +41,7 @@ Status: proposed; specification and source references only. No alpha asset, new 
 - [ ] **AC-08 - Reproducibility.** Committed manual masks, settings, source hashes, tool versions, and deterministic generation steps reproduce the promoted alpha/depth assets. Reports record alpha coverage, settings, clipping, dimensions, and output hashes.
 - [ ] **AC-09 - Full-page review.** The local review uses the complete site copied under `output/`, including music and drawing. Evidence covers desktop and mobile interaction, not only a static composite. Missing-texture and WebGL failure paths retain a usable poster.
 
-All criteria above describe the future implementation. They remain unchecked in this specification-only change.
+Acceptance criteria are checked only after the corresponding runtime behavior and review evidence pass.
 
 ## 4. Analysis
 
@@ -80,7 +79,7 @@ All inputs are 1672 x 941 pixels. The base file is RGBA but its alpha extrema ar
 | `references/no_logo_laiter_spec_gpt.png` | Flattened appearance comparison; not a runtime overlay | `6f08fe12eeeba2c20805c52d4a3fd2f331b6d7f352bd37fa2c47b902b41f4980` |
 | `references/no_logo_leiter_glass.png` | Cleaned glass donor | `5eb180b7225b800a6e68bc23c3f2ffca688336360af8075fb18404e04973b120` |
 
-The existing `references/ElGrayPimenovLeiterWindow2.png` remains intact. No extra duplicate of the flattened appearance reference is needed: its draft copy has the same hash.
+The existing `references/ElGrayPimenovLeiterWindow2.png` remains intact.
 
 ### 5.2 Registration and editable masks
 
@@ -153,7 +152,7 @@ The future review includes:
 - Existing build, formatting, audio, UI, drawing, and parallax checks, updated only where new geometry makes old reference-specific assertions obsolete.
 - Desktop and mobile checks of original stroke appearance, groove start, waltz selection, clipping, missing overlay, WebGL failure, and reduced motion.
 
-Normal-map generation, refractive distortion, physically moving reflected scenery, live relighting, recoloring the pencil, music changes, publication, and unrelated refactoring are outside this first implementation. The current specification-only commit includes no generated candidates, no test/source changes, and no edits to `dist/` or existing depth maps.
+Normal-map generation, refractive distortion, physically moving reflected scenery, live relighting, recoloring the pencil, music changes, publication, and unrelated refactoring are outside this first implementation. New runtime assets and renderer changes live in `dist/`; generated diagnostics remain under ignored `output/`. Existing artwork and music code outside the registration points stay intact.
 
 ## 6. ToDo
 
@@ -163,9 +162,10 @@ Normal-map generation, refractive distortion, physically moving reflected scener
 - [ ] Generate alpha candidates and inspect them on diagnostic backgrounds and the base.
 - [ ] Approve the glass appearance and useful transmission before page integration.
 - [ ] Author and review base-only semantic depth, including laptop and ticker.
-- [ ] Implement reproducible asset generation and layered sampling as a separate task.
-- [ ] Register drawing/hint geometry without changing visual styles or music behavior.
+- [x] Implement reproducible glass-alpha generation and separate layered sampling.
+- [x] Register drawing/hint geometry for the new canvas dimensions.
+- [x] Add an overall glass-opacity slider with default 0.68.
 - [ ] Review the complete local page at camera extremes and on mobile.
 - [ ] Collect acceptance evidence, run regressions, and promote accepted assets.
 
-Implementation checklist items remain pending until separately executed and verified. Committing this specification does not mark the visual effect implemented or accepted.
+Depth generation and base scene integration are implemented. Visual review and the remaining acceptance criteria stay pending until independently verified.

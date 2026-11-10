@@ -135,6 +135,27 @@ Open `http://127.0.0.1:8001/` and move the pointer or drag on a phone. Inspect b
 
 `scripts/check_reference_parallax.mjs` reads `specs/evidence/depth-report-semantic.json` and is the browser acceptance test for the current published semantic-region map.
 
+## Build the layered glass scene
+
+The layered glass page uses `references/no_logo.png` as its base scene and `references/no_logo_leiter_glass.png` as its RGB glass donor. `test/glass_layers.json` contains the full-frame pane boundary, manually reviewed scene-depth polygons, glass opacity fields, and default UI opacity. The flattened comparison image is retained only as a visual reference.
+
+Generate the raw relative depth map on Apple Silicon, then bake the manual scene regions and translucent glass assets:
+
+```sh
+mkdir -p output/coreml_tmp output/glass_review
+TMPDIR="$PWD/output/coreml_tmp" output/depth_venv/bin/python scripts/generate_raw_reference_depth.py --source references/no_logo.png --output output/glass_review/base-raw-depth.png
+output/depth_venv/bin/python scripts/bake_glass_scene_depth.py
+output/depth_venv/bin/python scripts/make_layered_glass.py
+```
+
+Inspect `output/glass_review/glass-alpha.png` and `glass-composite.png`. The matte is a deterministic artist-directed approximation, not a physically recovered transmission map. Once reviewed, promote `scene-depth.png`, `glass-layer.png`, and `glass-composite.png` to their matching `dist/assets/no_logo-*` runtime files. The web page exposes an overall 0-1 opacity control below the artwork, starting at 0.68. Run the full page over HTTP:
+
+```sh
+python3 -m http.server 8766 --bind 127.0.0.1 --directory dist
+```
+
+The existing drawing and music modules remain part of that page. Their pane and hint coordinates are registered in `dist/glass-ink.js` for the 1672 x 941 base.
+
 ## Run and check the current page
 
 The page already lives in `dist/`. The following commands validate the committed assets and source without regenerating the reference photograph or its depth map:
